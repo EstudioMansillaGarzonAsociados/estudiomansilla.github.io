@@ -1,1161 +1,1477 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
-
   <meta charset="UTF-8">
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  >
-
-  <title>Panel de Asesores - Estudio Mansilla</title>
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Centro de Atención - Estudio Mansilla</title>
 
   <style>
-
     * {
       box-sizing: border-box;
     }
 
-
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background: #f4f4f4;
-      height: 100vh;
-      overflow: hidden;
+      background: #f3f4f6;
+      color: #222;
     }
 
+    /* LOGIN */
 
-    /* =========================
-       PANEL GENERAL
-    ========================= */
-
-    .panel {
+    #login {
+      min-height: 100vh;
       display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f3f4f6;
+    }
+
+    .login-box {
+      width: 380px;
+      max-width: 90%;
+      background: white;
+      padding: 35px;
+      border-radius: 15px;
+      box-shadow: 0 5px 25px rgba(0,0,0,.12);
+    }
+
+    .login-box h1 {
+      margin-top: 0;
+      text-align: center;
+    }
+
+    .login-box p {
+      text-align: center;
+      color: #666;
+    }
+
+    input,
+    textarea,
+    select,
+    button {
+      font-family: inherit;
+    }
+
+    .login-box input {
+      width: 100%;
+      padding: 13px;
+      margin-bottom: 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 8px;
+      padding: 12px 18px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .btn-primary {
+      width: 100%;
+      background: #222;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      opacity: .9;
+    }
+
+    #loginError {
+      color: #c62828;
+      margin-top: 12px;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    /* PANEL */
+
+    #app {
+      display: none;
       height: 100vh;
     }
 
-
-    /* =========================
-       LISTA DE CONVERSACIONES
-    ========================= */
-
-    .lista {
-      width: 350px;
+    .sidebar {
+      width: 360px;
       background: white;
       border-right: 1px solid #ddd;
       display: flex;
       flex-direction: column;
     }
 
-
-    .titulo {
-      background: #222;
-      color: white;
-      padding: 20px;
-      font-size: 20px;
-      font-weight: bold;
+    .sidebar-header {
+      padding: 18px;
+      border-bottom: 1px solid #ddd;
     }
 
+    .sidebar-header h2 {
+      margin: 0 0 5px;
+    }
 
-    .subtitulo {
-      padding: 10px 20px;
-      color: #777;
+    #usuarioActual {
+      color: #666;
       font-size: 13px;
-      border-bottom: 1px solid #eee;
     }
 
+    .search {
+      padding: 12px;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .search input {
+      width: 100%;
+      padding: 11px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
 
     #listaConversaciones {
-      flex: 1;
       overflow-y: auto;
+      flex: 1;
     }
 
-
-    .conversacion {
-      padding: 15px 18px;
+    .conversation {
+      padding: 15px;
       border-bottom: 1px solid #eee;
       cursor: pointer;
     }
 
-
-    .conversacion:hover {
-      background: #f5f5f5;
+    .conversation:hover {
+      background: #f7f7f7;
     }
 
-
-    .conversacion.activa {
+    .conversation.active {
       background: #eeeeee;
     }
 
-
-    .cliente-nombre {
+    .conversation-name {
       font-weight: bold;
-      font-size: 15px;
     }
 
-
-    .cliente-motivo {
-      font-size: 12px;
-      color: #777;
-      margin-top: 4px;
-    }
-
-
-    .ultimo-mensaje {
+    .conversation-last {
+      color: #666;
       font-size: 13px;
-      color: #555;
-      margin-top: 7px;
+      margin-top: 5px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
 
+    .conversation-time {
+      font-size: 12px;
+      margin-top: 5px;
+      color: #777;
+    }
 
-    .estado-chat {
+    .status {
       display: inline-block;
+      font-size: 11px;
+      padding: 4px 7px;
+      border-radius: 10px;
       margin-top: 7px;
-      padding: 3px 7px;
-      border-radius: 20px;
-      font-size: 10px;
+    }
+
+    .status-pendiente {
       background: #fff3cd;
       color: #856404;
     }
 
+    .status-atencion {
+      background: #dbeafe;
+      color: #1e40af;
+    }
 
-    /* =========================
-       CHAT
-    ========================= */
+    .status-finalizada {
+      background: #dcfce7;
+      color: #166534;
+    }
 
-    .chat {
+    .waiting {
+      color: #c62828;
+      font-weight: bold;
+    }
+
+    .answered {
+      color: #2e7d32;
+    }
+
+    /* CHAT */
+
+    .main {
       flex: 1;
       display: flex;
       flex-direction: column;
+      min-width: 0;
     }
-
 
     .chat-header {
       background: white;
-      padding: 15px 20px;
       border-bottom: 1px solid #ddd;
+      padding: 18px;
     }
 
-
-    .chat-header-nombre {
-      font-weight: bold;
-      font-size: 17px;
+    .chat-header h2 {
+      margin: 0;
     }
 
-
-    .chat-header-datos {
-      color: #777;
-      font-size: 12px;
-      margin-top: 5px;
-    }
-
-
-    .mensajes {
-      flex: 1;
-      padding: 20px;
-      overflow-y: auto;
-      background: #f7f7f7;
-    }
-
-
-    .mensaje {
-      max-width: 70%;
-      padding: 10px 14px;
-      margin-bottom: 10px;
-      border-radius: 12px;
-      line-height: 1.4;
+    .client-data {
+      margin-top: 10px;
       font-size: 14px;
-      word-wrap: break-word;
-    }
-
-
-    .cliente-mensaje {
-      background: white;
-      border: 1px solid #ddd;
-      margin-right: auto;
-    }
-
-
-    .asesor-mensaje {
-      background: #222;
-      color: white;
-      margin-left: auto;
-    }
-
-
-    .hora {
-      font-size: 10px;
-      opacity: 0.6;
-      margin-top: 5px;
-    }
-
-
-    /* =========================
-       ENTRADA
-    ========================= */
-
-    .entrada {
-      display: flex;
-      gap: 10px;
-      padding: 12px;
-      background: white;
-      border-top: 1px solid #ddd;
-    }
-
-
-    .entrada input {
-      flex: 1;
-      padding: 13px;
-      border: 1px solid #ddd;
-      border-radius: 10px;
-      font-size: 14px;
-      outline: none;
-    }
-
-
-    .entrada button {
-      width: 55px;
-      border: none;
-      border-radius: 10px;
-      background: #222;
-      color: white;
-      font-size: 18px;
-      cursor: pointer;
-    }
-
-
-    .entrada button:hover {
-      opacity: 0.85;
-    }
-
-
-    /* =========================
-       SIN CHAT
-    ========================= */
-
-    .sin-chat {
-      flex: 1;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      color: #777;
-      font-size: 18px;
-      text-align: center;
-      padding: 30px;
-    }
-
-
-    /* =========================
-       DATOS DEL CLIENTE
-    ========================= */
-
-    .datos-cliente {
-      background: #f8f8f8;
-      border-bottom: 1px solid #ddd;
-      padding: 12px 20px;
-      font-size: 12px;
       color: #555;
     }
 
-
-    .datos-cliente strong {
-      color: #222;
+    .actions {
+      margin-top: 15px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
     }
 
+    .btn-take {
+      background: #2563eb;
+      color: white;
+    }
 
-    @media (max-width: 700px) {
+    .btn-finish {
+      background: #15803d;
+      color: white;
+    }
 
-      .lista {
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+    }
+
+    .message {
+      max-width: 70%;
+      margin-bottom: 12px;
+      padding: 12px;
+      border-radius: 12px;
+      word-wrap: break-word;
+    }
+
+    .message.client {
+      background: white;
+      margin-right: auto;
+    }
+
+    .message.advisor {
+      background: #dbeafe;
+      margin-left: auto;
+    }
+
+    .message-meta {
+      font-size: 11px;
+      color: #777;
+      margin-top: 5px;
+    }
+
+    .reply {
+      background: white;
+      border-top: 1px solid #ddd;
+      padding: 15px;
+    }
+
+    .reply textarea {
+      width: 100%;
+      height: 80px;
+      resize: none;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+
+    .reply button {
+      margin-top: 8px;
+      background: #222;
+      color: white;
+    }
+
+    .empty {
+      padding: 30px;
+      text-align: center;
+      color: #777;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.45);
+      align-items: center;
+      justify-content: center;
+      z-index: 20;
+    }
+
+    .modal-box {
+      background: white;
+      width: 400px;
+      max-width: 90%;
+      padding: 25px;
+      border-radius: 12px;
+    }
+
+    .modal-box h3 {
+      margin-top: 0;
+    }
+
+    .modal-box select {
+      width: 100%;
+      padding: 11px;
+      margin: 15px 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    .btn-cancel {
+      background: #ddd;
+    }
+
+    @media(max-width: 800px) {
+      .sidebar {
         width: 280px;
       }
 
-      .mensaje {
+      .message {
         max-width: 85%;
       }
-
     }
-
   </style>
-
 </head>
-
 
 <body>
 
+<!-- LOGIN -->
 
-  <div class="panel">
+<div id="login">
+
+  <div class="login-box">
+
+    <h1>Estudio Mansilla</h1>
+
+    <p>Centro de Atención</p>
+
+    <input
+      type="email"
+      id="email"
+      placeholder="Correo electrónico"
+    >
+
+    <input
+      type="password"
+      id="password"
+      placeholder="Contraseña"
+    >
+
+    <button
+      class="btn btn-primary"
+      onclick="iniciarSesion()"
+    >
+      Ingresar
+    </button>
+
+    <div id="loginError"></div>
+
+  </div>
+
+</div>
 
 
-    <!-- =========================
-         LISTA
-    ========================= -->
+<!-- APLICACIÓN -->
 
-    <div class="lista">
+<div id="app">
 
+  <div class="sidebar">
 
-      <div class="titulo">
+    <div class="sidebar-header">
 
-        💬 Panel de Asesores
+      <h2>Chats</h2>
 
-      </div>
+      <div id="usuarioActual"></div>
 
-
-      <div class="subtitulo">
-
-        Conversaciones
-
-      </div>
-
-
-      <div
-        id="listaConversaciones"
+      <button
+        class="btn"
+        onclick="cerrarSesion()"
+        style="margin-top:10px;"
       >
-
-      </div>
-
+        Cerrar sesión
+      </button>
 
     </div>
 
 
-    <!-- =========================
-         CHAT
-    ========================= -->
+    <div class="search">
 
-    <div class="chat">
-
-
-      <div
-        id="sinChat"
-        class="sin-chat"
+      <input
+        type="text"
+        id="busqueda"
+        placeholder="Buscar por DNI, nombre o teléfono..."
+        oninput="filtrarConversaciones()"
       >
-
-        Seleccioná una conversación<br>
-        para comenzar a atender.
-
-      </div>
-
-
-      <div
-        id="chatContenido"
-        style="display:none; flex:1; flex-direction:column;"
-      >
-
-
-        <!-- HEADER -->
-
-        <div class="chat-header">
-
-
-          <div
-            class="chat-header-nombre"
-            id="chatNombre"
-          >
-
-          </div>
-
-
-          <div
-            class="chat-header-datos"
-            id="chatDatos"
-          >
-
-          </div>
-
-
-        </div>
-
-
-        <!-- DATOS -->
-
-        <div
-          class="datos-cliente"
-          id="datosCliente"
-        >
-
-        </div>
-
-
-        <!-- MENSAJES -->
-
-        <div
-          class="mensajes"
-          id="mensajes"
-        >
-
-        </div>
-
-
-        <!-- ENTRADA -->
-
-        <div class="entrada">
-
-
-          <input
-            type="text"
-            id="mensajeInput"
-            placeholder="Escribí una respuesta..."
-            onkeydown="presionarEnter(event)"
-          >
-
-
-          <button
-            onclick="enviarMensaje()"
-          >
-
-            ➤
-
-          </button>
-
-
-        </div>
-
-
-      </div>
-
 
     </div>
 
+
+    <div id="listaConversaciones"></div>
 
   </div>
 
 
-  <!-- =========================
-       FIREBASE
-  ========================= -->
+  <div class="main">
 
-  <script type="module">
-
-
-    import {
-      initializeApp
-    } from
-    "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
-
-
-    import {
-      getDatabase,
-      ref,
-      onValue,
-      push
-    } from
-    "https://www.gstatic.com/firebasejs/12.19.0/firebase-database.js";
+    <div
+      id="chatHeader"
+      class="chat-header"
+    >
+      <div class="empty">
+        Seleccioná una conversación
+      </div>
+    </div>
 
 
-    /* =========================
-       FIREBASE CONFIG
-    ========================= */
+    <div
+      id="mensajes"
+      class="messages"
+    ></div>
 
-    const firebaseConfig = {
 
-      apiKey:
-        "AIzaSyC1sOc1OaBwkzz5DXT3GD_OEcFFrkOua8",
+    <div
+      id="respuesta"
+      class="reply"
+      style="display:none;"
+    >
 
-      authDomain:
-        "estudiomansilla.firebaseapp.com",
+      <textarea
+        id="textoRespuesta"
+        placeholder="Escribí una respuesta..."
+      ></textarea>
 
-      databaseURL:
-        "https://estudiomansilla-default-rtdb.firebaseio.com",
+      <button
+        class="btn"
+        onclick="enviarMensaje()"
+      >
+        Enviar
+      </button>
 
-      projectId:
-        "estudiomansilla",
+    </div>
 
-      storageBucket:
-        "estudiomansilla.firebasestorage.app",
+  </div>
 
-      messagingSenderId:
-        "482010073100",
+</div>
 
-      appId:
-        "1:482010073100:web:d5cb61259de293b1420629",
 
-      measurementId:
-        "G-8710S26Z8L"
+<!-- MODAL FINALIZAR -->
+
+<div
+  id="modalFinalizar"
+  class="modal"
+>
+
+  <div class="modal-box">
+
+    <h3>Finalizar conversación</h3>
+
+    <p>Seleccioná el motivo de finalización:</p>
+
+    <select id="motivoFinalizacion">
+
+      <option value="Alta de acuerdo">
+        Alta de acuerdo
+      </option>
+
+      <option value="Carga de comprobante">
+        Carga de comprobante
+      </option>
+
+      <option value="Servicio al cliente">
+        Servicio al cliente
+      </option>
+
+      <option value="Consulta resuelta">
+        Consulta resuelta
+      </option>
+
+      <option value="Sin acuerdo">
+        Sin acuerdo
+      </option>
+
+      <option value="Cliente no responde">
+        Cliente no responde
+      </option>
+
+      <option value="Derivado">
+        Derivado
+      </option>
+
+      <option value="Otro">
+        Otro
+      </option>
+
+    </select>
+
+    <div class="modal-buttons">
+
+      <button
+        class="btn btn-cancel"
+        onclick="cerrarModal()"
+      >
+        Cancelar
+      </button>
+
+      <button
+        class="btn btn-finish"
+        onclick="confirmarFinalizacion()"
+      >
+        Finalizar
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<script type="module">
+
+import {
+  initializeApp
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+  getDatabase,
+  ref,
+  onValue,
+  push,
+  set,
+  update,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+
+const firebaseConfig = {
+
+  apiKey: "AIzaSyC1sOc1OaBwkzz5DXT3GD_OEcFFrkOua8",
+
+  authDomain: "estudiomansilla.firebaseapp.com",
+
+  databaseURL: "https://estudiomansilla-default-rtdb.firebaseio.com",
+
+  projectId: "estudiomansilla",
+
+  storageBucket: "estudiomansilla.firebasestorage.app",
+
+  messagingSenderId: "482010073100",
+
+  appId: "1:482010073100:web:d5cb61259de293b1420629",
+
+  measurementId: "G-8710S26Z8L"
+
+};
+
+
+const app = initializeApp(firebaseConfig);
+
+const db = getDatabase(app);
+
+const auth = getAuth(app);
+
+
+let conversaciones = {};
+
+let conversacionSeleccionada = null;
+
+let usuarioActual = null;
+
+
+/* PERFILES */
+
+const perfiles = {
+
+  "mavillegas@mansillayasoc.com.ar": {
+    nombre: "Milagros",
+    rol: "supervisor"
+  },
+
+  "rocio.lopez@mansillayasoc.com.ar": {
+    nombre: "Rocio",
+    rol: "senior"
+  },
+
+  "antonela.lopez@mansillayasoc.com.ar": {
+    nombre: "Antonela",
+    rol: "senior"
+  },
+
+  "pilar.solano@mansillayasoc.com.ar": {
+    nombre: "Pilar",
+    rol: "senior"
+  },
+
+  "daniela.cortez@mansillayasoc.com.ar": {
+    nombre: "Daniela",
+    rol: "senior"
+  },
+
+  "paula.lopez@mansillayasoc.com.ar": {
+    nombre: "Paula",
+    rol: "asesor"
+  },
+
+  "ana.rueda@mansillayasoc.com.ar": {
+    nombre: "Ana",
+    rol: "asesor"
+  },
+
+  "ana.paz@mansillayasoc.com.ar": {
+    nombre: "Maria Paz",
+    rol: "asesor"
+  },
+
+  "agustina.baez@mansillayasoc.com.ar": {
+    nombre: "Agustina",
+    rol: "asesor"
+  },
+
+  "pablo.medina@mansillayasoc.com.ar": {
+    nombre: "Pablo",
+    rol: "asesor"
+  },
+
+  "giulina.pancelo@mansillayasoc.com.ar": {
+    nombre: "Giuliana",
+    rol: "asesor"
+  },
+
+  "candela.espeche@mansillayasoc.com.ar": {
+    nombre: "Candela",
+    rol: "asesor"
+  },
+
+  "delfina.sesto@mansillayasoc.com.ar": {
+    nombre: "Delfina",
+    rol: "asesor"
+  },
+
+  "julieta.araoz@mansillayasoc.com.ar": {
+    nombre: "Julieta",
+    rol: "asesor"
+  },
+
+  "moriana.rey@mansillayasoc.com.ar": {
+    nombre: "Moriana",
+    rol: "asesor"
+  },
+
+  "keila.luduena@mansillayasoc.com.ar": {
+    nombre: "Keila",
+    rol: "asesor"
+  },
+
+  "natalia.lopez@mansillayasoc.com.ar": {
+    nombre: "Natalia",
+    rol: "asesor"
+  }
+
+};
+
+
+/* LOGIN */
+
+window.iniciarSesion = async function() {
+
+  const email =
+    document.getElementById("email").value.trim();
+
+  const password =
+    document.getElementById("password").value;
+
+  const error =
+    document.getElementById("loginError");
+
+  error.textContent = "";
+
+  if (!email || !password) {
+
+    error.textContent =
+      "Completá correo y contraseña.";
+
+    return;
+
+  }
+
+  try {
+
+    await signInWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
+
+  } catch (e) {
+
+    console.error(e);
+
+    error.textContent =
+      "Correo o contraseña incorrectos.";
+
+  }
+
+};
+
+
+/* SESIÓN */
+
+onAuthStateChanged(auth, user => {
+
+  if (!user) {
+
+    document.getElementById("login").style.display =
+      "flex";
+
+    document.getElementById("app").style.display =
+      "none";
+
+    return;
+
+  }
+
+
+  const email =
+    (user.email || "").toLowerCase();
+
+
+  usuarioActual =
+    perfiles[email] || {
+
+      nombre: email,
+
+      rol: "asesor"
 
     };
 
 
-    const app =
-      initializeApp(firebaseConfig);
+  document.getElementById("login").style.display =
+    "none";
+
+  document.getElementById("app").style.display =
+    "flex";
 
 
-    const db =
-      getDatabase(app);
+  document.getElementById("usuarioActual").textContent =
+    usuarioActual.nombre +
+    " · " +
+    usuarioActual.rol;
 
 
-    /* =========================
-       VARIABLES
-    ========================= */
+  cargarConversaciones();
 
-    let conversaciones = {};
-
-    let conversacionSeleccionada = null;
-
-    let escuchandoMensajes = null;
+});
 
 
-    /* =========================
-       LEER CONVERSACIONES
-    ========================= */
+/* CERRAR SESIÓN */
 
-    const conversacionesRef =
-      ref(
-        db,
-        "conversaciones"
+window.cerrarSesion = async function() {
+
+  await signOut(auth);
+
+};
+
+
+/* CARGAR CONVERSACIONES */
+
+function cargarConversaciones() {
+
+  const conversacionesRef =
+    ref(db, "conversaciones");
+
+
+  onValue(conversacionesRef, snapshot => {
+
+    conversaciones =
+      snapshot.val() || {};
+
+    renderizarLista();
+
+    if (conversacionSeleccionada) {
+
+      mostrarConversacion(
+        conversacionSeleccionada
       );
 
+    }
 
-    onValue(
-      conversacionesRef,
-      (snapshot) => {
+  });
 
-        const datos =
-          snapshot.val();
+}
 
 
-        conversaciones =
-          datos || {};
+/* FILTRAR */
+
+window.filtrarConversaciones = function() {
+
+  renderizarLista();
+
+};
 
 
-        mostrarLista();
+/* LISTA */
 
-      }
+function renderizarLista() {
+
+  const lista =
+    document.getElementById("listaConversaciones");
+
+  const busqueda =
+    document
+      .getElementById("busqueda")
+      .value
+      .toLowerCase()
+      .trim();
+
+
+  lista.innerHTML = "";
+
+
+  const elementos =
+    Object.entries(conversaciones);
+
+
+  elementos.sort((a,b) => {
+
+    return (
+      (b[1].fechaCreacion || 0) -
+      (a[1].fechaCreacion || 0)
     );
 
-
-    /* =========================
-       MOSTRAR LISTA
-    ========================= */
-
-    function mostrarLista() {
+  });
 
 
-      const lista =
-        document.getElementById(
-          "listaConversaciones"
-        );
+  let encontrados = 0;
 
 
-      lista.innerHTML = "";
+  elementos.forEach(([id, conv]) => {
+
+    const datos =
+      conv.datosCliente || {};
+
+    const nombre =
+      datos.nombre || "Sin nombre";
+
+    const dni =
+      datos.dni || "";
+
+    const telefono =
+      datos.telefono || "";
+
+    const motivo =
+      datos.motivo || "";
 
 
-      const ids =
-        Object.keys(
-          conversaciones
-        );
+    const ultimo =
+      obtenerUltimoMensaje(conv);
 
 
-      if (ids.length === 0) {
+    const textoUltimo =
+      ultimo
+        ? ultimo.texto || ""
+        : "";
 
-        lista.innerHTML =
+
+    const buscable =
+      (
+        nombre + " " +
+        dni + " " +
+        telefono + " " +
+        motivo
+      ).toLowerCase();
+
+
+    if (
+      busqueda &&
+      !buscable.includes(busqueda)
+    ) {
+
+      return;
+
+    }
+
+
+    encontrados++;
+
+
+    const div =
+      document.createElement("div");
+
+    div.className = "conversation";
+
+
+    if (
+      id === conversacionSeleccionada
+    ) {
+
+      div.classList.add("active");
+
+    }
+
+
+    const estado =
+      conv.estado || "pendiente";
+
+
+    const estadoTexto =
+      estado === "finalizada"
+        ? "Finalizada"
+        : estado === "en_atencion"
+        ? "En atención"
+        : "Pendiente";
+
+
+    const tiempo =
+      ultimo
+        ? calcularTiempoUltimoMensaje(
+            ultimo
+          )
+        : "";
+
+
+    const esperando =
+      ultimo &&
+      ultimo.remitente === "cliente" &&
+      estado !== "finalizada";
+
+
+    div.innerHTML = `
+
+      <div class="conversation-name">
+
+        ${escaparHTML(nombre)}
+
+      </div>
+
+      <div>
+
+        DNI: ${escaparHTML(dni)}
+
+      </div>
+
+      <div class="conversation-last">
+
+        ${escaparHTML(textoUltimo)}
+
+      </div>
+
+      <div class="conversation-time">
+
+        ${tiempo}
+
+      </div>
+
+      <span class="status status-${estado.replace(
+        "en_atencion",
+        "atencion"
+      )}">
+
+        ${estadoTexto}
+
+      </span>
+
+      ${
+        esperando
+          ? `<div class="waiting">
+              ⚠ Esperando respuesta
+             </div>`
+          : ""
+      }
+
+    `;
+
+
+    div.onclick = () => {
+
+      mostrarConversacion(id);
+
+    };
+
+
+    lista.appendChild(div);
+
+  });
+
+
+  if (!encontrados) {
+
+    lista.innerHTML =
+      `<div class="empty">
+        No se encontraron conversaciones.
+       </div>`;
+
+  }
+
+}
+
+
+/* MOSTRAR CONVERSACIÓN */
+
+function mostrarConversacion(id) {
+
+  conversacionSeleccionada = id;
+
+
+  const conv =
+    conversaciones[id];
+
+
+  if (!conv) return;
+
+
+  const datos =
+    conv.datosCliente || {};
+
+
+  const header =
+    document.getElementById("chatHeader");
+
+
+  const estado =
+    conv.estado || "pendiente";
+
+
+  header.innerHTML = `
+
+    <h2>
+      ${escaparHTML(
+        datos.nombre || "Cliente"
+      )}
+    </h2>
+
+    <div class="client-data">
+
+      <strong>DNI:</strong>
+      ${escaparHTML(datos.dni || "-")}
+
+      &nbsp; | &nbsp;
+
+      <strong>Teléfono:</strong>
+      ${escaparHTML(datos.telefono || "-")}
+
+      <br>
+
+      <strong>Motivo:</strong>
+      ${escaparHTML(datos.motivo || "-")}
+
+      <br>
+
+      <strong>Estado:</strong>
+      ${estado}
+
+    </div>
+
+    <div class="actions">
+
+      ${
+        estado !== "finalizada"
+          ? `
+            <button
+              class="btn btn-take"
+              onclick="tomarConversacion()"
+            >
+              Tomar conversación
+            </button>
+
+            <button
+              class="btn btn-finish"
+              onclick="abrirModalFinalizar()"
+            >
+              Finalizar conversación
+            </button>
           `
-          <div style="
-            padding:20px;
-            color:#777;
-            font-size:13px;
-          ">
-            No hay conversaciones todavía.
-          </div>
-          `;
-
-        return;
-
-      }
-
-
-      /* MÁS NUEVAS PRIMERO */
-
-      ids.sort(
-        (a, b) => {
-
-          const fechaA =
-            conversaciones[a]
-              .fechaCreacion || 0;
-
-          const fechaB =
-            conversaciones[b]
-              .fechaCreacion || 0;
-
-          return fechaB - fechaA;
-
-        }
-      );
-
-
-      ids.forEach(
-        (id) => {
-
-
-          const conversacion =
-            conversaciones[id];
-
-
-          const datosCliente =
-            conversacion.datosCliente;
-
-
-          if (!datosCliente) {
-
-            return;
-
-          }
-
-
-          const nombre =
-            datosCliente.nombre ||
-            "Cliente sin nombre";
-
-
-          const motivo =
-            datosCliente.motivo ||
-            "Sin motivo";
-
-
-          const estado =
-            conversacion.estado ||
-            "pendiente";
-
-
-          let ultimoMensaje =
-            "Sin mensajes";
-
-
-          const mensajes =
-            conversacion.mensajes;
-
-
-          if (mensajes) {
-
-            const mensajesArray =
-              Object.values(
-                mensajes
-              );
-
-
-            mensajesArray.sort(
-              (a, b) =>
-                (a.fecha || 0) -
-                (b.fecha || 0)
-            );
-
-
-            if (
-              mensajesArray.length > 0
-            ) {
-
-              ultimoMensaje =
-                mensajesArray[
-                  mensajesArray.length - 1
-                ].texto || "";
-
-            }
-
-          }
-
-
-          const div =
-            document.createElement(
-              "div"
-            );
-
-
-          div.classList.add(
-            "conversacion"
-          );
-
-
-          if (
-            id ===
-            conversacionSeleccionada
-          ) {
-
-            div.classList.add(
-              "activa"
-            );
-
-          }
-
-
-          div.innerHTML = `
-
-            <div class="cliente-nombre">
-
-              ${escaparHTML(nombre)}
-
-            </div>
-
-            <div class="cliente-motivo">
-
-              ${escaparHTML(motivo)}
-
-            </div>
-
-            <div class="ultimo-mensaje">
-
-              ${escaparHTML(ultimoMensaje)}
-
-            </div>
-
-            <span class="estado-chat">
-
-              ${escaparHTML(estado)}
-
+          : `
+            <span>
+              Esta conversación está finalizada.
             </span>
-
-          `;
-
-
-          div.onclick =
-            function() {
-
-              seleccionarConversacion(
-                id
-              );
-
-            };
-
-
-          lista.appendChild(
-            div
-          );
-
-        }
-      );
-
-    }
-
-
-    /* =========================
-       SELECCIONAR CHAT
-    ========================= */
-
-    window.seleccionarConversacion =
-      function(id) {
-
-
-        conversacionSeleccionada =
-          id;
-
-
-        const conversacion =
-          conversaciones[id];
-
-
-        if (!conversacion) {
-
-          return;
-
-        }
-
-
-        const datosCliente =
-          conversacion.datosCliente ||
-          {};
-
-
-        document.getElementById(
-          "sinChat"
-        ).style.display =
-          "none";
-
-
-        document.getElementById(
-          "chatContenido"
-        ).style.display =
-          "flex";
-
-
-        document.getElementById(
-          "chatNombre"
-        ).textContent =
-          datosCliente.nombre ||
-          "Cliente";
-
-
-        document.getElementById(
-          "chatDatos"
-        ).textContent =
-          "Motivo: " +
-          (
-            datosCliente.motivo ||
-            "Sin motivo"
-          );
-
-
-        document.getElementById(
-          "datosCliente"
-        ).innerHTML = `
-
-          <strong>DNI:</strong>
-          ${escaparHTML(
-            datosCliente.dni || "-"
-          )}
-
-          &nbsp;&nbsp;|&nbsp;&nbsp;
-
-          <strong>Teléfono:</strong>
-          ${escaparHTML(
-            datosCliente.telefono || "-"
-          )}
-
-          &nbsp;&nbsp;|&nbsp;&nbsp;
-
-          <strong>Motivo:</strong>
-          ${escaparHTML(
-            datosCliente.motivo || "-"
-          )}
-
-        `;
-
-
-        cargarMensajes(
-          id
-        );
-
-
-        mostrarLista();
-
-
-        document.getElementById(
-          "mensajeInput"
-        ).focus();
-
-      };
-
-
-    /* =========================
-       CARGAR MENSAJES
-    ========================= */
-
-    function cargarMensajes(
-      id
-    ) {
-
-
-      const contenedor =
-        document.getElementById(
-          "mensajes"
-        );
-
-
-      contenedor.innerHTML =
-        "";
-
-
-      if (
-        escuchandoMensajes
-      ) {
-
-        escuchandoMensajes();
-
+          `
       }
 
+    </div>
 
-      const mensajesRef =
-        ref(
-          db,
-          "conversaciones/" +
-          id +
-          "/mensajes"
-        );
+  `;
 
 
-      escuchandoMensajes =
-        onValue(
-          mensajesRef,
-          (snapshot) => {
+  mostrarMensajes(conv);
 
 
-            contenedor.innerHTML =
-              "";
+  document.getElementById("respuesta").style.display =
+    estado === "finalizada"
+      ? "none"
+      : "block";
 
 
-            const mensajes =
-              snapshot.val();
+  renderizarLista();
+
+}
 
 
-            if (!mensajes) {
+/* MENSAJES */
 
-              return;
+function mostrarMensajes(conv) {
 
-            }
-
-
-            const lista =
-              Object.values(
-                mensajes
-              );
+  const contenedor =
+    document.getElementById("mensajes");
 
 
-            lista.sort(
-              (a, b) =>
-                (a.fecha || 0) -
-                (b.fecha || 0)
-            );
+  contenedor.innerHTML = "";
 
 
-            lista.forEach(
-              (mensaje) => {
-
-                mostrarMensaje(
-                  mensaje
-                );
-
-              }
-            );
+  const mensajes =
+    conv.mensajes || {};
 
 
-            contenedor.scrollTop =
-              contenedor.scrollHeight;
-
-          }
-        );
-
-    }
-
-
-    /* =========================
-       MOSTRAR MENSAJE
-    ========================= */
-
-    function mostrarMensaje(
-      mensaje
-    ) {
-
-
-      const contenedor =
-        document.getElementById(
-          "mensajes"
-        );
-
+  Object.entries(mensajes).forEach(
+    ([id, mensaje]) => {
 
       const div =
-        document.createElement(
-          "div"
+        document.createElement("div");
+
+
+      div.className =
+        "message " +
+        (
+          mensaje.remitente === "cliente"
+            ? "client"
+            : "advisor"
         );
-
-
-      div.classList.add(
-        "mensaje"
-      );
-
-
-      if (
-        mensaje.remitente ===
-        "asesor"
-      ) {
-
-        div.classList.add(
-          "asesor-mensaje"
-        );
-
-      } else {
-
-        div.classList.add(
-          "cliente-mensaje"
-        );
-
-      }
-
-
-      const texto =
-        document.createElement(
-          "div"
-        );
-
-
-      texto.textContent =
-        mensaje.texto || "";
-
-
-      div.appendChild(
-        texto
-      );
-
-
-      if (
-        mensaje.fecha
-      ) {
-
-        const hora =
-          document.createElement(
-            "div"
-          );
-
-
-        hora.classList.add(
-          "hora"
-        );
-
-
-        hora.textContent =
-          formatearFecha(
-            mensaje.fecha
-          );
-
-
-        div.appendChild(
-          hora
-        );
-
-      }
-
-
-      contenedor.appendChild(
-        div
-      );
-
-    }
-
-
-    /* =========================
-       ENVIAR MENSAJE
-    ========================= */
-
-    window.enviarMensaje =
-      function() {
-
-
-        if (
-          !conversacionSeleccionada
-        ) {
-
-          return;
-
-        }
-
-
-        const input =
-          document.getElementById(
-            "mensajeInput"
-          );
-
-
-        const texto =
-          input.value.trim();
-
-
-        if (
-          texto === ""
-        ) {
-
-          return;
-
-        }
-
-
-        const mensajesRef =
-          ref(
-            db,
-            "conversaciones/" +
-            conversacionSeleccionada +
-            "/mensajes"
-          );
-
-
-        push(
-          mensajesRef,
-          {
-
-            texto:
-              texto,
-
-            remitente:
-              "asesor",
-
-            fecha:
-              Date.now()
-
-          }
-        );
-
-
-        input.value =
-          "";
-
-
-        input.focus();
-
-      };
-
-
-    /* =========================
-       ENTER
-    ========================= */
-
-    window.presionarEnter =
-      function(event) {
-
-
-        if (
-          event.key ===
-          "Enter"
-        ) {
-
-          enviarMensaje();
-
-        }
-
-      };
-
-
-    /* =========================
-       FECHA
-    ========================= */
-
-    function formatearFecha(
-      timestamp
-    ) {
 
 
       const fecha =
-        new Date(
-          timestamp
-        );
+        mensaje.fecha
+          ? new Date(
+              mensaje.fecha
+            ).toLocaleString("es-AR")
+          : "";
 
 
-      return fecha.toLocaleTimeString(
-        "es-AR",
-        {
-          hour: "2-digit",
-          minute: "2-digit"
-        }
-      );
+      div.innerHTML = `
 
-    }
+        <div>
+          ${escaparHTML(
+            mensaje.texto || ""
+          )}
+        </div>
 
+        <div class="message-meta">
 
-    /* =========================
-       SEGURIDAD HTML
-    ========================= */
+          ${
+            mensaje.remitente === "cliente"
+              ? "Cliente"
+              : escaparHTML(
+                  mensaje.asesorNombre ||
+                  "Asesor"
+                )
+          }
 
-    function escaparHTML(
-      texto
-    ) {
+          ${fecha ? " · " + fecha : ""}
 
+        </div>
 
-      const div =
-        document.createElement(
-          "div"
-        );
-
-
-      div.textContent =
-        texto;
+      `;
 
 
-      return div.innerHTML;
+      contenedor.appendChild(div);
 
     }
+  );
 
-  </script>
+
+  contenedor.scrollTop =
+    contenedor.scrollHeight;
+
+}
+
+
+/* ENVIAR */
+
+window.enviarMensaje = async function() {
+
+  if (!conversacionSeleccionada) return;
+
+
+  const texto =
+    document
+      .getElementById("textoRespuesta")
+      .value
+      .trim();
+
+
+  if (!texto) return;
+
+
+  const mensajesRef =
+    ref(
+      db,
+      "conversaciones/" +
+      conversacionSeleccionada +
+      "/mensajes"
+    );
+
+
+  const nuevoMensaje =
+    push(mensajesRef);
+
+
+  await set(
+    nuevoMensaje,
+    {
+
+      texto: texto,
+
+      remitente: "asesor",
+
+      asesorNombre:
+        usuarioActual.nombre,
+
+      asesorEmail:
+        auth.currentUser.email,
+
+      fecha: Date.now()
+
+    }
+  );
+
+
+  await update(
+    ref(
+      db,
+      "conversaciones/" +
+      conversacionSeleccionada
+    ),
+    {
+
+      estado: "en_atencion",
+
+      asesorAsignado:
+        usuarioActual.nombre,
+
+      asesorEmail:
+        auth.currentUser.email
+
+    }
+  );
+
+
+  document
+    .getElementById("textoRespuesta")
+    .value = "";
+
+};
+
+
+/* TOMAR */
+
+window.tomarConversacion = async function() {
+
+  if (!conversacionSeleccionada) return;
+
+
+  await update(
+    ref(
+      db,
+      "conversaciones/" +
+      conversacionSeleccionada
+    ),
+    {
+
+      estado: "en_atencion",
+
+      asesorAsignado:
+        usuarioActual.nombre,
+
+      asesorEmail:
+        auth.currentUser.email
+
+    }
+  );
+
+};
+
+
+/* FINALIZAR */
+
+window.abrirModalFinalizar = function() {
+
+  document
+    .getElementById("modalFinalizar")
+    .style.display = "flex";
+
+};
+
+
+window.cerrarModal = function() {
+
+  document
+    .getElementById("modalFinalizar")
+    .style.display = "none";
+
+};
+
+
+window.confirmarFinalizacion = async function() {
+
+  if (!conversacionSeleccionada) return;
+
+
+  const motivo =
+    document
+      .getElementById("motivoFinalizacion")
+      .value;
+
+
+  await update(
+    ref(
+      db,
+      "conversaciones/" +
+      conversacionSeleccionada
+    ),
+    {
+
+      estado: "finalizada",
+
+      motivoFinalizacion:
+        motivo,
+
+      fechaFinalizacion:
+        Date.now(),
+
+      finalizadoPor:
+        usuarioActual.nombre,
+
+      finalizadoPorEmail:
+        auth.currentUser.email
+
+    }
+  );
+
+
+  cerrarModal();
+
+};
+
+
+/* ÚLTIMO MENSAJE */
+
+function obtenerUltimoMensaje(conv) {
+
+  const mensajes =
+    conv.mensajes || {};
+
+
+  const lista =
+    Object.values(mensajes);
+
+
+  if (!lista.length) return null;
+
+
+  return lista.sort(
+    (a,b) =>
+      (b.fecha || 0) -
+      (a.fecha || 0)
+  )[0];
+
+}
+
+
+/* TIEMPO */
+
+function calcularTiempoUltimoMensaje(
+  mensaje
+) {
+
+  if (!mensaje.fecha) return "";
+
+
+  const diferencia =
+    Date.now() - mensaje.fecha;
+
+
+  const minutos =
+    Math.floor(
+      diferencia / 60000
+    );
+
+
+  if (minutos < 1) {
+
+    return "Hace menos de 1 min";
+
+  }
+
+
+  if (minutos < 60) {
+
+    return "Hace " +
+      minutos +
+      " min";
+
+  }
+
+
+  const horas =
+    Math.floor(minutos / 60);
+
+
+  if (horas < 24) {
+
+    return "Hace " +
+      horas +
+      " h " +
+      (minutos % 60) +
+      " min";
+
+  }
+
+
+  const dias =
+    Math.floor(horas / 24);
+
+
+  return "Hace " +
+    dias +
+    " día(s)";
+
+}
+
+
+/* HTML SEGURO */
+
+function escaparHTML(texto) {
+
+  return String(texto)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+
+}
+
+</script>
 
 </body>
-
 </html>
