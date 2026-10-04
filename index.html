@@ -3,97 +3,422 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>Centro de Atención - Estudio Mansilla</title>
 
   <style>
     * {
       box-sizing: border-box;
     }
-    
+
     body {
       margin: 0;
       font-family: Arial, sans-serif;
       background: #f4f4f4;
+      min-height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
-      min-height: 100vh;
     }
 
-    .card {
+    .container {
+      width: 95%;
+      max-width: 500px;
       background: white;
-      width: 90%;
-      max-width: 450px;
-      padding: 40px 30px;
       border-radius: 18px;
       box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+      overflow: hidden;
+    }
+
+    .header {
+      background: #222;
+      color: white;
+      padding: 20px;
       text-align: center;
     }
 
-    .icon {
-      font-size: 50px;
-      margin-bottom: 15px;
+    .header h1 {
+      margin: 0;
+      font-size: 22px;
     }
 
-    h1 {
-      margin: 0 0 15px;
-      color: #222;
+    .header p {
+      margin: 6px 0 0;
+      font-size: 13px;
+      opacity: 0.8;
     }
 
-    p {
+    .inicio {
+      padding: 30px 25px;
+      text-align: center;
+    }
+
+    .inicio h2 {
+      margin-top: 0;
+    }
+
+    .inicio p {
       color: #666;
       line-height: 1.5;
     }
 
-    button {
-      margin-top: 20px;
+    .boton {
       width: 100%;
       padding: 15px;
+      margin-top: 12px;
       border: none;
       border-radius: 10px;
       background: #222;
       color: white;
-      font-size: 16px;
+      font-size: 15px;
       cursor: pointer;
     }
 
-    button:hover {
+    .boton:hover {
       opacity: 0.85;
     }
 
-    .status {
-      margin-top: 20px;
+    .chat {
+      display: none;
+      height: 600px;
+      flex-direction: column;
+    }
+
+    .chat-header {
+      background: #222;
+      color: white;
+      padding: 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .volver {
+      background: transparent;
+      border: none;
+      color: white;
+      font-size: 20px;
+      cursor: pointer;
+    }
+
+    .estado {
+      font-size: 12px;
+      color: #8cff8c;
+    }
+
+    .mensajes {
+      flex: 1;
+      padding: 15px;
+      overflow-y: auto;
+      background: #f7f7f7;
+    }
+
+    .mensaje {
+      max-width: 80%;
+      padding: 10px 13px;
+      margin-bottom: 10px;
+      border-radius: 12px;
+      line-height: 1.4;
       font-size: 14px;
-      color: #777;
+      word-wrap: break-word;
+    }
+
+    .cliente {
+      background: #222;
+      color: white;
+      margin-left: auto;
+      border-bottom-right-radius: 3px;
+    }
+
+    .asesor {
+      background: white;
+      color: #333;
+      margin-right: auto;
+      border: 1px solid #ddd;
+      border-bottom-left-radius: 3px;
+    }
+
+    .entrada {
+      display: flex;
+      padding: 10px;
+      background: white;
+      border-top: 1px solid #ddd;
+      gap: 8px;
+    }
+
+    .entrada input {
+      flex: 1;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      outline: none;
+    }
+
+    .enviar {
+      width: 50px;
+      border: none;
+      border-radius: 10px;
+      background: #222;
+      color: white;
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    .nombre {
+      font-size: 14px;
+    }
+
+    @media (max-width: 500px) {
+      .container {
+        width: 100%;
+        min-height: 100vh;
+        border-radius: 0;
+      }
+
+      .chat {
+        height: 100vh;
+      }
     }
   </style>
 </head>
 
 <body>
 
-  <div class="card">
-    <div class="icon">💬</div>
+  <div class="container">
 
-    <h1>Centro de Atención</h1>
+    <!-- INICIO -->
+    <div class="inicio" id="inicio">
 
-    <p>
-      Hola 👋<br>
-      Estamos para ayudarte.
-    </p>
+      <div style="font-size:50px;">💬</div>
 
-    <button onclick="iniciarChat()">
-      Hablar con un asesor
-    </button>
+      <h2>Centro de Atención</h2>
 
-    <div class="status">
-      Atención online
+      <p>
+        Hola 👋<br>
+        Estamos para ayudarte.
+      </p>
+
+      <button class="boton" onclick="abrirChat()">
+        👤 Hablar con un asesor
+      </button>
+
     </div>
+
+
+    <!-- CHAT -->
+    <div class="chat" id="chat">
+
+      <div class="chat-header">
+
+        <button class="volver" onclick="volverInicio()">
+          ←
+        </button>
+
+        <div>
+          <div class="nombre">
+            Asesor de Estudio Mansilla
+          </div>
+
+          <div class="estado">
+            ● En línea
+          </div>
+        </div>
+
+      </div>
+
+
+      <div class="mensajes" id="mensajes">
+      </div>
+
+
+      <div class="entrada">
+
+        <input
+          type="text"
+          id="mensajeInput"
+          placeholder="Escribí tu mensaje..."
+          onkeydown="presionarEnter(event)"
+        >
+
+        <button
+          class="enviar"
+          onclick="enviarMensaje()"
+        >
+          ➤
+        </button>
+
+      </div>
+
+    </div>
+
   </div>
 
-  <script>
-    function iniciarChat() {
-      alert("Próximamente podrás hablar con un asesor.");
+
+  <!-- FIREBASE -->
+
+  <script type="module">
+
+    import {
+      initializeApp
+    } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+
+    import {
+      getDatabase,
+      ref,
+      push,
+      onChildAdded
+    } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-database.js";
+
+
+    const firebaseConfig = {
+
+      apiKey: "AIzaSyC1sOc1O1aBwkzz5DXT3GD_OEcFFrkOua8",
+
+      authDomain: "estudiomansilla.firebaseapp.com",
+
+      databaseURL: "https://estudiomansilla-default-rtdb.firebaseio.com",
+
+      projectId: "estudiomansilla",
+
+      storageBucket: "estudiomansilla.firebasestorage.app",
+
+      messagingSenderId: "482010073100",
+
+      appId: "1:482010073100:web:d5cb61259de293b1420629",
+
+      measurementId: "G-8710S26Z8L"
+
+    };
+
+
+    const app = initializeApp(firebaseConfig);
+
+    const db = getDatabase(app);
+
+
+    /*
+      Creamos una conversación temporal para esta primera versión.
+    */
+
+    const conversacionId = "conversacion_prueba";
+
+    const mensajesRef = ref(
+      db,
+      "conversaciones/" + conversacionId + "/mensajes"
+    );
+
+
+    /*
+      Mostrar mensajes nuevos automáticamente.
+    */
+
+    onChildAdded(mensajesRef, (snapshot) => {
+
+      const mensaje = snapshot.val();
+
+      mostrarMensaje(
+        mensaje.texto,
+        mensaje.remitente
+      );
+
+    });
+
+
+    window.abrirChat = function() {
+
+      document.getElementById("inicio").style.display = "none";
+
+      document.getElementById("chat").style.display = "flex";
+
+      document.getElementById("mensajeInput").focus();
+
+    };
+
+
+    window.volverInicio = function() {
+
+      document.getElementById("chat").style.display = "none";
+
+      document.getElementById("inicio").style.display = "block";
+
+    };
+
+
+    window.enviarMensaje = function() {
+
+      const input = document.getElementById("mensajeInput");
+
+      const texto = input.value.trim();
+
+      if (texto === "") {
+        return;
+      }
+
+
+      push(mensajesRef, {
+
+        texto: texto,
+
+        remitente: "cliente",
+
+        fecha: Date.now()
+
+      });
+
+
+      input.value = "";
+
+      input.focus();
+
+    };
+
+
+    window.presionarEnter = function(event) {
+
+      if (event.key === "Enter") {
+
+        enviarMensaje();
+
+      }
+
+    };
+
+
+    function mostrarMensaje(texto, remitente) {
+
+      const contenedor =
+        document.getElementById("mensajes");
+
+
+      const div =
+        document.createElement("div");
+
+
+      div.classList.add("mensaje");
+
+
+      if (remitente === "cliente") {
+
+        div.classList.add("cliente");
+
+      } else {
+
+        div.classList.add("asesor");
+
+      }
+
+
+      div.textContent = texto;
+
+
+      contenedor.appendChild(div);
+
+
+      contenedor.scrollTop =
+        contenedor.scrollHeight;
+
     }
+
   </script>
 
 </body>
