@@ -50,22 +50,44 @@
 
     .inicio {
       padding: 30px 25px;
-      text-align: center;
     }
 
     .inicio h2 {
+      text-align: center;
       margin-top: 0;
     }
 
     .inicio p {
       color: #666;
       line-height: 1.5;
+      text-align: center;
+    }
+
+    .campo {
+      margin-top: 15px;
+    }
+
+    .campo label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    .campo input,
+    .campo select {
+      width: 100%;
+      padding: 13px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      font-size: 14px;
+      outline: none;
     }
 
     .boton {
       width: 100%;
       padding: 15px;
-      margin-top: 12px;
+      margin-top: 20px;
       border: none;
       border-radius: 10px;
       background: #222;
@@ -76,6 +98,16 @@
 
     .boton:hover {
       opacity: 0.85;
+    }
+
+    .error {
+      display: none;
+      margin-top: 12px;
+      padding: 10px;
+      background: #ffe5e5;
+      color: #b00000;
+      border-radius: 8px;
+      font-size: 13px;
     }
 
     .chat {
@@ -164,7 +196,7 @@
       cursor: pointer;
     }
 
-    .nombre {
+    .nombre-cliente {
       font-size: 14px;
     }
 
@@ -186,48 +218,142 @@
 
   <div class="container">
 
-    <!-- INICIO -->
+    <!-- FORMULARIO -->
+
     <div class="inicio" id="inicio">
 
-      <div style="font-size:50px;">💬</div>
+      <div style="font-size:50px; text-align:center;">
+        💬
+      </div>
 
       <h2>Centro de Atención</h2>
 
       <p>
         Hola 👋<br>
-        Estamos para ayudarte.
+        Para comenzar, completá tus datos.
       </p>
 
-      <button class="boton" onclick="abrirChat()">
-        👤 Hablar con un asesor
+
+      <div class="campo">
+
+        <label>
+          Nombre y apellido
+        </label>
+
+        <input
+          type="text"
+          id="nombre"
+          placeholder="Ej.: Juan Pérez"
+        >
+
+      </div>
+
+
+      <div class="campo">
+
+        <label>
+          Teléfono
+        </label>
+
+        <input
+          type="tel"
+          id="telefono"
+          placeholder="Ej.: 351 1234567"
+        >
+
+      </div>
+
+
+      <div class="campo">
+
+        <label>
+          Motivo de consulta
+        </label>
+
+        <select id="motivo">
+
+          <option value="">
+            Seleccioná una opción
+          </option>
+
+          <option value="Consulta por deuda">
+            Consulta por deuda
+          </option>
+
+          <option value="Pago">
+            Pago
+          </option>
+
+          <option value="Acuerdo de pago">
+            Acuerdo de pago
+          </option>
+
+          <option value="Consulta general">
+            Consulta general
+          </option>
+
+          <option value="Otro">
+            Otro
+          </option>
+
+        </select>
+
+      </div>
+
+
+      <div
+        class="error"
+        id="error"
+      >
+        Completá todos los campos para continuar.
+      </div>
+
+
+      <button
+        class="boton"
+        onclick="comenzarChat()"
+      >
+        👤 Comenzar chat
       </button>
 
     </div>
 
 
     <!-- CHAT -->
-    <div class="chat" id="chat">
+
+    <div
+      class="chat"
+      id="chat"
+    >
 
       <div class="chat-header">
 
-        <button class="volver" onclick="volverInicio()">
+        <button
+          class="volver"
+          onclick="volverInicio()"
+        >
           ←
         </button>
 
         <div>
-          <div class="nombre">
+
+          <div class="nombre-cliente">
             Asesor de Estudio Mansilla
           </div>
 
           <div class="estado">
             ● En línea
           </div>
+
         </div>
 
       </div>
 
 
-      <div class="mensajes" id="mensajes">
+      <div
+        class="mensajes"
+        id="mensajes"
+      >
       </div>
 
 
@@ -272,7 +398,7 @@
 
     const firebaseConfig = {
 
-      apiKey: "AIzaSyC1sOc1O1aBwkzz5DXT3GD_OEcFFrkOua8",
+      apiKey: "AIzaSyC1sOc1OaBwkzz5DXT3GD_OEcFFrkOua8",
 
       authDomain: "estudiomansilla.firebaseapp.com",
 
@@ -291,127 +417,229 @@
     };
 
 
-    const app = initializeApp(firebaseConfig);
+    const app =
+      initializeApp(firebaseConfig);
 
-    const db = getDatabase(app);
+    const db =
+      getDatabase(app);
 
 
-    /*
-      Creamos una conversación temporal para esta primera versión.
-    */
+    const conversacionId =
+      "conversacion_prueba";
 
-    const conversacionId = "conversacion_prueba";
 
-    const mensajesRef = ref(
-      db,
-      "conversaciones/" + conversacionId + "/mensajes"
+    const mensajesRef =
+      ref(
+        db,
+        "conversaciones/" +
+        conversacionId +
+        "/mensajes"
+      );
+
+
+    onChildAdded(
+      mensajesRef,
+      (snapshot) => {
+
+        const mensaje =
+          snapshot.val();
+
+        mostrarMensaje(
+          mensaje.texto,
+          mensaje.remitente
+        );
+
+      }
     );
 
 
-    /*
-      Mostrar mensajes nuevos automáticamente.
-    */
+    window.comenzarChat =
+      function() {
 
-    onChildAdded(mensajesRef, (snapshot) => {
+        const nombre =
+          document.getElementById(
+            "nombre"
+          ).value.trim();
 
-      const mensaje = snapshot.val();
+        const telefono =
+          document.getElementById(
+            "telefono"
+          ).value.trim();
 
-      mostrarMensaje(
-        mensaje.texto,
-        mensaje.remitente
-      );
+        const motivo =
+          document.getElementById(
+            "motivo"
+          ).value;
 
-    });
-
-
-    window.abrirChat = function() {
-
-      document.getElementById("inicio").style.display = "none";
-
-      document.getElementById("chat").style.display = "flex";
-
-      document.getElementById("mensajeInput").focus();
-
-    };
+        const error =
+          document.getElementById(
+            "error"
+          );
 
 
-    window.volverInicio = function() {
+        if (
+          nombre === "" ||
+          telefono === "" ||
+          motivo === ""
+        ) {
 
-      document.getElementById("chat").style.display = "none";
+          error.style.display =
+            "block";
 
-      document.getElementById("inicio").style.display = "block";
+          return;
 
-    };
-
-
-    window.enviarMensaje = function() {
-
-      const input = document.getElementById("mensajeInput");
-
-      const texto = input.value.trim();
-
-      if (texto === "") {
-        return;
-      }
+        }
 
 
-      push(mensajesRef, {
-
-        texto: texto,
-
-        remitente: "cliente",
-
-        fecha: Date.now()
-
-      });
+        error.style.display =
+          "none";
 
 
-      input.value = "";
-
-      input.focus();
-
-    };
-
-
-    window.presionarEnter = function(event) {
-
-      if (event.key === "Enter") {
-
-        enviarMensaje();
-
-      }
-
-    };
+        push(
+          ref(
+            db,
+            "conversaciones/" +
+            conversacionId +
+            "/datosCliente"
+          ),
+          {
+            nombre: nombre,
+            telefono: telefono,
+            motivo: motivo,
+            fecha: Date.now()
+          }
+        );
 
 
-    function mostrarMensaje(texto, remitente) {
+        document.getElementById(
+          "inicio"
+        ).style.display = "none";
+
+
+        document.getElementById(
+          "chat"
+        ).style.display = "flex";
+
+
+        document.getElementById(
+          "mensajeInput"
+        ).focus();
+
+      };
+
+
+    window.volverInicio =
+      function() {
+
+        document.getElementById(
+          "chat"
+        ).style.display = "none";
+
+        document.getElementById(
+          "inicio"
+        ).style.display = "block";
+
+      };
+
+
+    window.enviarMensaje =
+      function() {
+
+        const input =
+          document.getElementById(
+            "mensajeInput"
+          );
+
+        const texto =
+          input.value.trim();
+
+
+        if (texto === "") {
+          return;
+        }
+
+
+        push(
+          mensajesRef,
+          {
+
+            texto: texto,
+
+            remitente: "cliente",
+
+            fecha: Date.now()
+
+          }
+        );
+
+
+        input.value = "";
+
+        input.focus();
+
+      };
+
+
+    window.presionarEnter =
+      function(event) {
+
+        if (
+          event.key === "Enter"
+        ) {
+
+          enviarMensaje();
+
+        }
+
+      };
+
+
+    function mostrarMensaje(
+      texto,
+      remitente
+    ) {
 
       const contenedor =
-        document.getElementById("mensajes");
+        document.getElementById(
+          "mensajes"
+        );
 
 
       const div =
-        document.createElement("div");
+        document.createElement(
+          "div"
+        );
 
 
-      div.classList.add("mensaje");
+      div.classList.add(
+        "mensaje"
+      );
 
 
-      if (remitente === "cliente") {
+      if (
+        remitente === "cliente"
+      ) {
 
-        div.classList.add("cliente");
+        div.classList.add(
+          "cliente"
+        );
 
       } else {
 
-        div.classList.add("asesor");
+        div.classList.add(
+          "asesor"
+        );
 
       }
 
 
-      div.textContent = texto;
+      div.textContent =
+        texto;
 
 
-      contenedor.appendChild(div);
+      contenedor.appendChild(
+        div
+      );
 
 
       contenedor.scrollTop =
