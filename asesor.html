@@ -17,8 +17,6 @@
       color: #222;
     }
 
-    /* LOGIN */
-
     #login {
       min-height: 100vh;
       display: flex;
@@ -75,18 +73,13 @@
       color: white;
     }
 
-    .btn-primary:hover {
-      opacity: .9;
-    }
-
     #loginError {
       color: #c62828;
       margin-top: 12px;
       text-align: center;
       font-size: 14px;
+      word-break: break-word;
     }
-
-    /* PANEL */
 
     #app {
       display: none;
@@ -192,12 +185,6 @@
       color: #c62828;
       font-weight: bold;
     }
-
-    .answered {
-      color: #2e7d32;
-    }
-
-    /* CHAT */
 
     .main {
       flex: 1;
@@ -350,8 +337,6 @@
 
 <body>
 
-<!-- LOGIN -->
-
 <div id="login">
 
   <div class="login-box">
@@ -386,8 +371,6 @@
 </div>
 
 
-<!-- APLICACIÓN -->
-
 <div id="app">
 
   <div class="sidebar">
@@ -408,7 +391,6 @@
 
     </div>
 
-
     <div class="search">
 
       <input
@@ -420,7 +402,6 @@
 
     </div>
 
-
     <div id="listaConversaciones"></div>
 
   </div>
@@ -428,21 +409,15 @@
 
   <div class="main">
 
-    <div
-      id="chatHeader"
-      class="chat-header"
-    >
+    <div id="chatHeader" class="chat-header">
+
       <div class="empty">
         Seleccioná una conversación
       </div>
+
     </div>
 
-
-    <div
-      id="mensajes"
-      class="messages"
-    ></div>
-
+    <div id="mensajes" class="messages"></div>
 
     <div
       id="respuesta"
@@ -469,12 +444,7 @@
 </div>
 
 
-<!-- MODAL FINALIZAR -->
-
-<div
-  id="modalFinalizar"
-  class="modal"
->
+<div id="modalFinalizar" class="modal">
 
   <div class="modal-box">
 
@@ -484,9 +454,7 @@
 
     <select id="motivoFinalizacion">
 
-      <option value="Alta de acuerdo">
-        Alta de acuerdo
-      </option>
+      <option value="Alta de acuerdo">Alta de acuerdo</option>
 
       <option value="Carga de comprobante">
         Carga de comprobante
@@ -553,8 +521,7 @@ import {
   onValue,
   push,
   set,
-  update,
-  serverTimestamp
+  update
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 import {
@@ -599,8 +566,6 @@ let conversacionSeleccionada = null;
 
 let usuarioActual = null;
 
-
-/* PERFILES */
 
 const perfiles = {
 
@@ -692,8 +657,6 @@ const perfiles = {
 };
 
 
-/* LOGIN */
-
 window.iniciarSesion = async function() {
 
   const email =
@@ -726,17 +689,15 @@ window.iniciarSesion = async function() {
 
   } catch (e) {
 
-    console.error(e);
+    console.error("ERROR FIREBASE:", e);
 
     error.textContent =
-      "Correo o contraseña incorrectos.";
+      "Error: " + e.code + " — " + e.message;
 
   }
 
 };
 
-
-/* SESIÓN */
 
 onAuthStateChanged(auth, user => {
 
@@ -752,10 +713,8 @@ onAuthStateChanged(auth, user => {
 
   }
 
-
   const email =
     (user.email || "").toLowerCase();
-
 
   usuarioActual =
     perfiles[email] || {
@@ -766,26 +725,21 @@ onAuthStateChanged(auth, user => {
 
     };
 
-
   document.getElementById("login").style.display =
     "none";
 
   document.getElementById("app").style.display =
     "flex";
 
-
   document.getElementById("usuarioActual").textContent =
     usuarioActual.nombre +
     " · " +
     usuarioActual.rol;
 
-
   cargarConversaciones();
 
 });
 
-
-/* CERRAR SESIÓN */
 
 window.cerrarSesion = async function() {
 
@@ -794,13 +748,10 @@ window.cerrarSesion = async function() {
 };
 
 
-/* CARGAR CONVERSACIONES */
-
 function cargarConversaciones() {
 
   const conversacionesRef =
     ref(db, "conversaciones");
-
 
   onValue(conversacionesRef, snapshot => {
 
@@ -822,16 +773,12 @@ function cargarConversaciones() {
 }
 
 
-/* FILTRAR */
-
 window.filtrarConversaciones = function() {
 
   renderizarLista();
 
 };
 
-
-/* LISTA */
 
 function renderizarLista() {
 
@@ -845,13 +792,10 @@ function renderizarLista() {
       .toLowerCase()
       .trim();
 
-
   lista.innerHTML = "";
-
 
   const elementos =
     Object.entries(conversaciones);
-
 
   elementos.sort((a,b) => {
 
@@ -862,9 +806,7 @@ function renderizarLista() {
 
   });
 
-
   let encontrados = 0;
-
 
   elementos.forEach(([id, conv]) => {
 
@@ -883,16 +825,13 @@ function renderizarLista() {
     const motivo =
       datos.motivo || "";
 
-
     const ultimo =
       obtenerUltimoMensaje(conv);
-
 
     const textoUltimo =
       ultimo
         ? ultimo.texto || ""
         : "";
-
 
     const buscable =
       (
@@ -901,7 +840,6 @@ function renderizarLista() {
         telefono + " " +
         motivo
       ).toLowerCase();
-
 
     if (
       busqueda &&
@@ -912,15 +850,12 @@ function renderizarLista() {
 
     }
 
-
     encontrados++;
-
 
     const div =
       document.createElement("div");
 
     div.className = "conversation";
-
 
     if (
       id === conversacionSeleccionada
@@ -930,10 +865,8 @@ function renderizarLista() {
 
     }
 
-
     const estado =
       conv.estado || "pendiente";
-
 
     const estadoTexto =
       estado === "finalizada"
@@ -942,7 +875,6 @@ function renderizarLista() {
         ? "En atención"
         : "Pendiente";
 
-
     const tiempo =
       ultimo
         ? calcularTiempoUltimoMensaje(
@@ -950,46 +882,34 @@ function renderizarLista() {
           )
         : "";
 
-
     const esperando =
       ultimo &&
       ultimo.remitente === "cliente" &&
       estado !== "finalizada";
 
-
     div.innerHTML = `
 
       <div class="conversation-name">
-
         ${escaparHTML(nombre)}
-
       </div>
 
       <div>
-
         DNI: ${escaparHTML(dni)}
-
       </div>
 
       <div class="conversation-last">
-
         ${escaparHTML(textoUltimo)}
-
       </div>
 
       <div class="conversation-time">
-
         ${tiempo}
-
       </div>
 
       <span class="status status-${estado.replace(
         "en_atencion",
         "atencion"
       )}">
-
         ${estadoTexto}
-
       </span>
 
       ${
@@ -1002,18 +922,15 @@ function renderizarLista() {
 
     `;
 
-
     div.onclick = () => {
 
       mostrarConversacion(id);
 
     };
 
-
     lista.appendChild(div);
 
   });
-
 
   if (!encontrados) {
 
@@ -1027,31 +944,23 @@ function renderizarLista() {
 }
 
 
-/* MOSTRAR CONVERSACIÓN */
-
 function mostrarConversacion(id) {
 
   conversacionSeleccionada = id;
 
-
   const conv =
     conversaciones[id];
 
-
   if (!conv) return;
-
 
   const datos =
     conv.datosCliente || {};
 
-
   const header =
     document.getElementById("chatHeader");
 
-
   const estado =
     conv.estado || "pendiente";
-
 
   header.innerHTML = `
 
@@ -1079,7 +988,21 @@ function mostrarConversacion(id) {
       <br>
 
       <strong>Estado:</strong>
-      ${estado}
+      ${escaparHTML(estado)}
+
+      ${
+        conv.asesorAsignado
+          ? `<br><strong>Asesor:</strong>
+             ${escaparHTML(conv.asesorAsignado)}`
+          : ""
+      }
+
+      ${
+        conv.motivoFinalizacion
+          ? `<br><strong>Motivo de finalización:</strong>
+             ${escaparHTML(conv.motivoFinalizacion)}`
+          : ""
+      }
 
     </div>
 
@@ -1113,42 +1036,33 @@ function mostrarConversacion(id) {
 
   `;
 
-
   mostrarMensajes(conv);
-
 
   document.getElementById("respuesta").style.display =
     estado === "finalizada"
       ? "none"
       : "block";
 
-
   renderizarLista();
 
 }
 
-
-/* MENSAJES */
 
 function mostrarMensajes(conv) {
 
   const contenedor =
     document.getElementById("mensajes");
 
-
   contenedor.innerHTML = "";
-
 
   const mensajes =
     conv.mensajes || {};
-
 
   Object.entries(mensajes).forEach(
     ([id, mensaje]) => {
 
       const div =
         document.createElement("div");
-
 
       div.className =
         "message " +
@@ -1158,14 +1072,12 @@ function mostrarMensajes(conv) {
             : "advisor"
         );
 
-
       const fecha =
         mensaje.fecha
           ? new Date(
               mensaje.fecha
             ).toLocaleString("es-AR")
           : "";
-
 
       div.innerHTML = `
 
@@ -1192,12 +1104,10 @@ function mostrarMensajes(conv) {
 
       `;
 
-
       contenedor.appendChild(div);
 
     }
   );
-
 
   contenedor.scrollTop =
     contenedor.scrollHeight;
@@ -1205,12 +1115,9 @@ function mostrarMensajes(conv) {
 }
 
 
-/* ENVIAR */
-
 window.enviarMensaje = async function() {
 
   if (!conversacionSeleccionada) return;
-
 
   const texto =
     document
@@ -1218,9 +1125,7 @@ window.enviarMensaje = async function() {
       .value
       .trim();
 
-
   if (!texto) return;
-
 
   const mensajesRef =
     ref(
@@ -1230,10 +1135,8 @@ window.enviarMensaje = async function() {
       "/mensajes"
     );
 
-
   const nuevoMensaje =
     push(mensajesRef);
-
 
   await set(
     nuevoMensaje,
@@ -1254,7 +1157,6 @@ window.enviarMensaje = async function() {
     }
   );
 
-
   await update(
     ref(
       db,
@@ -1273,7 +1175,6 @@ window.enviarMensaje = async function() {
 
     }
   );
-
 
   document
     .getElementById("textoRespuesta")
@@ -1282,12 +1183,9 @@ window.enviarMensaje = async function() {
 };
 
 
-/* TOMAR */
-
 window.tomarConversacion = async function() {
 
   if (!conversacionSeleccionada) return;
-
 
   await update(
     ref(
@@ -1310,8 +1208,6 @@ window.tomarConversacion = async function() {
 
 };
 
-
-/* FINALIZAR */
 
 window.abrirModalFinalizar = function() {
 
@@ -1335,12 +1231,10 @@ window.confirmarFinalizacion = async function() {
 
   if (!conversacionSeleccionada) return;
 
-
   const motivo =
     document
       .getElementById("motivoFinalizacion")
       .value;
-
 
   await update(
     ref(
@@ -1367,26 +1261,20 @@ window.confirmarFinalizacion = async function() {
     }
   );
 
-
   cerrarModal();
 
 };
 
-
-/* ÚLTIMO MENSAJE */
 
 function obtenerUltimoMensaje(conv) {
 
   const mensajes =
     conv.mensajes || {};
 
-
   const lista =
     Object.values(mensajes);
 
-
   if (!lista.length) return null;
-
 
   return lista.sort(
     (a,b) =>
@@ -1397,31 +1285,23 @@ function obtenerUltimoMensaje(conv) {
 }
 
 
-/* TIEMPO */
-
-function calcularTiempoUltimoMensaje(
-  mensaje
-) {
+function calcularTiempoUltimoMensaje(mensaje) {
 
   if (!mensaje.fecha) return "";
 
-
   const diferencia =
     Date.now() - mensaje.fecha;
-
 
   const minutos =
     Math.floor(
       diferencia / 60000
     );
 
-
   if (minutos < 1) {
 
     return "Hace menos de 1 min";
 
   }
-
 
   if (minutos < 60) {
 
@@ -1431,10 +1311,8 @@ function calcularTiempoUltimoMensaje(
 
   }
 
-
   const horas =
     Math.floor(minutos / 60);
-
 
   if (horas < 24) {
 
@@ -1446,10 +1324,8 @@ function calcularTiempoUltimoMensaje(
 
   }
 
-
   const dias =
     Math.floor(horas / 24);
-
 
   return "Hace " +
     dias +
@@ -1457,8 +1333,6 @@ function calcularTiempoUltimoMensaje(
 
 }
 
-
-/* HTML SEGURO */
 
 function escaparHTML(texto) {
 
