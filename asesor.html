@@ -1,59 +1,1868 @@
-yecto
-Nombre del proyecto
-EstudioMansilla
-ID del proyecto
-estudiomansilla
-Número del proyecto
-482010073100
-Organización o carpeta superior en Google Cloud
-unc.edu.ar
-Entorno
-Este parámetro de configuración permite personalizar tu proyecto para las diferentes etapas del ciclo de vida de la app
-Tipo de entorno
-Sin especificar
-Tus apps
-Apps web
-Centro de Atención
-App web
-Alias de la app
-Centro de Atención
-ID de la app
-1:482010073100:web:d5cb61259de293b1420629
-Configuración del SDK
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Centro de Atención - Asesores</title>
 
-npm
+  <style>
+    * {
+      box-sizing: border-box;
+    }
 
-CDN
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f3f4f6;
+      color: #222;
+    }
 
-Config
-Si ya usas npm y un agrupador de módulos como Webpack o Rollup, puedes ejecutar el siguiente comando para instalar la versión más reciente del SDK (más información):
+    button,
+    input,
+    textarea,
+    select {
+      font: inherit;
+    }
 
-npm install firebase
-Luego, inicializa Firebase y comienza a usar los SDK de los productos que quieres utilizar.
+    /* LOGIN */
 
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+    #loginScreen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: #f3f4f6;
+    }
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyC1sOc1O1aBwkzz5DXT3GD_OEcFFrkOua8",
-  authDomain: "estudiomansilla.firebaseapp.com",
-  databaseURL: "https://estudiomansilla-default-rtdb.firebaseio.com",
-  projectId: "estudiomansilla",
-  storageBucket: "estudiomansilla.firebasestorage.app",
-  messagingSenderId: "482010073100",
-  appId: "1:482010073100:web:d5cb61259de293b1420629",
-  measurementId: "G-8710S26Z8L"
-};
+    .login-box {
+      width: 100%;
+      max-width: 400px;
+      background: white;
+      padding: 35px;
+      border-radius: 16px;
+      box-shadow: 0 8px 30px rgba(0,0,0,.12);
+    }
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-Nota: Esta opción utiliza el SDK de JavaScript modular, que proporciona un tamaño reducido del SDK.
+    .login-box h1 {
+      margin-top: 0;
+      text-align: center;
+      font-size: 25px;
+    }
 
-Obtén más información sobre Firebase para la Web: primeros pasos, referencia de la API del SDK web y muestras
+    .login-box p {
+      text-align: center;
+      color: #666;
+      margin-bottom: 25px;
+    }
 
+    .login-box input {
+      width: 100%;
+      padding: 13px;
+      margin-bottom: 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+
+    .login-box button {
+      width: 100%;
+      padding: 13px;
+      border: 0;
+      border-radius: 8px;
+      background: #222;
+      color: white;
+      cursor: pointer;
+    }
+
+    .login-box button:hover {
+      background: #444;
+    }
+
+    #loginError {
+      margin-top: 15px;
+      color: #c62828;
+      font-size: 14px;
+      text-align: center;
+    }
+
+    /* APP */
+
+    #app {
+      display: none;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .topbar {
+      height: 65px;
+      background: #202124;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+    }
+
+    .topbar h2 {
+      margin: 0;
+      font-size: 20px;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      font-size: 14px;
+    }
+
+    .logout-btn {
+      border: 1px solid #aaa;
+      background: transparent;
+      color: white;
+      padding: 7px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .main {
+      display: flex;
+      height: calc(100vh - 65px);
+    }
+
+    /* LISTA */
+
+    .sidebar {
+      width: 370px;
+      background: white;
+      border-right: 1px solid #ddd;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .search-box {
+      padding: 15px;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .search-box input {
+      width: 100%;
+      padding: 11px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+
+    #conversationList {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .conversation-item {
+      padding: 15px;
+      border-bottom: 1px solid #eee;
+      cursor: pointer;
+    }
+
+    .conversation-item:hover {
+      background: #f7f7f7;
+    }
+
+    .conversation-item.active {
+      background: #ececec;
+    }
+
+    .conversation-name {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .conversation-preview {
+      color: #666;
+      font-size: 13px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .conversation-meta {
+      margin-top: 7px;
+      font-size: 12px;
+      color: #888;
+    }
+
+    .waiting {
+      color: #c62828;
+      font-weight: bold;
+    }
+
+    .finished {
+      color: #2e7d32;
+      font-weight: bold;
+    }
+
+    /* CHAT */
+
+    .chat {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    #emptyChat {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #777;
+      text-align: center;
+    }
+
+    #chatContent {
+      display: none;
+      height: 100%;
+      flex-direction: column;
+    }
+
+    .chat-header {
+      background: white;
+      border-bottom: 1px solid #ddd;
+      padding: 15px 20px;
+    }
+
+    .chat-header h3 {
+      margin: 0 0 8px;
+    }
+
+    .client-data {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      font-size: 13px;
+      color: #555;
+    }
+
+    .chat-actions {
+      margin-top: 12px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .action-btn {
+      padding: 8px 13px;
+      border: 0;
+      border-radius: 7px;
+      cursor: pointer;
+      background: #222;
+      color: white;
+    }
+
+    .action-btn.secondary {
+      background: #777;
+    }
+
+    .action-btn.green {
+      background: #2e7d32;
+    }
+
+    .action-btn.red {
+      background: #c62828;
+    }
+
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+
+    .message {
+      max-width: 70%;
+      margin-bottom: 12px;
+      padding: 10px 13px;
+      border-radius: 12px;
+      line-height: 1.4;
+      word-wrap: break-word;
+    }
+
+    .message.client {
+      background: white;
+      margin-right: auto;
+      border: 1px solid #ddd;
+    }
+
+    .message.advisor {
+      background: #d9ead3;
+      margin-left: auto;
+    }
+
+    .message-system {
+      background: #e8e8e8;
+      color: #666;
+      max-width: 80%;
+      margin: 15px auto;
+      text-align: center;
+      font-size: 13px;
+    }
+
+    .message-info {
+      margin-top: 5px;
+      font-size: 10px;
+      color: #777;
+    }
+
+    .composer {
+      background: white;
+      border-top: 1px solid #ddd;
+      padding: 12px;
+      display: flex;
+      gap: 10px;
+    }
+
+    .composer textarea {
+      flex: 1;
+      resize: none;
+      height: 45px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+
+    .send-btn {
+      width: 90px;
+      border: 0;
+      border-radius: 8px;
+      background: #222;
+      color: white;
+      cursor: pointer;
+    }
+
+    .send-btn:disabled {
+      background: #aaa;
+      cursor: not-allowed;
+    }
+
+    /* MODAL */
+
+    #finalizeModal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.55);
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .modal {
+      width: 90%;
+      max-width: 450px;
+      background: white;
+      border-radius: 12px;
+      padding: 25px;
+    }
+
+    .modal h3 {
+      margin-top: 0;
+    }
+
+    .modal select {
+      width: 100%;
+      padding: 11px;
+      border: 1px solid #ccc;
+      border-radius: 7px;
+      margin: 15px 0;
+    }
+
+    .modal-buttons {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .modal-buttons button {
+      padding: 9px 14px;
+      border: 0;
+      border-radius: 7px;
+      cursor: pointer;
+    }
+
+    .cancel-btn {
+      background: #ddd;
+    }
+
+    .confirm-btn {
+      background: #2e7d32;
+      color: white;
+    }
+
+    @media (max-width: 800px) {
+      .sidebar {
+        width: 300px;
+      }
+
+      .message {
+        max-width: 85%;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- LOGIN -->
+
+  <div id="loginScreen">
+    <div class="login-box">
+      <h1>Centro de Atención</h1>
+      <p>Ingreso para asesores</p>
+
+      <input
+        type="email"
+        id="email"
+        placeholder="Correo electrónico"
+        autocomplete="username"
+      >
+
+      <input
+        type="password"
+        id="password"
+        placeholder="Contraseña"
+        autocomplete="current-password"
+      >
+
+      <button id="loginBtn">Ingresar</button>
+
+      <div id="loginError"></div>
+    </div>
+  </div>
+
+
+  <!-- APP -->
+
+  <div id="app">
+
+    <div class="topbar">
+      <h2>Centro de Atención</h2>
+
+      <div class="user-info">
+        <span id="loggedUser"></span>
+        <button class="logout-btn" id="logoutBtn">Cerrar sesión</button>
+      </div>
+    </div>
+
+    <div class="main">
+
+      <aside class="sidebar">
+
+        <div class="search-box">
+          <input
+            type="text"
+            id="searchInput"
+            placeholder="Buscar por DNI, nombre, teléfono o motivo..."
+          >
+        </div>
+
+        <div id="conversationList"></div>
+
+      </aside>
+
+
+      <section class="chat">
+
+        <div id="emptyChat">
+          <div>
+            <h3>Seleccioná una conversación</h3>
+            <p>Las conversaciones aparecerán en este panel.</p>
+          </div>
+        </div>
+
+
+        <div id="chatContent">
+
+          <div class="chat-header">
+
+            <h3 id="clientName">Cliente</h3>
+
+            <div class="client-data">
+              <span id="clientDni"></span>
+              <span id="clientPhone"></span>
+              <span id="clientMotive"></span>
+              <span id="conversationStatus"></span>
+            </div>
+
+            <div id="assignmentInfo"></div>
+
+            <div class="chat-actions">
+
+              <button
+                class="action-btn"
+                id="takeConversationBtn"
+              >
+                Tomar conversación
+              </button>
+
+              <button
+                class="action-btn green"
+                id="finalizeBtn"
+              >
+                Finalizar conversación
+              </button>
+
+            </div>
+
+          </div>
+
+
+          <div id="messages"></div>
+
+
+          <div class="composer">
+
+            <textarea
+              id="messageInput"
+              placeholder="Escribí un mensaje..."
+            ></textarea>
+
+            <button
+              class="send-btn"
+              id="sendBtn"
+            >
+              Enviar
+            </button>
+
+          </div>
+
+        </div>
+
+      </section>
+
+    </div>
+
+  </div>
+
+
+  <!-- MODAL FINALIZAR -->
+
+  <div id="finalizeModal">
+
+    <div class="modal">
+
+      <h3>Finalizar conversación</h3>
+
+      <p>Seleccioná el motivo de finalización:</p>
+
+      <select id="finalizationReason">
+
+        <option value="">
+          Seleccionar motivo
+        </option>
+
+        <option value="Alta de acuerdo">
+          Alta de acuerdo
+        </option>
+
+        <option value="Carga de comprobante">
+          Carga de comprobante
+        </option>
+
+        <option value="Servicio al cliente">
+          Servicio al cliente
+        </option>
+
+        <option value="Consulta resuelta">
+          Consulta resuelta
+        </option>
+
+        <option value="Sin acuerdo">
+          Sin acuerdo
+        </option>
+
+        <option value="Cliente no responde">
+          Cliente no responde
+        </option>
+
+        <option value="Derivado">
+          Derivado
+        </option>
+
+        <option value="Otro">
+          Otro
+        </option>
+
+      </select>
+
+      <div class="modal-buttons">
+
+        <button
+          class="cancel-btn"
+          id="cancelFinalize"
+        >
+          Cancelar
+        </button>
+
+        <button
+          class="confirm-btn"
+          id="confirmFinalize"
+        >
+          Finalizar
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- FIREBASE -->
+
+  <script type="module">
+
+    import { initializeApp } from
+      "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+    import {
+      getDatabase,
+      ref,
+      onValue,
+      onChildAdded,
+      push,
+      set,
+      update
+    } from
+      "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+    import {
+      getAuth,
+      signInWithEmailAndPassword,
+      onAuthStateChanged,
+      signOut
+    } from
+      "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+
+    /* =========================
+       CONFIGURACIÓN FIREBASE
+       ========================= */
+
+    const firebaseConfig = {
+
+      apiKey:
+        "AIzaSyC1sOc1O1aBwkzz5DXTGD_OEcFFrkOua8",
+
+      authDomain:
+        "estudiomansilla.firebaseapp.com",
+
+      databaseURL:
+        "https://estudiomansilla-default-rtdb.firebaseio.com",
+
+      projectId:
+        "estudiomansilla",
+
+      storageBucket:
+        "estudiomansilla.firebasestorage.app",
+
+      messagingSenderId:
+        "482010073100",
+
+      appId:
+        "1:482010073100:web:d5cb61259de293b1420629",
+
+      measurementId:
+        "G-8710S26Z8L"
+    };
+
+
+    const app = initializeApp(firebaseConfig);
+
+    const db = getDatabase(app);
+
+    const auth = getAuth(app);
+
+
+    /* =========================
+       PERFILES
+       ========================= */
+
+    const perfiles = {
+
+      "Milagros": "supervisor",
+
+      "Rocio": "senior",
+      "Antonela": "senior",
+      "Pilar": "senior",
+      "Daniela": "senior",
+
+      "Paula": "asesor",
+      "Ana": "asesor",
+      "Maria Paz": "asesor",
+      "Agustina": "asesor",
+      "Pablo": "asesor",
+      "Giuliana": "asesor",
+      "Candela": "asesor",
+      "Belen": "asesor",
+      "Delfina": "asesor",
+      "Julieta": "asesor",
+      "Moriana": "asesor",
+      "Keila": "asesor",
+      "Alejandra": "asesor",
+      "Maica": "asesor",
+      "Natalia": "asesor",
+      "Gustavo": "asesor",
+      "Alejo": "asesor",
+      "Gregorio": "asesor",
+      "Francesca": "asesor",
+      "Florencia": "asesor",
+      "Valentina": "asesor",
+
+      "Alejo Supervisor": "supervisor",
+      "Ramon": "supervisor",
+      "Gonzalo": "supervisor",
+      "Javier": "supervisor"
+    };
+
+
+    let conversaciones = {};
+
+    let conversacionSeleccionada = null;
+
+    let mensajesListener = null;
+
+
+    /* =========================
+       ELEMENTOS
+       ========================= */
+
+    const loginScreen =
+      document.getElementById("loginScreen");
+
+    const appScreen =
+      document.getElementById("app");
+
+    const loginBtn =
+      document.getElementById("loginBtn");
+
+    const logoutBtn =
+      document.getElementById("logoutBtn");
+
+    const loginError =
+      document.getElementById("loginError");
+
+    const emailInput =
+      document.getElementById("email");
+
+    const passwordInput =
+      document.getElementById("password");
+
+    const loggedUser =
+      document.getElementById("loggedUser");
+
+    const conversationList =
+      document.getElementById("conversationList");
+
+    const searchInput =
+      document.getElementById("searchInput");
+
+    const emptyChat =
+      document.getElementById("emptyChat");
+
+    const chatContent =
+      document.getElementById("chatContent");
+
+    const messages =
+      document.getElementById("messages");
+
+    const messageInput =
+      document.getElementById("messageInput");
+
+    const sendBtn =
+      document.getElementById("sendBtn");
+
+    const takeConversationBtn =
+      document.getElementById("takeConversationBtn");
+
+    const finalizeBtn =
+      document.getElementById("finalizeBtn");
+
+    const finalizeModal =
+      document.getElementById("finalizeModal");
+
+    const cancelFinalize =
+      document.getElementById("cancelFinalize");
+
+    const confirmFinalize =
+      document.getElementById("confirmFinalize");
+
+    const finalizationReason =
+      document.getElementById("finalizationReason");
+
+
+    /* =========================
+       LOGIN
+       ========================= */
+
+    loginBtn.addEventListener("click", async () => {
+
+      const email =
+        emailInput.value.trim();
+
+      const password =
+        passwordInput.value;
+
+      loginError.textContent = "";
+
+      if (!email || !password) {
+
+        loginError.textContent =
+          "Ingresá correo y contraseña.";
+
+        return;
+      }
+
+      loginBtn.disabled = true;
+
+      loginBtn.textContent =
+        "Ingresando...";
+
+      try {
+
+        await signInWithEmailAndPassword(
+          auth,
+          email,
+          password
+        );
+
+      } catch (error) {
+
+        console.error(error);
+
+        loginError.textContent =
+          "Error: " +
+          error.code +
+          " — " +
+          error.message;
+
+      } finally {
+
+        loginBtn.disabled = false;
+
+        loginBtn.textContent =
+          "Ingresar";
+      }
+
+    });
+
+
+    passwordInput.addEventListener("keydown", (event) => {
+
+      if (event.key === "Enter") {
+        loginBtn.click();
+      }
+
+    });
+
+
+    /* =========================
+       ESTADO DE LOGIN
+       ========================= */
+
+    onAuthStateChanged(auth, (user) => {
+
+      if (user) {
+
+        loginScreen.style.display =
+          "none";
+
+        appScreen.style.display =
+          "block";
+
+        loggedUser.textContent =
+          user.email;
+
+        cargarConversaciones();
+
+      } else {
+
+        loginScreen.style.display =
+          "flex";
+
+        appScreen.style.display =
+          "none";
+
+        loggedUser.textContent = "";
+
+      }
+
+    });
+
+
+    /* =========================
+       CERRAR SESIÓN
+       ========================= */
+
+    logoutBtn.addEventListener("click", async () => {
+
+      await signOut(auth);
+
+    });
+
+
+    /* =========================
+       CARGAR CONVERSACIONES
+       ========================= */
+
+    function cargarConversaciones() {
+
+      const conversacionesRef =
+        ref(db, "conversaciones");
+
+      onValue(conversacionesRef, (snapshot) => {
+
+        conversaciones = {};
+
+        snapshot.forEach((child) => {
+
+          const data = child.val();
+
+          if (!data) return;
+
+          conversaciones[child.key] = {
+            id: child.key,
+            ...data
+          };
+
+        });
+
+        renderConversationList();
+
+        if (conversacionSeleccionada) {
+
+          const actual =
+            conversaciones[
+              conversacionSeleccionada
+            ];
+
+          if (actual) {
+            mostrarConversacion(actual);
+          }
+
+        }
+
+      });
+
+    }
+
+
+    /* =========================
+       LISTA
+       ========================= */
+
+    function renderConversationList() {
+
+      const search =
+        searchInput.value
+          .trim()
+          .toLowerCase();
+
+      conversationList.innerHTML = "";
+
+      const lista =
+        Object.values(conversaciones)
+          .filter((conversation) => {
+
+            const datos =
+              conversation.datosCliente || {};
+
+            const texto = [
+
+              datos.nombre,
+              datos.dni,
+              datos.telefono,
+              datos.motivo
+
+            ]
+              .filter(Boolean)
+              .join(" ")
+              .toLowerCase();
+
+            return texto.includes(search);
+
+          })
+          .sort((a, b) => {
+
+            return (
+              (b.fechaCreacion || 0) -
+              (a.fechaCreacion || 0)
+            );
+
+          });
+
+
+      if (lista.length === 0) {
+
+        conversationList.innerHTML =
+          `<div style="padding:20px;color:#777">
+             No hay conversaciones.
+           </div>`;
+
+        return;
+      }
+
+
+      lista.forEach((conversation) => {
+
+        const datos =
+          conversation.datosCliente || {};
+
+        const mensajesObj =
+          conversation.mensajes || {};
+
+        const mensajesArray =
+          Object.values(mensajesObj);
+
+        const ultimo =
+          mensajesArray.length
+            ? mensajesArray[
+                mensajesArray.length - 1
+              ]
+            : null;
+
+        const div =
+          document.createElement("div");
+
+        div.className =
+          "conversation-item" +
+          (
+            conversation.id ===
+            conversacionSeleccionada
+              ? " active"
+              : ""
+          );
+
+        const estado =
+          conversation.estado ||
+          "pendiente";
+
+        let estadoTexto = "";
+
+        if (estado === "finalizada") {
+
+          estadoTexto =
+            `<span class="finished">
+              Finalizada
+            </span>`;
+
+        } else if (
+          ultimo &&
+          ultimo.remitente === "cliente"
+        ) {
+
+          estadoTexto =
+            `<span class="waiting">
+              Esperando respuesta
+            </span>`;
+
+        } else {
+
+          estadoTexto =
+            `<span>
+              ${escaparHTML(estado)}
+            </span>`;
+        }
+
+
+        div.innerHTML = `
+
+          <div class="conversation-name">
+            ${escaparHTML(
+              datos.nombre ||
+              "Sin nombre"
+            )}
+          </div>
+
+          <div class="conversation-preview">
+            ${escaparHTML(
+              ultimo?.texto ||
+              "Sin mensajes"
+            )}
+          </div>
+
+          <div class="conversation-meta">
+            ${estadoTexto}
+            · ${tiempoRelativo(
+              ultimo?.fecha ||
+              conversation.fechaCreacion
+            )}
+          </div>
+
+        `;
+
+
+        div.addEventListener(
+          "click",
+          () => {
+
+            conversacionSeleccionada =
+              conversation.id;
+
+            mostrarConversacion(
+              conversation
+            );
+
+            renderConversationList();
+
+          }
+        );
+
+
+        conversationList.appendChild(div);
+
+      });
+
+    }
+
+
+    searchInput.addEventListener(
+      "input",
+      renderConversationList
+    );
+
+
+    /* =========================
+       MOSTRAR CONVERSACIÓN
+       ========================= */
+
+    function mostrarConversacion(
+      conversation
+    ) {
+
+      emptyChat.style.display =
+        "none";
+
+      chatContent.style.display =
+        "flex";
+
+      const datos =
+        conversation.datosCliente || {};
+
+
+      document.getElementById(
+        "clientName"
+      ).textContent =
+        datos.nombre ||
+        "Cliente";
+
+
+      document.getElementById(
+        "clientDni"
+      ).textContent =
+        datos.dni
+          ? "DNI: " + datos.dni
+          : "";
+
+
+      document.getElementById(
+        "clientPhone"
+      ).textContent =
+        datos.telefono
+          ? "Tel: " + datos.telefono
+          : "";
+
+
+      document.getElementById(
+        "clientMotive"
+      ).textContent =
+        datos.motivo
+          ? "Motivo: " + datos.motivo
+          : "";
+
+
+      document.getElementById(
+        "conversationStatus"
+      ).innerHTML =
+        conversation.estado ===
+        "finalizada"
+
+          ? `<span class="finished">
+               Finalizada
+             </span>`
+
+          : `<span>
+               Estado: ${
+                 escaparHTML(
+                   conversation.estado ||
+                   "pendiente"
+                 )
+               }
+             </span>`;
+
+
+      let assignment = "";
+
+      if (conversation.asesorAsignado) {
+
+        assignment =
+          `<div style="
+             margin-top:10px;
+             font-size:13px;
+             color:#555;
+           ">
+             Asignada a:
+             <strong>
+               ${escaparHTML(
+                 conversation.asesorAsignado
+               )}
+             </strong>
+           </div>`;
+
+      }
+
+
+      if (conversation.motivoFinalizacion) {
+
+        assignment +=
+          `<div style="
+             margin-top:6px;
+             font-size:13px;
+             color:#555;
+           ">
+             Motivo de finalización:
+             <strong>
+               ${escaparHTML(
+                 conversation.motivoFinalizacion
+               )}
+             </strong>
+           </div>`;
+
+      }
+
+
+      if (conversation.finalizadoPor) {
+
+        assignment +=
+          `<div style="
+             margin-top:6px;
+             font-size:13px;
+             color:#555;
+           ">
+             Finalizada por:
+             <strong>
+               ${escaparHTML(
+                 conversation.finalizadoPor
+               )}
+             </strong>
+           </div>`;
+
+      }
+
+
+      document.getElementById(
+        "assignmentInfo"
+      ).innerHTML =
+        assignment;
+
+
+      takeConversationBtn.disabled =
+        conversation.estado ===
+        "finalizada";
+
+
+      finalizeBtn.disabled =
+        conversation.estado ===
+        "finalizada";
+
+
+      messageInput.disabled =
+        conversation.estado ===
+        "finalizada";
+
+
+      sendBtn.disabled =
+        conversation.estado ===
+        "finalizada";
+
+
+      cargarMensajes(conversation.id);
+
+    }
+
+
+    /* =========================
+       MENSAJES
+       ========================= */
+
+    function cargarMensajes(
+      conversationId
+    ) {
+
+      messages.innerHTML = "";
+
+      const mensajesRef =
+        ref(
+          db,
+          `conversaciones/${conversationId}/mensajes`
+        );
+
+
+      onValue(mensajesRef, (snapshot) => {
+
+        messages.innerHTML = "";
+
+        const lista = [];
+
+        snapshot.forEach((child) => {
+
+          lista.push({
+            id: child.key,
+            ...child.val()
+          });
+
+        });
+
+
+        lista.sort((a, b) => {
+
+          return (
+            (a.fecha || 0) -
+            (b.fecha || 0)
+          );
+
+        });
+
+
+        lista.forEach((message) => {
+
+          mostrarMensaje(message);
+
+        });
+
+
+        messages.scrollTop =
+          messages.scrollHeight;
+
+      });
+
+    }
+
+
+    function mostrarMensaje(message) {
+
+      const div =
+        document.createElement("div");
+
+
+      if (
+        message.remitente ===
+        "sistema"
+      ) {
+
+        div.className =
+          "message message-system";
+
+      } else if (
+        message.remitente ===
+        "asesor"
+      ) {
+
+        div.className =
+          "message advisor";
+
+      } else {
+
+        div.className =
+          "message client";
+
+      }
+
+
+      const nombre =
+        message.remitente ===
+        "asesor"
+
+          ? (
+              message.asesorNombre ||
+              "Asesor"
+            )
+
+          : message.remitente ===
+            "cliente"
+
+            ? "Cliente"
+
+            : "Sistema";
+
+
+      div.innerHTML = `
+
+        <div>
+          ${escaparHTML(
+            message.texto || ""
+          )}
+        </div>
+
+        <div class="message-info">
+
+          ${escaparHTML(nombre)}
+          ·
+          ${formatearFecha(
+            message.fecha
+          )}
+
+        </div>
+
+      `;
+
+
+      messages.appendChild(div);
+
+    }
+
+
+    /* =========================
+       TOMAR CONVERSACIÓN
+       ========================= */
+
+    takeConversationBtn.addEventListener(
+      "click",
+      async () => {
+
+        if (!conversacionSeleccionada)
+          return;
+
+        const user =
+          auth.currentUser;
+
+        if (!user)
+          return;
+
+
+        const nombre =
+          obtenerNombrePorEmail(
+            user.email
+          );
+
+
+        await update(
+
+          ref(
+            db,
+            `conversaciones/${conversacionSeleccionada}`
+          ),
+
+          {
+            estado: "en_atencion",
+
+            asesorAsignado:
+              nombre,
+
+            asesorEmail:
+              user.email,
+
+            fechaAsignacion:
+              Date.now()
+          }
+
+        );
+
+        alert(
+          "Conversación tomada correctamente."
+        );
+
+      }
+    );
+
+
+    /* =========================
+       ENVIAR MENSAJE
+       ========================= */
+
+    sendBtn.addEventListener(
+      "click",
+      enviarMensaje
+    );
+
+
+    messageInput.addEventListener(
+      "keydown",
+      (event) => {
+
+        if (
+          event.key === "Enter" &&
+          !event.shiftKey
+        ) {
+
+          event.preventDefault();
+
+          enviarMensaje();
+
+        }
+
+      }
+    );
+
+
+    async function enviarMensaje() {
+
+      const texto =
+        messageInput.value.trim();
+
+
+      if (
+        !texto ||
+        !conversacionSeleccionada
+      ) {
+        return;
+      }
+
+
+      const user =
+        auth.currentUser;
+
+      if (!user)
+        return;
+
+
+      const conversation =
+        conversaciones[
+          conversacionSeleccionada
+        ];
+
+
+      if (
+        conversation &&
+        conversation.estado ===
+        "finalizada"
+      ) {
+
+        return;
+      }
+
+
+      const nombre =
+        obtenerNombrePorEmail(
+          user.email
+        );
+
+
+      const mensajesRef =
+        ref(
+          db,
+          `conversaciones/${conversacionSeleccionada}/mensajes`
+        );
+
+
+      const nuevoMensaje =
+        push(mensajesRef);
+
+
+      await set(
+        nuevoMensaje,
+        {
+
+          texto,
+
+          remitente:
+            "asesor",
+
+          asesorNombre:
+            nombre,
+
+          asesorEmail:
+            user.email,
+
+          fecha:
+            Date.now()
+
+        }
+      );
+
+
+      await update(
+
+        ref(
+          db,
+          `conversaciones/${conversacionSeleccionada}`
+        ),
+
+        {
+
+          estado:
+            "en_atencion",
+
+          asesorAsignado:
+            nombre,
+
+          asesorEmail:
+            user.email,
+
+          ultimaRespuesta:
+            Date.now()
+
+        }
+
+      );
+
+
+      messageInput.value = "";
+
+    }
+
+
+    /* =========================
+       FINALIZAR
+       ========================= */
+
+    finalizeBtn.addEventListener(
+      "click",
+      () => {
+
+        if (!conversacionSeleccionada)
+          return;
+
+        finalizationReason.value = "";
+
+        finalizeModal.style.display =
+          "flex";
+
+      }
+    );
+
+
+    cancelFinalize.addEventListener(
+      "click",
+      () => {
+
+        finalizeModal.style.display =
+          "none";
+
+      }
+    );
+
+
+    confirmFinalize.addEventListener(
+      "click",
+      async () => {
+
+        const motivo =
+          finalizationReason.value;
+
+
+        if (!motivo) {
+
+          alert(
+            "Seleccioná un motivo."
+          );
+
+          return;
+        }
+
+
+        const user =
+          auth.currentUser;
+
+        if (!user)
+          return;
+
+
+        const nombre =
+          obtenerNombrePorEmail(
+            user.email
+          );
+
+
+        await update(
+
+          ref(
+            db,
+            `conversaciones/${conversacionSeleccionada}`
+          ),
+
+          {
+
+            estado:
+              "finalizada",
+
+            motivoFinalizacion:
+              motivo,
+
+            fechaFinalizacion:
+              Date.now(),
+
+            finalizadoPor:
+              nombre,
+
+            finalizadoPorEmail:
+              user.email
+
+          }
+
+        );
+
+
+        finalizeModal.style.display =
+          "none";
+
+
+        alert(
+          "Conversación finalizada correctamente."
+        );
+
+      }
+    );
+
+
+    /* =========================
+       FUNCIONES
+       ========================= */
+
+    function obtenerNombrePorEmail(
+      email
+    ) {
+
+      const mapa = {
+
+        "rocio.lopez@mansillayasoc.com.ar":
+          "Rocio",
+
+        "antonela.lopez@mansillayasoc.com.ar":
+          "Antonela",
+
+        "pilar.solano@mansillayasoc.com.ar":
+          "Pilar",
+
+        "daniela.cortez@mansillayasoc.com.ar":
+          "Daniela",
+
+        "paula.lopez@mansillayasoc.com.ar":
+          "Paula",
+
+        "ana.rueda@mansillayasoc.com.ar":
+          "Ana",
+
+        "ana.paz@mansillayasoc.com.ar":
+          "Maria Paz",
+
+        "agustina.baez@mansillayasoc.com.ar":
+          "Agustina",
+
+        "pablo.medina@mansillayasoc.com.ar":
+          "Pablo",
+
+        "giulina.pancelo@mansillayasoc.com.ar":
+          "Giuliana",
+
+        "candela.espeche@mansillayasoc.com.ar":
+          "Candela",
+
+        "delfina.sesto@mansillayasoc.com.ar":
+          "Delfina",
+
+        "julieta.araoz@mansillayasoc.com.ar":
+          "Julieta",
+
+        "moriana.rey@mansillayasoc.com.ar":
+          "Moriana",
+
+        "keila.luduena@mansillayasoc.com.ar":
+          "Keila",
+
+        "natalia.lopez@mansillayasoc.com.ar":
+          "Natalia",
+
+        "mavillegas@mansillayasoc.com.ar":
+          "Milagros"
+
+      };
+
+
+      return (
+        mapa[email] ||
+        email.split("@")[0]
+      );
+
+    }
+
+
+    function escaparHTML(texto) {
+
+      return String(texto ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+
+    }
+
+
+    function formatearFecha(timestamp) {
+
+      if (!timestamp)
+        return "";
+
+      return new Date(timestamp)
+        .toLocaleString(
+          "es-AR",
+          {
+            day: "2-digit",
+            month: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit"
+          }
+        );
+
+    }
+
+
+    function tiempoRelativo(timestamp) {
+
+      if (!timestamp)
+        return "";
+
+      const diferencia =
+        Date.now() -
+        timestamp;
+
+
+      const minutos =
+        Math.floor(
+          diferencia /
+          60000
+        );
+
+
+      if (minutos < 1)
+        return "Ahora";
+
+
+      if (minutos < 60)
+        return `Hace ${minutos} min`;
+
+
+      const horas =
+        Math.floor(
+          minutos / 60
+        );
+
+
+      if (horas < 24)
+        return `Hace ${horas} h`;
+
+
+      const dias =
+        Math.floor(
+          horas / 24
+        );
+
+
+      return `Hace ${dias} día${
+        dias === 1 ? "" : "s"
+      }`;
+
+    }
+
+  </script>
+
+</body>
+</html>
