@@ -206,6 +206,17 @@ button{cursor:pointer}
 .calendar-grid .day-name{padding:4px 2px !important;font-size:10px !important}
 .calendar-grid .day-number{font-size:11px !important}
 .calendar-grid .event{padding:2px 3px !important;margin-top:2px !important;font-size:9px !important;line-height:1.15 !important}
+
+.sos-panel{margin:12px;border:2px solid #dc2626;background:#fff5f5;border-radius:12px;padding:10px;box-shadow:0 4px 14px rgba(180,35,24,.12)}
+.sos-title{font-weight:900;color:#b42318;font-size:13px;margin-bottom:7px}
+.sos-item{display:block;width:100%;text-align:left;border:1px solid #f2a3a3;background:#fff;border-radius:9px;padding:8px;margin-top:6px;cursor:pointer;color:#5f1111}
+.sos-item-title{font-weight:900;color:#b42318;margin-bottom:2px}
+.sos-item small{display:block;margin-top:3px;color:#777}
+.sos-button{font-weight:900;animation:sosPulse 1.5s infinite}
+@keyframes sosPulse{0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,.35)}50%{box-shadow:0 0 0 6px rgba(220,38,38,0)}}
+.expediente-acuerdo{margin-top:12px;padding-top:10px;border-top:1px solid #e5e7eb}
+.expediente-acuerdo textarea{width:100%;box-sizing:border-box;border:1px solid #cfd6df;border-radius:8px;padding:9px;resize:vertical;margin-top:6px;font:inherit;min-height:90px}
+.agreement-readonly{background:#f7f8fa;border-radius:8px;padding:9px;margin-top:6px;min-height:45px}
 </style>
 </head>
 
@@ -275,6 +286,11 @@ button{cursor:pointer}
         <span>📆 Vencimientos</span>
       </button>
     </nav>
+
+    <div id="sosPanel" class="sos-panel hidden">
+      <div class="sos-title">🚨 SOS URGENTES</div>
+      <div id="sosList"></div>
+    </div>
 
     <div class="sidebar-bottom">
       <button class="logout" onclick="cerrarSesion()">Cerrar sesión</button>
@@ -650,6 +666,11 @@ function valorCampoProfundo(obj, claves){
     for(const [k,v] of Object.entries(x)){
       const nk=normalizarTexto(k).replace(/[^a-z0-9]/g,"");
       if(buscadas.has(nk) && v!==null && v!==undefined && String(v).trim()!=="") return v;
+      // También acepta nombres de campos como numero_de_dni, documentoCliente, nro_documento, etc.
+      if((/dni|documento|documentnumber/.test(nk)) && v!==null && v!==undefined && String(v).trim()!==""){
+        const sv=String(v).trim();
+        if(/\d{6,}/.test(sv)) return v;
+      }
     }
     for(const v of Object.values(x)){
       const r=recorrer(v, profundidad+1);
@@ -840,6 +861,7 @@ function crearCardCliente(c,finalizada=false){
     ${gestor?`<div class="card-sub">👤 ${escapeHtml(gestor)}</div>`:""}
     ${finalizada?`<div class="card-sub">📚 Finalizada ${formatFecha(c.fechaFinalizacion)}</div>`:""}
     ${interno?`<div class="card-sub">🔒 ${interno} indicación/es interna/s</div>`:""}
+    ${(c.acuerdo||c.acuerdos||c.compromiso)?`<div class="card-sub" style="color:#176b3a;font-weight:700">🤝 Acuerdo: ${escapeHtml(String(c.acuerdo||c.acuerdos||c.compromiso).slice(0,110))}${String(c.acuerdo||c.acuerdos||c.compromiso).length>110?"…":""}</div>`:""}
   `;
   div.onclick=()=>abrirConversacion(c._id,finalizada);
   return div;
@@ -1098,9 +1120,11 @@ async function abrirConversacion(id,finalizada=false){
 
   const gestionar=!finalizada && puedeGestionarConversacion(c);
 
+  const urgenciaPendiente=normalizarTexto(urgencias[id]?.estado)==="pendiente";
   $("chatActions").innerHTML=`
     ${esSenior()||esSupervisor()?`<button class="btn blue" onclick="abrirModalAsignacion('${id}')">Asignar / transferir</button>`:""}
-    ${esAsesor() && gestionar?`<button class="btn red" onclick="pedirAyudaSenior()">🆘 SOS · Hablar con senior</button>`:""}
+    ${esAsesor() && gestionar?`<button class="btn red sos-button" onclick="pedirAyudaSenior()">🚨 SOS URGENTE · Hablar con senior</button>`:""}
+    ${urgenciaPendiente && (esSenior()||esSupervisor())?`<button class="btn green" onclick="cerrarSOS('${id}')">✓ Marcar SOS atendido</button>`:""}
     ${gestionar?`<button class="btn" onclick="abrirIndicacionInterna()">🔒 Indicación</button>`:""}
     ${gestionar?`<button class="btn red" onclick="finalizarConversacion()">Finalizar</button>`:""}
   `;
@@ -1119,20 +1143,45 @@ function renderizarFicha(c,finalizada){
   const equipo=obtenerEquipoDeConversacion(c);
   const gestor=obtenerGestorDeConversacion(c);
   const estado=finalizada?"Finalizada":(c.estado||"Activa");
+  const acuerdo=c.acuerdo || c.acuerdos || c.compromiso || c.observacionAcuerdo || "";
+  const puedeEditar=!finalizada && puedeGestionarConversacion(c);
 
   $("clientPanel").innerHTML=`
-    <h3>Ficha del cliente</h3>
-    ${info("Nombre",d.nombre)}
-    ${info("DNI",d.dni)}
-    ${info("Teléfono",d.telefono)}
-    ${info("Fecha",d.fecha)}
-    ${info("Motivo",d.motivo)}
-    ${info("Equipo",equipo)}
-    ${info("Gestor",gestor)}
+    <h3>📁 Expediente del cliente</h3>
+    ${info("Nombre",d.nombre || "No informado")}
+    ${info("DNI",d.dni || "No informado")}
+    ${info("Teléfono",d.telefono || "No informado")}
+    ${info("Fecha",d.fecha || "No informada")}
+    ${info("Motivo",d.motivo || "No informado")}
+    ${info("Equipo",equipo || "Sin asignar")}
+    ${info("Gestor",gestor || "Sin asignar")}
     ${info("Estado",estado)}
+    <div class="expediente-acuerdo">
+      <div class="info-label">🤝 Acuerdo / compromiso con el cliente</div>
+      ${puedeEditar ? `<textarea id="acuerdoCliente" rows="5" placeholder="Escribí qué se acordó con el cliente, monto, fecha de pago, compromiso, próxima acción, etc.">${escapeHtml(acuerdo)}</textarea>
+      <button class="btn blue" style="width:100%;margin-top:6px" onclick="guardarAcuerdoCliente()">💾 Guardar acuerdo</button>` : `<div class="info-value agreement-readonly">${escapeHtml(acuerdo || "No hay un acuerdo registrado.").replace(/\n/g,"<br>")}</div>`}
+    </div>
     ${finalizada?info("Finalizada",formatFecha(c.fechaFinalizacion)):""}
     ${c.finalizadoPor?info("Finalizó",c.finalizadoPor):""}
   `;
+}
+
+async function guardarAcuerdoCliente(){
+  if(!conversacionSeleccionada) return;
+  const c=conversaciones[conversacionSeleccionada];
+  if(!c || !puedeGestionarConversacion(c) || !estaActiva(c)) return;
+  const texto=$("acuerdoCliente")?.value.trim() || "";
+  try{
+    await update(ref(db,`conversaciones/${conversacionSeleccionada}`),{
+      acuerdo:texto,
+      acuerdoActualizado:Date.now(),
+      acuerdoActualizadoPor:nombreActual,
+      acuerdoActualizadoPorEmail:usuarioActual?.email||""
+    });
+  }catch(err){
+    console.error(err);
+    alert("No se pudo guardar el acuerdo. Revisá los permisos de Firebase.");
+  }
 }
 
 function info(label,value){
@@ -1195,30 +1244,114 @@ async function pedirAyudaSenior(){
   if(!c || !esAsesor() || !puedeGestionarConversacion(c)) return;
 
   const ahora=Date.now();
+  const d=obtenerDatosCliente(c);
+  const equipo=obtenerEquipoDeConversacion(c)||obtenerEquipoDeGestor(nombreActual)[0]||"";
+  const id=conversacionSeleccionada;
   try{
-    await set(ref(db,`urgencias/${conversacionSeleccionada}`),{
-      conversacionId:conversacionSeleccionada,
+    await set(ref(db,`urgencias/${id}`),{
+      conversacionId:id,
       cliente:mostrarNombreCliente(c),
-      dni:obtenerDatosCliente(c).dni || "",
+      dni:d.dni || "",
       gestor:nombreActual,
       gestorEmail:usuarioActual?.email||"",
-      equipo:obtenerEquipoDeConversacion(c)||obtenerEquipoDeGestor(nombreActual)[0]||"",
+      equipo,
       estado:"pendiente",
-      fecha:ahora
+      fecha:ahora,
+      mensaje:`${nombreActual} solicita hablar con un senior de forma URGENTE.`
     });
-    await push(ref(db,`conversaciones/${conversacionSeleccionada}/mensajes`),{
+    await push(ref(db,`conversaciones/${id}/mensajes`),{
       tipo:"interno",
-      texto:`🆘 ${nombreActual} pidió hablar con un senior.`,
+      texto:`🚨 SOS URGENTE — ${nombreActual} solicita hablar con un senior.`,
       remitente:nombreActual,
       remitenteEmail:usuarioActual?.email||"",
       fecha:ahora,
-      sos:true
+      sos:true,
+      urgente:true
     });
-    alert("🆘 Se avisó al senior. La conversación quedó marcada como urgente.");
+    alert("🚨 SOS enviado. El pedido quedó marcado como URGENTE para los seniors.");
   }catch(err){
     console.error(err);
     alert("No se pudo enviar el SOS. Revisá los permisos de Firebase.");
   }
+}
+
+let urgencias={};
+let primerCargaUrgencias=true;
+let ultimoSOSIds=new Set();
+
+function escucharUrgencias(){
+  onValue(ref(db,"urgencias"),snap=>{
+    const data=snap.val()||{};
+    const pendientes=new Set(Object.entries(data).filter(([,u])=>normalizarTexto(u?.estado)==="pendiente").map(([id])=>id));
+    if(!primerCargaUrgencias && (esSenior()||esSupervisor())){
+      for(const id of pendientes){
+        if(!ultimoSOSIds.has(id)){
+          sonidoNuevoChat();
+          break;
+        }
+      }
+    }
+    urgencias=data;
+    ultimoSOSIds=pendientes;
+    primerCargaUrgencias=false;
+    renderizarPanelSOS();
+    if(conversacionSeleccionada && conversaciones[conversacionSeleccionada]){
+      const c=conversaciones[conversacionSeleccionada];
+      const esFin=!estaActiva(c);
+      const d=obtenerDatosCliente(c);
+      $("chatActions").innerHTML=`
+        ${esSenior()||esSupervisor()?`<button class="btn blue" onclick="abrirModalAsignacion('${conversacionSeleccionada}')">Asignar / transferir</button>`:""}
+        ${esAsesor() && !esFin && puedeGestionarConversacion(c)?`<button class="btn red sos-button" onclick="pedirAyudaSenior()">🚨 SOS URGENTE · Hablar con senior</button>`:""}
+        ${normalizarTexto(urgencias[conversacionSeleccionada]?.estado)==="pendiente" && (esSenior()||esSupervisor())?`<button class="btn green" onclick="cerrarSOS('${conversacionSeleccionada}')">✓ Marcar SOS atendido</button>`:""}
+        ${!esFin && puedeGestionarConversacion(c)?`<button class="btn" onclick="abrirIndicacionInterna()">🔒 Indicación</button>`:""}
+        ${!esFin && puedeGestionarConversacion(c)?`<button class="btn red" onclick="finalizarConversacion()">Finalizar</button>`:""}
+      `;
+    }
+  });
+}
+
+function renderizarPanelSOS(){
+  const panel=$("sosPanel");
+  const list=$("sosList");
+  if(!panel || !list) return;
+  if(!esSenior() && !esSupervisor()){
+    panel.classList.add("hidden");
+    return;
+  }
+  const pendientes=Object.entries(urgencias)
+    .map(([id,u])=>({...u,_id:id}))
+    .filter(u=>normalizarTexto(u.estado)==="pendiente")
+    .sort((a,b)=>(b.fecha||0)-(a.fecha||0));
+
+  panel.classList.toggle("hidden",pendientes.length===0);
+  list.innerHTML=pendientes.map(u=>`
+    <button class="sos-item" onclick="abrirSOS('${escapeHtml(u._id)}')">
+      <div class="sos-item-title">🚨 SOS URGENTE</div>
+      <div>${escapeHtml(u.gestor||"Gestor")}</div>
+      <div>${escapeHtml(u.cliente||"Cliente")} ${u.dni?`· DNI ${escapeHtml(u.dni)}`:""}</div>
+      <small>${formatFecha(u.fecha)}</small>
+    </button>
+  `).join("");
+}
+
+function abrirSOS(id){
+  const u=urgencias[id];
+  if(!u) return;
+  const c=conversaciones[id];
+  if(c){
+    mostrarVista("principal");
+    setTimeout(()=>abrirConversacion(id,false),0);
+  }
+}
+
+async function cerrarSOS(id){
+  if(!esSenior()&&!esSupervisor()) return;
+  await update(ref(db,`urgencias/${id}`),{
+    estado:"atendido",
+    atendidoPor:nombreActual,
+    atendidoPorEmail:usuarioActual?.email||"",
+    atendidoFecha:Date.now()
+  });
 }
 
 function abrirIndicacionInterna(){
@@ -1908,6 +2041,11 @@ onAuthStateChanged(auth,async user=>{
   const infoUser=await resolverUsuarioPorEmail(user);
   nombreActual=infoUser.nombre;
   perfilActual=normalizarTexto(infoUser.perfil);
+  // Las cuentas conocidas tienen rol fijo por correo: evita que un registro viejo
+  // de /usuarios vuelva a mostrar funciones que no corresponden.
+  const rolFijo=rolFijoPorCorreo();
+  if(rolFijo) perfilActual=rolFijo;
+  if(emailsPorNombre[normalizarTexto(user.email)]) nombreActual=emailsPorNombre[normalizarTexto(user.email)];
 
   if(!nombreActual||!perfilActual){
     await signOut(auth);
@@ -1925,6 +2063,11 @@ onAuthStateChanged(auth,async user=>{
     perfilActual==="senior"?"Senior":"Gestor";
 
   greeting();
+  // Ocultamiento físico de funciones según rol. Paula y cualquier asesor no reciben Agenda ni Sin asignar.
+  const esGestionSuperior=esSenior()||esSupervisor();
+  $("navAgenda").classList.toggle("hidden",!esGestionSuperior);
+  $("navSinAsignar").classList.toggle("hidden",!esGestionSuperior);
+  renderizarPanelSOS();
 
   try{
     const snap=await get(ref(db,`presencia/${user.uid}`));
@@ -1944,6 +2087,7 @@ onAuthStateChanged(auth,async user=>{
   escucharPresencias();
   escucharAgenda();
   escucharVencimientos();
+  escucharUrgencias();
 
   mostrarVista("principal");
 });
@@ -1967,6 +2111,10 @@ window.limpiarBusqueda=limpiarBusqueda;
 window.abrirConversacion=abrirConversacion;
 window.abrirChatsDeGestor=abrirChatsDeGestor;
 window.abrirIndicacionInterna=abrirIndicacionInterna;
+window.pedirAyudaSenior=pedirAyudaSenior;
+window.abrirSOS=abrirSOS;
+window.cerrarSOS=cerrarSOS;
+window.guardarAcuerdoCliente=guardarAcuerdoCliente;
 window.enviarMensajeInterno=enviarMensajeInterno;
 window.enviarMensaje=enviarMensaje;
 window.finalizarConversacion=finalizarConversacion;
