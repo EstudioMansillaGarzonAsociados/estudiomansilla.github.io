@@ -7,7 +7,13 @@
 
 <style>
 *{box-sizing:border-box}
-body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f4f6f8;color:#222}
+
+body{
+margin:0;
+font-family:Arial,Helvetica,sans-serif;
+background:#f4f6f8;
+color:#222
+}
 
 .login-screen{
 min-height:100vh;
@@ -26,8 +32,16 @@ padding:35px;
 box-shadow:0 20px 60px rgba(0,0,0,.20)
 }
 
-.login-box h1{margin:0 0 10px;text-align:center}
-.login-box p{text-align:center;color:#777;margin-bottom:30px}
+.login-box h1{
+margin:0 0 10px;
+text-align:center
+}
+
+.login-box p{
+text-align:center;
+color:#777;
+margin-bottom:30px
+}
 
 .login-box input{
 width:100%;
@@ -49,7 +63,10 @@ font-size:16px;
 cursor:pointer
 }
 
-.login-box button:disabled{opacity:.7;cursor:wait}
+.login-box button:disabled{
+opacity:.7;
+cursor:wait
+}
 
 .login-error{
 color:#c62828;
@@ -91,8 +108,14 @@ padding:18px 20px;
 border-bottom:1px solid rgba(255,255,255,.12)
 }
 
-.user-info strong{display:block;margin-bottom:5px}
-.user-info small{opacity:.75}
+.user-info strong{
+display:block;
+margin-bottom:5px
+}
+
+.user-info small{
+opacity:.75
+}
 
 .nav{
 padding:15px 10px;
@@ -157,7 +180,10 @@ justify-content:space-between;
 padding:0 25px
 }
 
-.topbar h2{margin:0;font-size:20px}
+.topbar h2{
+margin:0;
+font-size:20px
+}
 
 .role-badge{
 padding:7px 12px;
@@ -174,14 +200,18 @@ height:calc(100vh - 65px);
 overflow:auto
 }
 
-.view.active{display:block}
+.view.active{
+display:block
+}
 
 .conversations-view{
 display:none;
 height:calc(100vh - 65px)
 }
 
-.conversations-view.active{display:flex}
+.conversations-view.active{
+display:flex
+}
 
 .conversation-list{
 width:370px;
@@ -218,16 +248,22 @@ border-bottom:1px solid #eee;
 cursor:pointer
 }
 
-.conversation-item:hover{background:#f5f8fa}
+.conversation-item:hover{
+background:#f5f8fa
+}
 
-.conversation-item.selected{background:#eaf4fb}
+.conversation-item.selected{
+background:#eaf4fb
+}
 
 .conversation-item strong{
 display:block;
 margin-bottom:5px
 }
 
-.conversation-item small{color:#777}
+.conversation-item small{
+color:#777
+}
 
 .conversation-status{
 display:inline-block;
@@ -283,7 +319,9 @@ align-items:flex-start;
 gap:20px
 }
 
-.chat-header h3{margin:0 0 5px}
+.chat-header h3{
+margin:0 0 5px
+}
 
 .chat-meta{
 color:#777;
@@ -329,6 +367,11 @@ background:#e5e7e9;
 color:#333
 }
 
+.btn-info{
+background:#5e35b1;
+color:white
+}
+
 .messages{
 flex:1;
 overflow:auto;
@@ -343,7 +386,9 @@ border-radius:12px;
 line-height:1.4
 }
 
-.message.client{background:white}
+.message.client{
+background:white
+}
 
 .message.agent{
 background:#d9efff;
@@ -408,7 +453,9 @@ display:none
 padding:25px
 }
 
-.page-title{margin-top:0}
+.page-title{
+margin-top:0
+}
 
 .active-panel{
 background:white;
@@ -425,7 +472,9 @@ align-items:center;
 margin-bottom:15px
 }
 
-.active-panel-header h3{margin:0}
+.active-panel-header h3{
+margin:0
+}
 
 .active-count{
 background:#e8f5e9;
@@ -449,7 +498,9 @@ padding:12px 15px;
 min-width:210px
 }
 
-.active-agent-name{font-weight:bold}
+.active-agent-name{
+font-weight:bold
+}
 
 .active-agent-team{
 font-size:12px;
@@ -500,7 +551,9 @@ align-items:flex-start;
 margin-bottom:15px
 }
 
-.agent-card h3{margin:0}
+.agent-card h3{
+margin:0
+}
 
 .agent-team{
 font-size:12px;
@@ -576,7 +629,9 @@ display:block;
 margin-bottom:5px
 }
 
-.unassigned-info small{color:#777}
+.unassigned-info small{
+color:#777
+}
 
 .unassigned-actions{
 display:flex;
@@ -584,36 +639,57 @@ gap:8px;
 flex-wrap:wrap
 }
 
+/* HISTORIAL */
+
 .history-tools{
 background:white;
-padding:15px;
+padding:18px;
 border-radius:12px;
-margin-bottom:15px;
-display:flex;
-gap:10px;
-align-items:center;
-flex-wrap:wrap;
-box-shadow:0 2px 8px rgba(0,0,0,.04)
+margin-bottom:18px;
+box-shadow:0 2px 8px rgba(0,0,0,.05)
 }
 
-.history-tools input{
+.history-tools-title{
+font-weight:bold;
+margin-bottom:10px
+}
+
+.history-search-row{
+display:flex;
+gap:10px;
+flex-wrap:wrap
+}
+
+.history-search-row input{
 flex:1;
 min-width:220px;
-padding:11px 13px;
+padding:11px 12px;
 border:1px solid #ddd;
 border-radius:8px;
 font-size:14px
 }
 
+.history-search-row button{
+padding:10px 15px
+}
+
+.history-counter{
+margin-top:10px;
+font-size:13px;
+color:#777
+}
+
 .history-table-wrapper{
 background:white;
 border-radius:12px;
-overflow:auto
+overflow:auto;
+box-shadow:0 2px 8px rgba(0,0,0,.05)
 }
 
 .history-table{
 width:100%;
-border-collapse:collapse
+border-collapse:collapse;
+min-width:800px
 }
 
 .history-table th,
@@ -624,12 +700,25 @@ text-align:left;
 font-size:13px
 }
 
-.history-table th{background:#f6f7f8}
+.history-table th{
+background:#f6f7f8;
+position:sticky;
+top:0;
+z-index:1
+}
 
-.dni-text{
+.history-client{
+font-weight:bold
+}
+
+.history-dni{
+font-size:11px;
 color:#777;
-font-size:12px;
 margin-top:3px
+}
+
+.history-actions{
+white-space:nowrap
 }
 
 .modal{
@@ -642,7 +731,9 @@ align-items:center;
 justify-content:center
 }
 
-.modal.show{display:flex}
+.modal.show{
+display:flex
+}
 
 .modal-box{
 width:500px;
@@ -652,7 +743,9 @@ border-radius:15px;
 padding:25px
 }
 
-.modal-box h3{margin-top:0}
+.modal-box h3{
+margin-top:0
+}
 
 .modal-box label{
 display:block;
@@ -675,6 +768,15 @@ gap:8px;
 margin-top:20px
 }
 
+.finalized-notice{
+background:#f3f3f3;
+color:#666;
+padding:12px 15px;
+border-top:1px solid #ddd;
+font-size:13px;
+display:none
+}
+
 @media(max-width:900px){
 .sidebar{width:190px}
 .main{margin-left:190px}
@@ -684,25 +786,14 @@ margin-top:20px
 @media(max-width:700px){
 .sidebar{width:65px}
 .logo{font-size:0;text-align:center}
-.logo:after{
-content:"CA";
-font-size:20px
-}
+.logo:after{content:"CA";font-size:20px}
 .user-info{display:none}
-.nav button{
-text-align:center;
-font-size:0
-}
+.nav button{text-align:center;font-size:0}
 .nav button:before{font-size:20px}
 .main{margin-left:65px}
 .conversations-view.active{flex-direction:column}
-.conversation-list{
-width:100%;
-height:40%
-}
-.chat-panel{
-height:60%
-}
+.conversation-list{width:100%;height:40%}
+.chat-panel{height:60%}
 }
 </style>
 </head>
@@ -738,7 +829,6 @@ Ingresar
 <div id="loginError" class="login-error"></div>
 
 </div>
-
 </div>
 
 
@@ -831,6 +921,10 @@ Conversaciones
 </header>
 
 
+<!-- =========================
+     CONVERSACIONES
+========================= -->
+
 <section
 id="conversationsView"
 class="conversations-view active"
@@ -848,7 +942,7 @@ Conversaciones
 id="conversationSearch"
 class="search"
 type="text"
-placeholder="Buscar por nombre, DNI, gestor o equipo..."
+placeholder="Buscar nombre, DNI, gestor o equipo..."
 oninput="aplicarBusquedaConversaciones()"
 >
 
@@ -897,10 +991,7 @@ Elegí una conversación de la lista para ver los mensajes.
 
 </div>
 
-<div
-id="chatActions"
-class="chat-actions"
-></div>
+<div id="chatActions" class="chat-actions"></div>
 
 </div>
 
@@ -914,12 +1005,26 @@ style="display:none;"
 ></div>
 
 
-<div id="noPermission" class="no-permission">
+<div
+id="noPermission"
+class="no-permission"
+>
 No tenés permisos para responder esta conversación.
 </div>
 
 
-<div id="messageForm" class="message-form">
+<div
+id="finalizedNotice"
+class="finalized-notice"
+>
+📁 Esta conversación está finalizada. Podés consultar toda la gestión, pero no enviar nuevos mensajes.
+</div>
+
+
+<div
+id="messageForm"
+class="message-form"
+>
 
 <textarea
 id="messageText"
@@ -948,13 +1053,22 @@ Enviar
 </section>
 
 
-<section id="unassignedView" class="view">
+<!-- =========================
+     SIN GESTOR
+========================= -->
+
+<section
+id="unassignedView"
+class="view"
+>
 
 <div class="unassigned-container">
 
 <div class="unassigned-banner">
 
-<h3>🆕 Chats sin gestor</h3>
+<h3>
+🆕 Chats sin gestor
+</h3>
 
 <p>
 Estos chats todavía no tienen un gestor asignado.
@@ -973,7 +1087,14 @@ class="unassigned-list"
 </section>
 
 
-<section id="agentsView" class="view">
+<!-- =========================
+     AGENTES
+========================= -->
+
+<section
+id="agentsView"
+class="view"
+>
 
 <div class="agents-container">
 
@@ -1009,7 +1130,6 @@ Cargando...
 
 </div>
 
-
 <div class="agents-tools">
 
 <input
@@ -1032,7 +1152,6 @@ Todos los equipos
 
 </div>
 
-
 <div
 id="agentsGrid"
 class="agents-grid"
@@ -1043,7 +1162,14 @@ class="agents-grid"
 </section>
 
 
-<section id="historyView" class="view">
+<!-- =========================
+     HISTORIAL
+========================= -->
+
+<section
+id="historyView"
+class="view"
+>
 
 <div class="history-container">
 
@@ -1054,13 +1180,25 @@ class="agents-grid"
 
 <div class="history-tools">
 
+<div class="history-tools-title">
+🔎 Buscar conversaciones finalizadas
+</div>
+
+<div class="history-search-row">
+
 <input
-id="historyDniSearch"
+id="historySearch"
 type="text"
-inputmode="numeric"
-placeholder="🔎 Buscar chat por DNI..."
-oninput="buscarHistorialPorDni()"
+placeholder="Buscar por DNI o nombre del cliente..."
+oninput="filtrarHistorial()"
 >
+
+<button
+class="btn btn-primary"
+onclick="filtrarHistorial()"
+>
+Buscar
+</button>
 
 <button
 class="btn btn-secondary"
@@ -1071,11 +1209,14 @@ Limpiar
 
 </div>
 
-
 <div
-id="historyResultInfo"
-style="color:#777;font-size:13px;margin:0 0 12px 3px;"
-></div>
+id="historyCounter"
+class="history-counter"
+>
+-
+</div>
+
+</div>
 
 
 <div class="history-table-wrapper">
@@ -1087,11 +1228,16 @@ style="color:#777;font-size:13px;margin:0 0 12px 3px;"
 <tr>
 
 <th>Cliente</th>
+
 <th>DNI</th>
+
 <th>Gestor</th>
+
 <th>Equipo</th>
-<th>Estado</th>
+
 <th>Fecha</th>
+
+<th>Gestión</th>
 
 </tr>
 
@@ -1112,7 +1258,14 @@ style="color:#777;font-size:13px;margin:0 0 12px 3px;"
 </div>
 
 
-<div id="transferModal" class="modal">
+<!-- =========================
+     MODAL TRANSFERENCIA
+========================= -->
+
+<div
+id="transferModal"
+class="modal"
+>
 
 <div class="modal-box">
 
@@ -1170,7 +1323,6 @@ Transferir
 </div>
 
 </div>
-
 </div>
 
 
@@ -1202,9 +1354,9 @@ onDisconnect
    FIREBASE
 ===================================================== */
 
-const firebaseConfig = {
+const firebaseConfig={
 
-apiKey:"AIzaSyBIwTvMk2FPGWMAjnqGdQg6up_D6ofUo_I",
+apiKey:"AIzaSyC1sOc1OaBwkzz5DXT3GD_OEcFFrkOua8",
 
 authDomain:"estudiomansilla.firebaseapp.com",
 
@@ -1223,7 +1375,9 @@ measurementId:"G-8710S26Z8L"
 };
 
 const app=initializeApp(firebaseConfig);
+
 const auth=getAuth(app);
+
 const db=getDatabase(app);
 
 
@@ -1350,14 +1504,18 @@ const emailsPorNombre={
 let usuarioActual=null;
 let nombreUsuarioActual="";
 let rolUsuarioActual="";
+
 let conversaciones={};
 let conversacionesArray=[];
+
 let conversacionActualId=null;
+
 let mensajesListener=null;
 let presencia={};
 let heartbeatInterval=null;
 let presenciaListener=null;
 let conversacionesListener=null;
+
 let transferenciaConversacionId=null;
 
 
@@ -1381,7 +1539,7 @@ const resultado=[];
 Object.entries(equipos).forEach(([equipo,datos])=>{
 
 if(
-datos.seniors.includes(nombre) ||
+datos.seniors.includes(nombre)||
 datos.gestores.includes(nombre)
 ){
 
@@ -1465,7 +1623,7 @@ return esSupervisor()||esSenior();
 function normalizarDni(valor){
 
 if(
-valor===null ||
+valor===null||
 valor===undefined
 ){
 
@@ -1489,41 +1647,28 @@ c.dni,
 c.DNI,
 c.documento,
 c.document,
-c.documentNumber,
-
 c.clienteDni,
 c.clienteDNI,
 c.dniCliente,
-
+c.documentoCliente,
 c.clientDni,
 c.clientDNI,
 
-c.cliente &&
-c.cliente.dni,
+c.cliente?.dni,
+c.cliente?.DNI,
+c.cliente?.documento,
 
-c.cliente &&
-c.cliente.DNI,
+c.datosCliente?.dni,
+c.datosCliente?.DNI,
+c.datosCliente?.documento,
 
-c.cliente &&
-c.cliente.documento,
+c.usuario?.dni,
+c.usuario?.DNI,
+c.usuario?.documento,
 
-c.cliente &&
-c.cliente.document,
-
-c.datosCliente &&
-c.datosCliente.dni,
-
-c.datosCliente &&
-c.datosCliente.DNI,
-
-c.datosCliente &&
-c.datosCliente.documento,
-
-c.usuario &&
-c.usuario.dni,
-
-c.usuario &&
-c.usuario.DNI
+c.clienteData?.dni,
+c.clienteData?.DNI,
+c.clienteData?.documento
 
 ];
 
@@ -1531,11 +1676,7 @@ for(const valor of candidatos){
 
 const dni=normalizarDni(valor);
 
-if(dni){
-
-return dni;
-
-}
+if(dni)return dni;
 
 }
 
@@ -1557,51 +1698,24 @@ const candidatos=[
 c.clienteNombre,
 c.nombreCliente,
 c.nombreCompleto,
-c.clientName,
-
-typeof c.cliente==="string"
-?c.cliente
-:null,
-
-c.cliente &&
-typeof c.cliente==="object"
-?c.cliente.nombre
-:null,
-
-c.cliente &&
-typeof c.cliente==="object"
-?c.cliente.nombreCompleto
-:null,
-
-c.datosCliente &&
-c.datosCliente.nombre,
-
-c.datosCliente &&
-c.datosCliente.nombreCompleto,
-
-c.usuario &&
-c.usuario.nombre
+c.cliente?.nombre,
+c.cliente?.nombreCompleto,
+c.datosCliente?.nombre,
+c.datosCliente?.nombreCompleto,
+c.clienteData?.nombre,
+c.clienteData?.nombreCompleto
 
 ];
 
 for(const valor of candidatos){
 
 if(
-valor!==null &&
-valor!==undefined &&
-String(valor).trim()!==""
+valor!==undefined&&
+valor!==null&&
+String(valor).trim()!=""
 ){
 
-const texto=String(valor).trim();
-
-if(
-texto.toLowerCase()!=="cliente" &&
-texto.toLowerCase()!=="sin nombre"
-){
-
-return texto;
-
-}
+return String(valor).trim();
 
 }
 
@@ -1626,11 +1740,24 @@ const dni=obtenerDniConversacion(c);
 
 if(dni){
 
-return "DNI: "+dni;
+return dni;
 
 }
 
-return "Cliente";
+const telefono=
+c?.telefono||
+c?.phone||
+c?.celular||
+c?.mobile||
+"";
+
+if(telefono){
+
+return String(telefono);
+
+}
+
+return "Sin identificar";
 
 }
 
@@ -1647,9 +1774,17 @@ if(esAdministrador())return true;
 
 if(rolUsuarioActual!=="asesor")return false;
 
-if(!c.asesorAsignado&&!c.asesorEmail)return false;
+if(
+!c.asesorAsignado&&
+!c.asesorEmail
+){
 
-const equipo=obtenerEquipoConversacion(c);
+return false;
+
+}
+
+const equipo=
+obtenerEquipoConversacion(c);
 
 if(!equipo)return false;
 
@@ -1677,7 +1812,14 @@ if(!c)return false;
 
 if(c.estado==="finalizada")return false;
 
-if(c.asesorAsignado||c.asesorEmail)return false;
+if(
+c.asesorAsignado||
+c.asesorEmail
+){
+
+return false;
+
+}
 
 return esAdministrador();
 
@@ -1685,10 +1827,9 @@ return esAdministrador();
 
 
 /*
-Los asesores pueden transferir dentro
-de sus equipos.
-Senior y Supervisor pueden transferir
-a cualquier equipo.
+   IMPORTANTE:
+   Ahora los asesores también pueden transferir
+   conversaciones que pueden gestionar.
 */
 
 function puedeTransferirConversacion(c){
@@ -1781,11 +1922,6 @@ mensaje=
 mensaje=
 "auth/network-request-failed: problema de conexión.";
 
-}else if(err.code==="auth/operation-not-allowed"){
-
-mensaje=
-"auth/operation-not-allowed: el acceso por correo y contraseña no está habilitado en Firebase.";
-
 }else{
 
 mensaje=
@@ -1822,7 +1958,7 @@ nombreUsuarioActual=
 obtenerNombrePorEmail(user.email);
 
 if(
-!nombreUsuarioActual &&
+!nombreUsuarioActual&&
 user.displayName
 ){
 
@@ -1865,9 +2001,7 @@ rolUsuarioActual.toUpperCase();
 document.getElementById(
 "navUnassigned"
 ).style.display=
-esAdministrador()
-?"block"
-:"none";
+esAdministrador()?"block":"none";
 
 
 setTimeout(()=>{
@@ -1875,47 +2009,30 @@ setTimeout(()=>{
 try{
 cargarConversaciones();
 }catch(err){
-console.error(
-"Error cargando conversaciones:",
-err
-);
+console.error(err);
 }
 
 try{
 cargarFiltrosAgentes();
 }catch(err){
-console.error(
-"Error cargando filtros:",
-err
-);
+console.error(err);
 }
 
 try{
 cargarPresencia();
 }catch(err){
-console.error(
-"Error cargando presencia:",
-err
-);
+console.error(err);
 }
 
-iniciarPresencia().catch(err=>{
-console.error(
-"Error de presencia:",
-err
-);
-});
+iniciarPresencia()
+.catch(err=>console.error(err));
 
 },300);
 
 }else{
 
-detenerPresenciaSeguro().catch(err=>{
-console.error(
-"Error cerrando presencia:",
-err
-);
-});
+detenerPresenciaSeguro()
+.catch(err=>console.error(err));
 
 usuarioActual=null;
 nombreUsuarioActual="";
@@ -1965,9 +2082,8 @@ return{
 
 nombre:nombreUsuarioActual,
 
-email:usuarioActual
-?usuarioActual.email
-:"",
+email:usuarioActual?
+usuarioActual.email:"",
 
 rol:rolUsuarioActual,
 
@@ -2035,9 +2151,7 @@ err
 
 }
 
-clearInterval(
-heartbeatInterval
-);
+clearInterval(heartbeatInterval);
 
 heartbeatInterval=
 setInterval(async()=>{
@@ -2061,10 +2175,7 @@ lastSeen:Date.now()
 
 }catch(err){
 
-console.error(
-"Error actualizando presencia:",
-err
-);
+console.error(err);
 
 }
 
@@ -2075,9 +2186,7 @@ err
 
 async function detenerPresenciaSeguro(){
 
-clearInterval(
-heartbeatInterval
-);
+clearInterval(heartbeatInterval);
 
 heartbeatInterval=null;
 
@@ -2086,30 +2195,36 @@ if(!usuarioActual)return;
 try{
 
 await set(
+
 ref(
 db,
 `presencia/${usuarioActual.uid}`
 ),
+
 {
 
 nombre:nombreUsuarioActual,
+
 email:usuarioActual.email,
+
 rol:rolUsuarioActual,
-equipo:obtenerEquipoDePersona(
+
+equipo:
+obtenerEquipoDePersona(
 nombreUsuarioActual
 ),
+
 online:false,
+
 lastSeen:Date.now()
 
 }
+
 );
 
 }catch(err){
 
-console.error(
-"No se pudo cerrar presencia:",
-err
-);
+console.error(err);
 
 }
 
@@ -2147,10 +2262,7 @@ renderizarAgentes();
 
 error=>{
 
-console.error(
-"No se pudo leer presencia:",
-error
-);
+console.error(error);
 
 presencia={};
 
@@ -2164,10 +2276,7 @@ renderizarAgentes();
 
 }catch(err){
 
-console.error(
-"Error cargando presencia:",
-err
-);
+console.error(err);
 
 }
 
@@ -2233,10 +2342,8 @@ renderizarAgentes();
 actualizarContadorSinGestor();
 
 if(
-conversacionActualId &&
-conversaciones[
-conversacionActualId
-]
+conversacionActualId&&
+conversaciones[conversacionActualId]
 ){
 
 mostrarConversacion(
@@ -2270,8 +2377,7 @@ No se pudieron cargar las conversaciones.
 
 <small>
 ${escapeHtml(
-error.message||
-"Error de Firebase"
+error.message||"Error de Firebase"
 )}
 </small>
 
@@ -2285,10 +2391,7 @@ error.message||
 
 }catch(err){
 
-console.error(
-"Error iniciando conversaciones:",
-err
-);
+console.error(err);
 
 }
 
@@ -2303,9 +2406,9 @@ function esChatSinGestor(c){
 
 if(!c)return false;
 
-return!(
-c.asesorAsignado||
-c.asesorEmail
+return(
+!c.asesorAsignado&&
+!c.asesorEmail
 );
 
 }
@@ -2314,7 +2417,9 @@ c.asesorEmail
 function obtenerChatsSinGestor(){
 
 return conversacionesArray
+
 .filter(c=>esChatSinGestor(c))
+
 .filter(c=>c.estado!=="finalizada");
 
 }
@@ -2335,7 +2440,9 @@ document.getElementById(
 if(cantidad>0){
 
 badge.textContent=cantidad;
-badge.style.display="inline-block";
+
+badge.style.display=
+"inline-block";
 
 }else{
 
@@ -2372,9 +2479,7 @@ text-align:center;
 color:#777;
 ">
 
-<h3>
-✅ No hay chats sin gestor
-</h3>
+<h3>✅ No hay chats sin gestor</h3>
 
 <p>
 Todos los chats están asignados.
@@ -2417,23 +2522,18 @@ return`
 ${escapeHtml(cliente)}
 </strong>
 
-${dni?
-`<div class="dni-text">
-DNI: ${escapeHtml(dni)}
-</div>`
-:""}
-
 <small>
 
-${
-equipo
-?"Equipo: "+escapeHtml(equipo)
-:"Sin equipo"
-}
+${dni?
+"DNI: "+escapeHtml(dni)+" · ":""}
 
-${fecha
-?" · "+escapeHtml(fecha)
-:""}
+${equipo?
+"Equipo: "+escapeHtml(equipo):
+"Sin equipo"}
+
+${fecha?
+" · "+escapeHtml(fecha):
+""}
 
 </small>
 
@@ -2466,8 +2566,7 @@ Asignar
 }
 
 
-window.abrirChatDesdeSinGestor=
-function(id){
+window.abrirChatDesdeSinGestor=function(id){
 
 mostrarVista("conversations");
 
@@ -2478,6 +2577,8 @@ mostrarConversacion(id);
 
 /* =====================================================
    CONVERSACIONES VISIBLES
+   IMPORTANTE:
+   LAS FINALIZADAS YA NO APARECEN ACÁ
 ===================================================== */
 
 function renderizarConversaciones(
@@ -2496,14 +2597,25 @@ const lista=
 listaPersonalizada||
 conversacionesArray;
 
+
 document.getElementById(
 "conversationListTitle"
 ).textContent=titulo;
 
+
+/*
+   Solo activas.
+   Las finalizadas quedan exclusivamente
+   en Historial.
+*/
+
 const visibles=
-lista.filter(c=>
-puedeVerConversacion(c)
-);
+lista
+
+.filter(c=>c.estado!=="finalizada")
+
+.filter(c=>puedeVerConversacion(c));
+
 
 if(visibles.length===0){
 
@@ -2515,7 +2627,7 @@ color:#777;
 text-align:center;
 ">
 
-No hay conversaciones disponibles.
+No hay conversaciones activas disponibles.
 
 </div>
 
@@ -2524,6 +2636,7 @@ No hay conversaciones disponibles.
 return;
 
 }
+
 
 container.innerHTML=
 visibles.map(c=>{
@@ -2545,19 +2658,16 @@ const estado=
 c.estado||"abierta";
 
 let clase="status-open";
+
 let texto="Activa";
 
-if(estado==="finalizada"){
-
-clase="status-finished";
-texto="Finalizada";
-
-}else if(
+if(
 estado==="espera"||
 estado==="esperando"
 ){
 
 clase="status-waiting";
+
 texto="En espera";
 
 }
@@ -2566,9 +2676,8 @@ return`
 
 <div
 class="conversation-item ${
-conversacionActualId===c.id
-?"selected"
-:""
+conversacionActualId===c.id?
+"selected":""
 }"
 onclick="mostrarConversacion('${escapeAttribute(c.id)}')"
 >
@@ -2577,23 +2686,14 @@ onclick="mostrarConversacion('${escapeAttribute(c.id)}')"
 ${escapeHtml(cliente)}
 </strong>
 
-${
-dni &&
-obtenerNombreCliente(c)
-?
-`<div class="dni-text">
-DNI: ${escapeHtml(dni)}
-</div>`
-:""
-}
-
 <small>
 
-${
-equipo
-?"Equipo "+escapeHtml(equipo)
-:"Sin equipo"
-}
+${dni?
+"DNI "+escapeHtml(dni)+" · ":""}
+
+${equipo?
+"Equipo "+escapeHtml(equipo):
+"Sin equipo"}
 
 ·
 
@@ -2616,40 +2716,26 @@ ${texto}
 }
 
 
-/* =====================================================
-   BUSQUEDA CONVERSACIONES
-===================================================== */
-
-window.aplicarBusquedaConversaciones=
-function(){
+window.aplicarBusquedaConversaciones=function(){
 
 const texto=
-document
-.getElementById(
+document.getElementById(
 "conversationSearch"
-)
-.value
+).value
 .toLowerCase()
 .trim();
-
-const dniBuscado=
-normalizarDni(texto);
 
 const filtradas=
 conversacionesArray
 
-.filter(c=>
-puedeVerConversacion(c)
-)
+.filter(c=>c.estado!=="finalizada")
+
+.filter(c=>puedeVerConversacion(c))
 
 .filter(c=>{
 
 const cliente=
 obtenerCliente(c)
-.toLowerCase();
-
-const nombre=
-obtenerNombreCliente(c)
 .toLowerCase();
 
 const dni=
@@ -2661,19 +2747,16 @@ const gestor=
 
 const equipo=
 (
-obtenerEquipoConversacion(c)||
-""
-).toLowerCase();
+obtenerEquipoConversacion(c)||""
+)
+.toLowerCase();
 
 return(
 
 cliente.includes(texto)||
 
-nombre.includes(texto)||
-
-(
-dniBuscado &&
-dni.includes(dniBuscado)
+dni.includes(
+normalizarDni(texto)
 )||
 
 gestor.includes(texto)||
@@ -2683,6 +2766,7 @@ equipo.includes(texto)
 );
 
 });
+
 
 renderizarConversaciones(
 filtradas,
@@ -2696,8 +2780,7 @@ filtradas,
    MOSTRAR CHAT
 ===================================================== */
 
-window.mostrarConversacion=
-function(id){
+window.mostrarConversacion=function(id){
 
 const conversation=
 conversaciones[id];
@@ -2750,16 +2833,29 @@ conversation.asesorAsignado||
 "Sin gestor";
 
 
-document.getElementById(
-"chatMeta"
-).textContent=
-`${
-dni
-?"DNI: "+dni+" · "
-:""
-}Equipo: ${
+let meta=
+`Equipo: ${
 equipo||"Sin equipo"
 } · Gestor: ${gestor}`;
+
+
+if(dni){
+
+meta+=` · DNI: ${dni}`;
+
+}
+
+
+if(conversation.estado==="finalizada"){
+
+meta+=" · FINALIZADA";
+
+}
+
+
+document.getElementById(
+"chatMeta"
+).textContent=meta;
 
 
 renderizarAccionesChat(
@@ -2767,6 +2863,8 @@ conversation
 );
 
 cargarMensajes(id);
+
+actualizarFormularioMensaje();
 
 renderizarConversaciones();
 
@@ -2786,7 +2884,25 @@ document.getElementById(
 
 container.innerHTML="";
 
-if(c.estado==="finalizada")return;
+
+if(c.estado==="finalizada"){
+
+const btn=
+document.createElement("button");
+
+btn.className=
+"btn btn-secondary";
+
+btn.textContent=
+"📁 Finalizada";
+
+btn.disabled=true;
+
+container.appendChild(btn);
+
+return;
+
+}
 
 
 if(puedeTomarConversacion(c)){
@@ -2818,7 +2934,8 @@ document.createElement("button");
 btn.className=
 "btn btn-warning";
 
-btn.textContent="Transferir";
+btn.textContent=
+"Transferir";
 
 btn.onclick=()=>{
 
@@ -2839,7 +2956,8 @@ document.createElement("button");
 btn.className=
 "btn btn-danger";
 
-btn.textContent="Finalizar";
+btn.textContent=
+"Finalizar";
 
 btn.onclick=()=>{
 
@@ -2904,10 +3022,7 @@ renderizarMensajes(lista);
 
 error=>{
 
-console.error(
-"Error leyendo mensajes:",
-error
-);
+console.error(error);
 
 document.getElementById(
 "messages"
@@ -2941,6 +3056,7 @@ document.getElementById(
 
 container.innerHTML="";
 
+
 if(lista.length===0){
 
 container.innerHTML=`
@@ -2959,13 +3075,17 @@ No hay mensajes todavía.
 
 }
 
+
 lista.forEach(mensaje=>{
 
 const tipo=
-determinarTipoMensaje(mensaje);
+determinarTipoMensaje(
+mensaje
+);
 
 const div=
 document.createElement("div");
+
 
 if(tipo==="system"){
 
@@ -2976,28 +3096,31 @@ div.className=
 
 div.className=
 `message ${
-tipo==="agent"
-?"agent"
-:"client"
+tipo==="agent"?
+"agent":
+"client"
 }`;
 
 }
+
 
 const autor=
 mensaje.nombre||
 mensaje.autor||
 mensaje.usuario||
 (
-tipo==="agent"
-?"Gestor"
-:"Cliente"
+tipo==="agent"?
+"Gestor":
+"Cliente"
 );
+
 
 const texto=
 mensaje.texto||
 mensaje.mensaje||
 mensaje.text||
 "";
+
 
 div.innerHTML=`
 
@@ -3021,6 +3144,7 @@ container.appendChild(div);
 
 });
 
+
 container.scrollTop=
 container.scrollHeight;
 
@@ -3028,6 +3152,10 @@ actualizarFormularioMensaje();
 
 }
 
+
+/* =====================================================
+   TIPO MENSAJE
+===================================================== */
 
 function determinarTipoMensaje(mensaje){
 
@@ -3074,14 +3202,14 @@ return"agent";
 
 
 if(
-autor &&
-autor===
-nombreUsuarioActual.toLowerCase()
+autor&&
+autor===nombreUsuarioActual.toLowerCase()
 ){
 
 return"agent";
 
 }
+
 
 return"client";
 
@@ -3104,23 +3232,52 @@ document.getElementById(
 "noPermission"
 );
 
+const finalizedNotice=
+document.getElementById(
+"finalizedNotice"
+);
+
+
 if(!conversacionActualId){
 
 form.style.display="none";
 
 noPermission.style.display="none";
 
+finalizedNotice.style.display="none";
+
 return;
 
 }
+
 
 const conversation=
 conversaciones[
 conversacionActualId
 ];
 
+
 if(
-conversation &&
+conversation&&
+conversation.estado==="finalizada"
+){
+
+form.style.display="none";
+
+noPermission.style.display="none";
+
+finalizedNotice.style.display="block";
+
+return;
+
+}
+
+
+finalizedNotice.style.display="none";
+
+
+if(
+conversation&&
 puedeGestionarConversacion(
 conversation
 )
@@ -3145,8 +3302,7 @@ noPermission.style.display="block";
    ENVIAR
 ===================================================== */
 
-window.enviarMensaje=
-async function(){
+window.enviarMensaje=async function(){
 
 if(!conversacionActualId)return;
 
@@ -3155,9 +3311,12 @@ conversaciones[
 conversacionActualId
 ];
 
-if(!puedeGestionarConversacion(
+
+if(
+!puedeGestionarConversacion(
 conversation
-)){
+)
+){
 
 alert(
 "No tenés permisos para responder esta conversación."
@@ -3166,6 +3325,7 @@ alert(
 return;
 
 }
+
 
 const textarea=
 document.getElementById(
@@ -3176,6 +3336,7 @@ const texto=
 textarea.value.trim();
 
 if(!texto)return;
+
 
 try{
 
@@ -3188,20 +3349,28 @@ db,
 const nuevoMensaje=
 push(mensajesRef);
 
+
 await set(
 nuevoMensaje,
 {
 
 texto:texto,
+
 mensaje:texto,
+
 nombre:nombreUsuarioActual,
+
 autor:nombreUsuarioActual,
+
 remitente:"gestor",
+
 tipo:"agent",
+
 timestamp:Date.now()
 
 }
 );
+
 
 await update(
 
@@ -3213,14 +3382,18 @@ db,
 {
 
 estado:"abierta",
+
 ultimoMensaje:texto,
+
 ultimaActividad:Date.now()
 
 }
 
 );
 
+
 textarea.value="";
+
 
 }catch(err){
 
@@ -3242,15 +3415,17 @@ alert(
    TOMAR
 ===================================================== */
 
-window.tomarConversacion=
-async function(id){
+window.tomarConversacion=async function(id){
 
 const conversation=
 conversaciones[id];
 
-if(!puedeTomarConversacion(
+
+if(
+!puedeTomarConversacion(
 conversation
-)){
+)
+){
 
 alert(
 "No podés tomar esta conversación."
@@ -3260,17 +3435,21 @@ return;
 
 }
 
+
 try{
 
 const updates={};
+
 
 updates[
 `conversaciones/${id}/asesorAsignado`
 ]=nombreUsuarioActual;
 
+
 updates[
 `conversaciones/${id}/asesorEmail`
 ]=usuarioActual.email;
+
 
 updates[
 `conversaciones/${id}/equipo`
@@ -3278,25 +3457,26 @@ updates[
 nombreUsuarioActual
 );
 
+
 updates[
 `conversaciones/${id}/estado`
 ]="abierta";
 
+
 updates[
 `conversaciones/${id}/ultimaActividad`
 ]=Date.now();
+
 
 await update(
 ref(db),
 updates
 );
 
+
 }catch(err){
 
-console.error(
-"Error tomando conversación:",
-err
-);
+console.error(err);
 
 alert(
 "No se pudo tomar la conversación."
@@ -3311,15 +3491,17 @@ alert(
    FINALIZAR
 ===================================================== */
 
-window.finalizarConversacion=
-async function(id){
+window.finalizarConversacion=async function(id){
 
 const conversation=
 conversaciones[id];
 
-if(!puedeGestionarConversacion(
+
+if(
+!puedeGestionarConversacion(
 conversation
-)){
+)
+){
 
 alert(
 "No tenés permisos para finalizar esta conversación."
@@ -3329,11 +3511,13 @@ return;
 
 }
 
+
 if(
 !confirm(
 "¿Querés finalizar esta conversación?"
 )
 )return;
+
 
 try{
 
@@ -3347,20 +3531,24 @@ db,
 {
 
 estado:"finalizada",
-finalizadaPor:nombreUsuarioActual,
-fechaFinalizacion:Date.now(),
-ultimaActividad:Date.now()
+
+finalizadaPor:
+nombreUsuarioActual,
+
+fechaFinalizacion:
+Date.now(),
+
+ultimaActividad:
+Date.now()
 
 }
 
 );
 
+
 }catch(err){
 
-console.error(
-"Error finalizando conversación:",
-err
-);
+console.error(err);
 
 alert(
 "No se pudo finalizar la conversación."
@@ -3375,14 +3563,29 @@ alert(
    TRANSFERENCIA
 ===================================================== */
 
-window.abrirTransferencia=
-function(id){
+window.abrirTransferencia=function(id){
 
 const conversation=
 conversaciones[id];
 
+
 if(
-!conversation ||
+!puedeTransferirConversacion(
+conversation
+)
+){
+
+alert(
+"No podés transferir esta conversación."
+);
+
+return;
+
+}
+
+
+if(
+!conversation||
 conversation.estado==="finalizada"
 ){
 
@@ -3394,24 +3597,15 @@ return;
 
 }
 
-if(!puedeTransferirConversacion(
-conversation
-)){
-
-alert(
-"No tenés permisos para transferir esta conversación."
-);
-
-return;
-
-}
 
 transferenciaConversacionId=id;
+
 
 const teamSelect=
 document.getElementById(
 "transferTeam"
 );
+
 
 teamSelect.innerHTML=`
 
@@ -3423,26 +3617,34 @@ Seleccionar equipo
 
 
 /*
-Senior/Supervisor:
-todos los equipos.
+   Senior y Supervisor:
+   todos los equipos.
 
-Asesor:
-solamente sus equipos.
+   Asesor:
+   solamente sus equipos.
 */
 
-let equiposPermitidos=
+let equiposDisponibles=
 Object.keys(equipos);
+
 
 if(!esAdministrador()){
 
-equiposPermitidos=
+const misEquipos=
 obtenerEquiposDelUsuario(
 nombreUsuarioActual
 );
 
+equiposDisponibles=
+equiposDisponibles.filter(
+equipo=>
+misEquipos.includes(equipo)
+);
+
 }
 
-equiposPermitidos.forEach(
+
+equiposDisponibles.forEach(
 equipo=>{
 
 const option=
@@ -3451,15 +3653,20 @@ document.createElement(
 );
 
 option.value=equipo;
+
 option.textContent=equipo;
 
 teamSelect.appendChild(
 option
 );
 
-}
-);
+});
 
+
+/*
+   Si ya conocemos el equipo de la conversación,
+   lo seleccionamos automáticamente.
+*/
 
 const equipoActual=
 obtenerEquipoConversacion(
@@ -3467,8 +3674,8 @@ conversation
 );
 
 if(
-equipoActual &&
-equiposPermitidos.includes(
+equipoActual&&
+equiposDisponibles.includes(
 equipoActual
 )
 ){
@@ -3488,32 +3695,30 @@ document.getElementById(
 };
 
 
-window.cerrarTransferencia=
-function(){
+window.cerrarTransferencia=function(){
 
 document.getElementById(
 "transferModal"
-).classList.remove(
-"show"
-);
+).classList.remove("show");
 
 transferenciaConversacionId=null;
 
 };
 
 
-window.cargarGestoresTransferencia=
-function(){
+window.cargarGestoresTransferencia=function(){
 
 const equipo=
 document.getElementById(
 "transferTeam"
 ).value;
 
+
 const select=
 document.getElementById(
 "transferAgent"
 );
+
 
 select.innerHTML=`
 
@@ -3523,18 +3728,15 @@ Seleccionar gestor
 
 `;
 
+
 if(!equipo)return;
 
-if(!equipos[equipo])return;
+
+const gestores=
+equipos[equipo]?.gestores||[];
 
 
-/*
-Solo mostramos gestores que tienen
-correo configurado porque Firebase
-necesita el correo para asignarlo.
-*/
-
-equipos[equipo].gestores.forEach(
+gestores.forEach(
 nombre=>{
 
 const emailEntry=
@@ -3546,26 +3748,18 @@ emailsPorNombre
 n===nombre
 );
 
+
+/*
+   Solamente mostramos gestores
+   que tengan email configurado.
+*/
+
 if(!emailEntry){
-
-const option=
-document.createElement(
-"option"
-);
-
-option.value="";
-option.textContent=
-`${nombre} (sin correo configurado)`;
-
-option.disabled=true;
-
-select.appendChild(
-option
-);
 
 return;
 
 }
+
 
 const option=
 document.createElement(
@@ -3573,15 +3767,15 @@ document.createElement(
 );
 
 option.value=nombre;
+
 option.textContent=nombre;
 
 select.appendChild(
 option
 );
 
-}
+});
 
-);
 
 };
 
@@ -3592,15 +3786,18 @@ async function(){
 if(!transferenciaConversacionId)
 return;
 
+
 const equipo=
 document.getElementById(
 "transferTeam"
 ).value;
 
+
 const gestor=
 document.getElementById(
 "transferAgent"
 ).value;
+
 
 if(!equipo||!gestor){
 
@@ -3612,27 +3809,35 @@ return;
 
 }
 
+
 const conversation=
 conversaciones[
 transferenciaConversacionId
 ];
 
-if(!conversation){
+
+if(
+!puedeTransferirConversacion(
+conversation
+)
+){
 
 alert(
-"No se encontró la conversación."
+"No podés transferir esta conversación."
 );
 
 return;
 
 }
 
-if(!puedeTransferirConversacion(
-conversation
-)){
+
+if(
+!conversation||
+conversation.estado==="finalizada"
+){
 
 alert(
-"No tenés permisos para transferir esta conversación."
+"Esta conversación no puede ser transferida."
 );
 
 return;
@@ -3641,21 +3846,20 @@ return;
 
 
 /*
-Validamos que el equipo seleccionado
-sea permitido para el usuario.
+   Seguridad adicional:
+   un asesor solamente puede transferir
+   a un gestor de uno de sus equipos.
 */
 
 if(!esAdministrador()){
 
-const equiposPermitidos=
+const misEquipos=
 obtenerEquiposDelUsuario(
 nombreUsuarioActual
 );
 
 if(
-!equiposPermitidos.includes(
-equipo
-)
+!misEquipos.includes(equipo)
 ){
 
 alert(
@@ -3678,12 +3882,8 @@ emailsPorNombre
 nombre===gestor
 );
 
-const emailGestor=
-emailEntry
-?emailEntry[0]
-:"";
 
-if(!emailGestor){
+if(!emailEntry){
 
 alert(
 "El gestor seleccionado no tiene un correo configurado."
@@ -3694,7 +3894,14 @@ return;
 }
 
 
+const emailGestor=
+emailEntry[0];
+
+
 try{
+
+const ahora=Date.now();
+
 
 await update(
 
@@ -3713,17 +3920,27 @@ asesorEmail:emailGestor,
 
 estado:"abierta",
 
-transferidoPor:nombreUsuarioActual,
+transferidoPor:
+nombreUsuarioActual,
 
-fechaTransferencia:Date.now(),
+fechaTransferencia:
+ahora,
 
-ultimaActividad:Date.now()
+ultimaActividad:
+ahora
 
 }
 
 );
 
+
 cerrarTransferencia();
+
+
+/*
+   Volvemos a mostrar la conversación
+   para actualizar el encabezado.
+*/
 
 if(
 conversacionActualId===
@@ -3736,6 +3953,7 @@ transferenciaConversacionId
 
 }
 
+
 }catch(err){
 
 console.error(
@@ -3745,7 +3963,7 @@ err
 
 alert(
 "No se pudo transferir la conversación: "+
-(err.message||"error desconocido")
+(err.message||"error de Firebase")
 );
 
 }
@@ -3766,13 +3984,19 @@ nombre=>
 perfiles[nombre]==="asesor"
 );
 
-if(esAdministrador())
+
+if(esAdministrador()){
+
 return agentes;
+
+}
+
 
 const misEquipos=
 obtenerEquiposDelUsuario(
 nombreUsuarioActual
 );
+
 
 return agentes.filter(
 nombre=>{
@@ -3847,19 +4071,9 @@ Todos los equipos
 
 `;
 
-let equiposMostrar=
-Object.keys(equipos);
 
-if(!esAdministrador()){
-
-equiposMostrar=
-obtenerEquiposDelUsuario(
-nombreUsuarioActual
-);
-
-}
-
-equiposMostrar.forEach(
+Object.keys(equipos)
+.forEach(
 equipo=>{
 
 const option=
@@ -3868,6 +4082,7 @@ document.createElement(
 );
 
 option.value=equipo;
+
 option.textContent=equipo;
 
 select.appendChild(
@@ -3888,25 +4103,27 @@ document.getElementById(
 
 if(!grid)return;
 
+
 const search=(
 
 document.getElementById(
 "agentSearch"
-)?.value||
-""
+)?.value||""
 
 )
 .toLowerCase()
 .trim();
 
+
 const teamFilter=
 document.getElementById(
 "agentTeamFilter"
-)?.value||
-"";
+)?.value||"";
+
 
 let agentes=
 obtenerAgentesVisibles();
+
 
 agentes=
 agentes.filter(
@@ -3917,11 +4134,14 @@ obtenerEquiposDelUsuario(
 nombre
 );
 
+
 return(
 
 nombre
 .toLowerCase()
-.includes(search)&&
+.includes(search)
+
+&&
 
 (
 !teamFilter||
@@ -3932,8 +4152,7 @@ teamFilter
 
 );
 
-}
-);
+});
 
 
 if(agentes.length===0){
@@ -3962,13 +4181,10 @@ grid.innerHTML=
 agentes.map(
 nombre=>{
 
-const equiposAgente=
-obtenerEquiposDelUsuario(
+const equipo=
+obtenerEquipoDePersona(
 nombre
 );
-
-const equipo=
-equiposAgente.join(", ");
 
 const total=
 contarCuentasDeAgente(
@@ -3981,13 +4197,16 @@ nombre
 );
 
 const registro=
-Object.values(presencia)
+Object.values(
+presencia
+)
 .find(
 p=>p&&p.nombre===nombre
 );
 
 const activo=
 estaActivo(registro);
+
 
 return`
 
@@ -4008,16 +4227,14 @@ Equipo: ${escapeHtml(equipo)}
 </div>
 
 <div class="${
-activo
-?"agent-online"
-:"agent-offline"
+activo?
+"agent-online":
+"agent-offline"
 }">
 
-${
-activo
-?"🟢 Activo"
-:"⚪ Desconectado"
-}
+${activo?
+"🟢 Activo":
+"⚪ Desconectado"}
 
 </div>
 
@@ -4083,15 +4300,19 @@ document.getElementById(
 
 if(!container||!count)return;
 
+
 const agentes=
 obtenerAgentesVisibles();
+
 
 const activos=
 agentes.filter(
 nombre=>{
 
 const registro=
-Object.values(presencia)
+Object.values(
+presencia
+)
 .find(
 p=>p&&p.nombre===nombre
 );
@@ -4100,8 +4321,10 @@ return estaActivo(registro);
 
 });
 
+
 count.textContent=
 activos.length;
+
 
 if(activos.length===0){
 
@@ -4117,14 +4340,15 @@ return;
 
 }
 
+
 container.innerHTML=
 activos.map(
 nombre=>{
 
 const equipo=
-obtenerEquiposDelUsuario(
+obtenerEquipoDePersona(
 nombre
-).join(", ");
+);
 
 return`
 
@@ -4162,18 +4386,29 @@ const lista=
 conversacionesArray
 
 .filter(
-c=>c.asesorAsignado===nombreAgente
+c=>
+c.asesorAsignado===
+nombreAgente
 )
 
 .filter(
-c=>puedeVerConversacion(c)
+c=>
+c.estado!=="finalizada"
+)
+
+.filter(
+c=>
+puedeVerConversacion(c)
 );
 
+
 mostrarVista("conversations");
+
 
 document.getElementById(
 "conversationSearch"
 ).value="";
+
 
 renderizarConversaciones(
 lista,
@@ -4192,27 +4427,40 @@ function obtenerConversacionesFinalizadas(){
 return conversacionesArray
 
 .filter(
-c=>c.estado==="finalizada"
+c=>
+c.estado==="finalizada"
 )
 
 .filter(
-c=>puedeVerConversacion(c)
+c=>
+puedeVerConversacion(c)
 )
 
 .sort(
 (a,b)=>
-Number(
-b.fechaFinalizacion||
-b.ultimaActividad||
-obtenerTimestamp(b)||
+obtenerTimestampFinalizacion(b)-
+obtenerTimestampFinalizacion(a)
+);
+
+}
+
+
+function obtenerTimestampFinalizacion(c){
+
+return Number(
+
+c.fechaFinalizacion||
+
+c.ultimaActividad||
+
+c.timestamp||
+
+c.createdAt||
+
+c.fechaCreacion||
+
 0
-)-
-Number(
-a.fechaFinalizacion||
-a.ultimaActividad||
-obtenerTimestamp(a)||
-0
-)
+
 );
 
 }
@@ -4227,68 +4475,42 @@ document.getElementById(
 
 if(!body)return;
 
-const input=
-document.getElementById(
-"historyDniSearch"
-);
 
-const texto=
-input
-?input.value.trim()
-:"";
-
-const dniBuscado=
-normalizarDni(texto);
-
-let lista=
+const lista=
 obtenerConversacionesFinalizadas();
 
 
-if(dniBuscado){
-
-lista=
-lista.filter(
-c=>{
-
-const dni=
-obtenerDniConversacion(c);
-
-return(
-dni &&
-dni.includes(dniBuscado)
+renderizarFilasHistorial(
+lista
 );
-
-});
 
 }
 
 
-const info=
+function renderizarFilasHistorial(lista){
+
+const body=
 document.getElementById(
-"historyResultInfo"
+"historyBody"
 );
 
-if(info){
+const counter=
+document.getElementById(
+"historyCounter"
+);
 
-if(dniBuscado){
 
-info.textContent=
-`${lista.length} chat${
-lista.length===1?"":"s"
-} encontrado${
-lista.length===1?"":"s"
-} para el DNI ${dniBuscado}.`;
+if(!body)return;
 
-}else{
 
-info.textContent=
+if(counter){
+
+counter.textContent=
 `${lista.length} conversación${
 lista.length===1?"":"es"
 } finalizada${
 lista.length===1?"":"s"
-}.`;
-
-}
+}`;
 
 }
 
@@ -4308,13 +4530,7 @@ padding:30px;
 "
 >
 
-${
-dniBuscado
-?
-"No se encontraron chats finalizados para ese DNI."
-:
-"No hay conversaciones finalizadas."
-}
+No se encontraron conversaciones finalizadas.
 
 </td>
 
@@ -4328,16 +4544,38 @@ return;
 
 
 body.innerHTML=
-lista.map(c=>{
+lista.map(
+c=>{
 
 const nombre=
 obtenerNombreCliente(c);
 
-const cliente=
-obtenerCliente(c);
 
 const dni=
 obtenerDniConversacion(c);
+
+
+const cliente=
+obtenerCliente(c);
+
+
+const gestor=
+c.asesorAsignado||
+"Sin gestor";
+
+
+const equipo=
+obtenerEquipoConversacion(c)||
+"Sin equipo";
+
+
+const fecha=
+formatearFecha(
+c.fechaFinalizacion||
+c.ultimaActividad||
+obtenerTimestamp(c)
+);
+
 
 return`
 
@@ -4345,72 +4583,154 @@ return`
 
 <td>
 
-<strong>
+<div class="history-client">
+
 ${escapeHtml(cliente)}
-</strong>
+
+</div>
 
 ${
-nombre&&dni
-?
-`<div class="dni-text">
-DNI: ${escapeHtml(dni)}
-</div>`
-:""
+nombre?
+`<div class="history-dni">
+Cliente identificado por nombre
+</div>`:
+""
 }
 
 </td>
 
+
 <td>
+
 ${
-dni
-?escapeHtml(dni)
-:"-"
+dni?
+escapeHtml(dni):
+"<span style='color:#aaa;'>Sin DNI</span>"
 }
+
 </td>
 
-<td>
-${escapeHtml(
-c.asesorAsignado||
-"Sin gestor"
-)}
-</td>
 
 <td>
-${escapeHtml(
-obtenerEquipoConversacion(c)||
-"Sin equipo"
-)}
+
+${escapeHtml(gestor)}
+
 </td>
 
-<td>
-<span class="conversation-status status-finished">
-Finalizada
-</span>
-</td>
 
 <td>
-${escapeHtml(
-formatearFecha(
-c.fechaFinalizacion||
-c.ultimaActividad||
-obtenerTimestamp(c)
-)
-)}
+
+${escapeHtml(equipo)}
+
+</td>
+
+
+<td>
+
+${escapeHtml(fecha)}
+
+</td>
+
+
+<td class="history-actions">
+
+<button
+class="btn btn-info"
+onclick="verGestionHistorial('${escapeAttribute(c.id)}')"
+>
+👁 Ver gestión
+</button>
+
 </td>
 
 </tr>
 
 `;
 
-}).join("");
+}
+).join("");
 
 }
 
 
-window.buscarHistorialPorDni=
-function(){
+/*
+   FILTRO PREPARADO PARA 3.000+ CLIENTES.
+   Busca solamente en datos de la conversación,
+   no necesita recorrer todos los mensajes.
+*/
 
-renderizarHistorial();
+window.filtrarHistorial=function(){
+
+const input=
+document.getElementById(
+"historySearch"
+);
+
+const texto=
+(input?.value||"")
+.trim();
+
+
+const lista=
+obtenerConversacionesFinalizadas();
+
+
+if(!texto){
+
+renderizarFilasHistorial(
+lista
+);
+
+return;
+
+}
+
+
+const textoLower=
+texto.toLowerCase();
+
+
+const dniBuscado=
+normalizarDni(texto);
+
+
+const filtradas=
+lista.filter(
+c=>{
+
+const nombre=
+obtenerNombreCliente(c)
+.toLowerCase();
+
+
+const cliente=
+obtenerCliente(c)
+.toLowerCase();
+
+
+const dni=
+obtenerDniConversacion(c);
+
+
+return(
+
+nombre.includes(textoLower)||
+
+cliente.includes(textoLower)||
+
+(
+dniBuscado&&
+dni.includes(dniBuscado)
+)
+
+);
+
+});
+
+
+renderizarFilasHistorial(
+filtradas
+);
 
 };
 
@@ -4420,7 +4740,7 @@ function(){
 
 const input=
 document.getElementById(
-"historyDniSearch"
+"historySearch"
 );
 
 if(input){
@@ -4434,12 +4754,38 @@ renderizarHistorial();
 };
 
 
+/*
+   Abre la conversación finalizada
+   directamente desde Historial.
+*/
+
+window.verGestionHistorial=
+function(id){
+
+const conversation=
+conversaciones[id];
+
+
+if(!conversation)return;
+
+
+mostrarVista(
+"conversations"
+);
+
+
+mostrarConversacion(
+id
+);
+
+};
+
+
 /* =====================================================
    VISTAS
 ===================================================== */
 
-window.mostrarVista=
-function(vista){
+window.mostrarVista=function(vista){
 
 const views={
 
@@ -4465,22 +4811,20 @@ document.getElementById(
 
 };
 
+
 Object.values(views)
 .forEach(
 view=>
-view.classList.remove(
-"active"
-)
+view.classList.remove("active")
 );
+
 
 document.querySelectorAll(
 ".nav button"
 )
 .forEach(
 button=>
-button.classList.remove(
-"active"
-)
+button.classList.remove("active")
 );
 
 
@@ -4497,7 +4841,8 @@ document.getElementById(
 document.getElementById(
 "topbarTitle"
 )
-.textContent="Conversaciones";
+.textContent=
+"Conversaciones";
 
 renderizarConversaciones();
 
@@ -4516,6 +4861,7 @@ return;
 
 }
 
+
 views.unassigned
 .classList.add("active");
 
@@ -4527,7 +4873,8 @@ document.getElementById(
 document.getElementById(
 "topbarTitle"
 )
-.textContent="Chats sin gestor";
+.textContent=
+"Chats sin gestor";
 
 renderizarChatsSinGestor();
 
@@ -4547,7 +4894,8 @@ document.getElementById(
 document.getElementById(
 "topbarTitle"
 )
-.textContent="Agentes";
+.textContent=
+"Agentes";
 
 renderizarGestoresActivos();
 
@@ -4569,7 +4917,8 @@ document.getElementById(
 document.getElementById(
 "topbarTitle"
 )
-.textContent="Historial";
+.textContent=
+"Historial";
 
 renderizarHistorial();
 
@@ -4591,12 +4940,10 @@ await detenerPresenciaSeguro();
 
 }catch(err){
 
-console.error(
-"Error cerrando presencia:",
-err
-);
+console.error(err);
 
 }
+
 
 try{
 
@@ -4604,10 +4951,7 @@ await signOut(auth);
 
 }catch(err){
 
-console.error(
-"Error cerrando sesión:",
-err
-);
+console.error(err);
 
 }
 
@@ -4625,10 +4969,15 @@ if(!objeto)return 0;
 return Number(
 
 objeto.timestamp||
+
 objeto.fecha||
+
 objeto.createdAt||
+
 objeto.fechaCreacion||
+
 objeto.ultimaActividad||
+
 0
 
 );
@@ -4641,24 +4990,31 @@ function formatearFecha(valor){
 if(!valor)return "";
 
 const fecha=
-new Date(
-Number(valor)
-);
+new Date(Number(valor));
 
 if(
 Number.isNaN(
 fecha.getTime()
 )
-)return "";
+){
+
+return "";
+
+}
+
 
 return fecha.toLocaleString(
 "es-AR",
 {
 
 day:"2-digit",
+
 month:"2-digit",
+
 year:"numeric",
+
 hour:"2-digit",
+
 minute:"2-digit"
 
 }
@@ -4676,7 +5032,11 @@ function escapeHtml(texto){
 if(
 texto===null||
 texto===undefined
-)return "";
+){
+
+return "";
+
+}
 
 return String(texto)
 
@@ -4737,10 +5097,10 @@ if(
 
 event.target&&
 
-event.target.id===
-"messageText"&&
+event.target.id==="messageText"&&
 
 event.key==="Enter"&&
+
 !event.shiftKey
 
 ){
@@ -4764,15 +5124,12 @@ document.addEventListener(
 
 if(
 
-document.visibilityState===
-"visible"&&
-
+document.visibilityState==="visible"&&
 usuarioActual
 
 ){
 
 iniciarPresencia()
-
 .catch(
 err=>
 console.error(
@@ -4799,8 +5156,10 @@ if(
 event.key==="Enter"&&
 
 (
+
 event.target.id==="email"||
 event.target.id==="password"
+
 )
 
 ){
