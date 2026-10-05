@@ -752,7 +752,7 @@
 
 
     const firebaseConfig = {
-      apiKey: "AIzaSyC1sOc1OaBwkzz5DXT3GD_OEcFFrkOua8",
+      apiKey: "AIzaSyBIwTvMk2FPGWMAjnqGdQg6up_D6ofUo_I",
       authDomain: "estudiomansilla.firebaseapp.com",
       databaseURL: "https://estudiomansilla-default-rtdb.firebaseio.com",
       projectId: "estudiomansilla",
@@ -1028,6 +1028,7 @@
       }
 
       return usuarioActual.displayName || "";
+
     }
 
 
@@ -1163,11 +1164,6 @@
       }
 
       if (esSupervisor()) {
-
-        /*
-          El supervisor en Principal NO ve clientes.
-          Ve gestores.
-        */
         return false;
       }
 
@@ -1181,14 +1177,6 @@
 
         return false;
       }
-
-      /*
-        Una cuenta sin gestor no pertenece todavía
-        a un asesor específico.
-
-        Los seniors pueden verla.
-        Los asesores no.
-      */
 
       if (esSenior()) {
         return true;
@@ -1259,12 +1247,6 @@
       if (esSupervisor()) {
         return true;
       }
-
-      /*
-        Senior:
-        puede gestionar cuentas de su equipo
-        y también cuentas sin gestor.
-      */
 
       if (
         (modo === "equipo" ||
@@ -1694,14 +1676,6 @@
 
       }
 
-
-      /*
-        Supervisor:
-        todos los gestores.
-
-        Senior:
-        solamente gestores de sus equipos.
-      */
 
       const visibles =
         gestores.filter(
@@ -2956,12 +2930,6 @@
             searchInput.value
               .trim()
               .toLowerCase();
-
-
-          const equipo =
-            obtenerEquipoParaGestor(
-              agenteSeleccionado
-            );
 
 
           let lista =
