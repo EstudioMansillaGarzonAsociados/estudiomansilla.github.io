@@ -84,7 +84,7 @@ button{cursor:pointer}
 
 /* MAIN */
 .main{flex:1;display:flex;min-width:0}
-.list-panel{width:350px;background:#fff;border-right:1px solid var(--gris2);display:flex;flex-direction:column;min-width:0}
+.list-panel{width:300px;background:#fff;border-right:1px solid var(--gris2);display:flex;flex-direction:column;min-width:0}
 .list-header{padding:17px;border-bottom:1px solid var(--gris2)}
 .greeting{font-size:17px;font-weight:800}
 .motivational{margin-top:7px;background:#eef8f2;border-left:4px solid #176b4d;border-radius:8px;padding:8px 10px;color:#176b4d;font-size:12px;font-weight:700;line-height:1.35}
@@ -109,7 +109,7 @@ button{cursor:pointer}
 .back{border:0;background:#eef5f0;color:var(--verde);border-radius:8px;padding:8px 10px;margin-bottom:10px;font-weight:700}
 
 /* CHAT */
-.chat-panel{flex:1;display:flex;flex-direction:column;min-width:0;background:#f7f8fa}
+.chat-panel{flex:1;display:flex;flex-direction:column;min-width:0;background:#f7f8fa;min-width:0}
 .chat-header{
   background:white;border-bottom:1px solid var(--gris2);padding:14px 18px;
   display:flex;justify-content:space-between;gap:15px;align-items:center
@@ -145,7 +145,7 @@ button{cursor:pointer}
 .internal-composer button{border:0;border-radius:9px;padding:0 12px;background:#a36d00;color:white;font-weight:700}
 
 /* CLIENT INFO */
-.client-panel{width:285px;background:white;border-left:1px solid var(--gris2);overflow:auto;padding:15px}
+.client-panel{display:none;width:285px;background:white;border-left:1px solid var(--gris2);overflow:auto;padding:15px}
 .client-panel h3{margin:0 0 13px}
 .info-box{border:1px solid #e2e7eb;border-radius:11px;padding:10px;margin-bottom:8px}
 .info-label{font-size:10px;text-transform:uppercase;color:#7a8490;font-weight:700}
@@ -176,6 +176,9 @@ button{cursor:pointer}
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;padding:20px;z-index:50}
 .modal{background:white;width:min(600px,100%);max-height:90vh;overflow:auto;border-radius:16px;padding:20px;box-shadow:var(--sombra)}
 .modal h2{margin-top:0}
+.expediente-modal{width:min(560px,100%);max-height:88vh}
+.expediente-modal .info-box{margin-bottom:9px}
+.expediente-button{white-space:nowrap}
 .modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:15px}
 .modal-actions button{border:0;border-radius:9px;padding:10px 14px}
 .modal-actions .cancel{background:#eef1f4}
@@ -355,6 +358,13 @@ button{cursor:pointer}
       </div>
     </section>
   </main>
+</div>
+
+<!-- MODAL EXPEDIENTE -->
+<div id="expedienteModal" class="modal-bg hidden">
+  <div class="modal expediente-modal">
+    <div id="expedienteContent"></div>
+  </div>
 </div>
 
 <!-- MODAL ASIGNACIÓN -->
@@ -1206,6 +1216,7 @@ async function abrirConversacion(id,finalizada=false){
   const urgenciaPendiente=normalizarTexto(urgencias[id]?.estado)==="pendiente";
   $("chatActions").innerHTML=`
     ${esSenior()||esSupervisor()?`<button class="btn blue" onclick="abrirModalAsignacion('${id}')">Asignar / transferir</button>`:""}
+    ${`<button class="btn expediente-button" onclick="abrirExpediente()">📁 Ver expediente</button>`}
     ${esAsesor() && gestionar?`<button class="btn red sos-button" onclick="pedirAyudaSenior()">🚨 SOS URGENTE · Hablar con senior</button>`:""}
     ${urgenciaPendiente && (esSenior()||esSupervisor())?`<button class="btn green" onclick="cerrarSOS('${id}')">✓ Marcar SOS atendido</button>`:""}
     ${gestionar?`<button class="btn" onclick="abrirIndicacionInterna()">🔒 Indicación</button>`:""}
@@ -1229,8 +1240,8 @@ function renderizarFicha(c,finalizada){
   const acuerdo=c.acuerdo || c.acuerdos || c.compromiso || c.observacionAcuerdo || c.acuerdoCliente || c.compromisoCliente || c.observacionesAcuerdo || c.observacion || "";
   const puedeEditar=!finalizada && puedeGestionarConversacion(c);
 
-  $("clientPanel").innerHTML=`
-    <h3>📁 Expediente del cliente</h3>
+  const html=`
+    <h2>📁 Expediente del cliente</h2>
     ${info("Nombre",d.nombre || "No informado")}
     ${info("DNI",d.dni || "No informado")}
     ${info("Teléfono",d.telefono || "No informado")}
@@ -1246,7 +1257,18 @@ function renderizarFicha(c,finalizada){
     </div>
     ${finalizada?info("Finalizada",formatFecha(c.fechaFinalizacion)):""}
     ${c.finalizadoPor?info("Finalizó",c.finalizadoPor):""}
+    <div class="modal-actions"><button class="cancel" onclick="cerrarExpediente()">Cerrar</button></div>
   `;
+  $("clientPanel").innerHTML=html;
+  $("expedienteContent").innerHTML=html;
+}
+
+function abrirExpediente(){
+  if(!conversacionSeleccionada || !conversaciones[conversacionSeleccionada]) return;
+  $("expedienteModal").classList.remove("hidden");
+}
+function cerrarExpediente(){
+  $("expedienteModal").classList.add("hidden");
 }
 
 async function guardarAcuerdoCliente(){
@@ -2230,6 +2252,8 @@ window.finalizarConversacion=finalizarConversacion;
 window.abrirModalAsignacion=abrirModalAsignacion;
 window.cargarGestoresModal=cargarGestoresModal;
 window.guardarAsignacion=guardarAsignacion;
+window.abrirExpediente=abrirExpediente;
+window.cerrarExpediente=cerrarExpediente;
 window.cerrarModalAsignacion=cerrarModalAsignacion;
 window.cerrarSesion=cerrarSesion;
 window.cambiarMesAgenda=cambiarMesAgenda;
