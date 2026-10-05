@@ -1,645 +1,586 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Centro de Atención - Asesor</title>
+  <title>Centro de Atención - Asesor</title>
 
-<style>
-
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
-
-body {
-    font-family: Arial, Helvetica, sans-serif;
-    background: #f3f4f6;
-    color: #1f2937;
-    height: 100vh;
-    overflow: hidden;
-}
-
-button,
-input,
-select,
-textarea {
-    font-family: inherit;
-}
-
-/* =====================================================
-   LOGIN
-===================================================== */
-
-#loginScreen {
-    width: 100%;
-    height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, #111827, #374151);
-}
-
-.login-box {
-    width: 390px;
-    max-width: 92%;
-    background: white;
-    border-radius: 18px;
-    padding: 35px;
-    box-shadow: 0 20px 50px rgba(0,0,0,.25);
-}
-
-.login-logo {
-    text-align: center;
-    margin-bottom: 25px;
-}
-
-.login-logo h1 {
-    font-size: 25px;
-    margin-bottom: 5px;
-}
-
-.login-logo p {
-    color: #6b7280;
-    font-size: 14px;
-}
-
-.field {
-    margin-bottom: 17px;
-}
-
-.field label {
-    display: block;
-    margin-bottom: 7px;
-    font-size: 13px;
-    font-weight: bold;
-}
-
-.field input {
-    width: 100%;
-    padding: 13px;
-    border: 1px solid #d1d5db;
-    border-radius: 9px;
-    outline: none;
-}
-
-.field input:focus {
-    border-color: #111827;
-}
-
-.btn-login {
-    width: 100%;
-    padding: 13px;
-    border: none;
-    border-radius: 9px;
-    background: #111827;
-    color: white;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-.btn-login:hover {
-    background: #000;
-}
-
-#loginError {
-    display: none;
-    margin-top: 14px;
-    padding: 10px;
-    border-radius: 8px;
-    background: #fee2e2;
-    color: #991b1b;
-    font-size: 13px;
-}
-
-/* =====================================================
-   APP
-===================================================== */
-
-#app {
-    display: none;
-    height: 100vh;
-    flex-direction: column;
-}
-
-.topbar {
-    height: 64px;
-    background: #111827;
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 22px;
-    flex-shrink: 0;
-}
-
-.topbar-left {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
-.brand {
-    font-weight: bold;
-    font-size: 18px;
-}
-
-.user-info {
-    font-size: 13px;
-    color: #d1d5db;
-}
-
-.user-role {
-    display: inline-block;
-    margin-left: 7px;
-    background: #374151;
-    padding: 4px 8px;
-    border-radius: 20px;
-    font-size: 11px;
-}
-
-.btn-logout {
-    border: none;
-    background: #374151;
-    color: white;
-    padding: 8px 13px;
-    border-radius: 7px;
-    cursor: pointer;
-}
-
-.btn-logout:hover {
-    background: #4b5563;
-}
-
-.layout {
-    display: grid;
-    grid-template-columns: 330px minmax(500px, 1fr) 290px;
-    height: calc(100vh - 64px);
-    min-height: 0;
-}
-
-/* =====================================================
-   SIDEBAR
-===================================================== */
-
-.sidebar {
-    background: white;
-    border-right: 1px solid #e5e7eb;
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-}
-
-.sidebar-header {
-    padding: 16px;
-    border-bottom: 1px solid #e5e7eb;
-}
-
-.sidebar-header h2 {
-    font-size: 17px;
-    margin-bottom: 12px;
-}
-
-.search {
-    width: 100%;
-    padding: 10px 11px;
-    border: 1px solid #d1d5db;
-    border-radius: 8px;
-    outline: none;
-}
-
-.filters {
-    display: flex;
-    gap: 6px;
-    padding: 11px 15px;
-    border-bottom: 1px solid #e5e7eb;
-}
-
-.filter-btn {
-    flex: 1;
-    border: 1px solid #d1d5db;
-    background: white;
-    padding: 7px 4px;
-    border-radius: 7px;
-    cursor: pointer;
-    font-size: 11px;
-}
-
-.filter-btn.active {
-    background: #111827;
-    color: white;
-    border-color: #111827;
-}
-
-#conversationList {
-    overflow-y: auto;
-    flex: 1;
-}
-
-.conversation {
-    padding: 13px 15px;
-    border-bottom: 1px solid #f0f0f0;
-    cursor: pointer;
-    position: relative;
-}
-
-.conversation:hover {
-    background: #f9fafb;
-}
-
-.conversation.selected {
-    background: #eef2ff;
-    border-left: 4px solid #111827;
-    padding-left: 11px;
-}
-
-.conversation-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 5px;
-}
-
-.conversation-name {
-    font-weight: bold;
-    font-size: 14px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.conversation-time {
-    font-size: 10px;
-    color: #6b7280;
-    white-space: nowrap;
-}
-
-.conversation-preview {
-    color: #6b7280;
-    font-size: 12px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    margin-bottom: 8px;
-}
-
-.conversation-meta {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 5px;
-}
-
-.badge {
-    display: inline-block;
-    padding: 4px 7px;
-    border-radius: 12px;
-    font-size: 10px;
-    font-weight: bold;
-}
-
-.badge-pendiente {
-    background: #fef3c7;
-    color: #92400e;
-}
-
-.badge-atencion {
-    background: #dbeafe;
-    color: #1e40af;
-}
-
-.badge-finalizado {
-    background: #dcfce7;
-    color: #166534;
-}
-
-.wait-time {
-    font-size: 11px;
-    font-weight: bold;
-    color: #dc2626;
-    background: #fee2e2;
-    padding: 3px 6px;
-    border-radius: 7px;
-}
-
-.wait-time.ok {
-    color: #166534;
-    background: #dcfce7;
-}
-
-.unassigned-label {
-    font-size: 10px;
-    color: #92400e;
-    font-weight: bold;
-}
-
-/* =====================================================
-   CHAT
-===================================================== */
-
-.chat {
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-    min-height: 0;
-    background: #eef0f2;
-}
-
-.chat-empty {
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #6b7280;
-    text-align: center;
-}
-
-#chatContent {
-    display: none;
-    height: 100%;
-    flex-direction: column;
-    min-height: 0;
-}
-
-.chat-header {
-    background: white;
-    border-bottom: 1px solid #e5e7eb;
-    padding: 13px 18px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 10px;
-}
-
-.client-title {
-    font-weight: bold;
-    font-size: 16px;
-}
-
-.client-subtitle {
-    color: #6b7280;
-    font-size: 11px;
-    margin-top: 3px;
-}
-
-.chat-actions {
-    display: flex;
-    gap: 7px;
-    flex-wrap: wrap;
-}
-
-.action-btn {
-    border: 1px solid #d1d5db;
-    background: white;
-    padding: 8px 10px;
-    border-radius: 7px;
-    cursor: pointer;
-    font-size: 12px;
-}
-
-.action-btn:hover {
-    background: #f3f4f6;
-}
-
-.action-btn.primary {
-    background: #111827;
-    color: white;
-    border-color: #111827;
-}
-
-.action-btn.danger {
-    background: #fee2e2;
-    color: #991b1b;
-    border-color: #fecaca;
-}
-
-.chat-wait {
-    background: #fff1f2;
-    border-bottom: 1px solid #fecdd3;
-    padding: 8px 18px;
-    font-size: 12px;
-    color: #991b1b;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.chat-wait strong {
-    font-size: 14px;
-}
-
-#messages {
-    flex: 1;
-    overflow-y: auto;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 9px;
-}
-
-.message {
-    max-width: 72%;
-    padding: 10px 12px;
-    border-radius: 11px;
-    font-size: 13px;
-    line-height: 1.4;
-    position: relative;
-    word-wrap: break-word;
-}
-
-.message.client {
-    align-self: flex-start;
-    background: white;
-    border: 1px solid #e5e7eb;
-    border-bottom-left-radius: 3px;
-}
-
-.message.asesor {
-    align-self: flex-end;
-    background: #dbeafe;
-    color: #172554;
-    border-bottom-right-radius: 3px;
-}
-
-.message.ia {
-    align-self: flex-start;
-    background: #ede9fe;
-    color: #4c1d95;
-    border-bottom-left-radius: 3px;
-}
-
-.message.system {
-    align-self: center;
-    background: #e5e7eb;
-    color: #374151;
-    font-size: 11px;
-}
-
-.message-author {
-    font-size: 10px;
-    font-weight: bold;
-    margin-bottom: 3px;
-    opacity: .75;
-}
-
-.message-time {
-    font-size: 9px;
-    opacity: .6;
-    text-align: right;
-    margin-top: 4px;
-}
-
-.composer {
-    background: white;
-    border-top: 1px solid #e5e7eb;
-    padding: 12px;
-    display: flex;
-    gap: 8px;
-}
-
-#messageInput {
-    flex: 1;
-    min-height: 42px;
-    max-height: 120px;
-    resize: none;
-    border: 1px solid #d1d5db;
-    border-radius: 9px;
-    padding: 11px;
-    outline: none;
-}
-
-#messageInput:focus {
-    border-color: #111827;
-}
-
-#sendBtn {
-    width: 85px;
-    border: none;
-    border-radius: 9px;
-    background: #111827;
-    color: white;
-    cursor: pointer;
-    font-weight: bold;
-}
-
-#sendBtn:disabled {
-    opacity: .5;
-    cursor: not-allowed;
-}
-
-/* =====================================================
-   PANEL DERECHO
-===================================================== */
-
-.details {
-    background: white;
-    border-left: 1px solid #e5e7eb;
-    overflow-y: auto;
-    padding: 18px;
-}
-
-.details h3 {
-    font-size: 15px;
-    margin-bottom: 16px;
-}
-
-.detail-section {
-    margin-bottom: 20px;
-}
-
-.detail-title {
-    font-size: 11px;
-    text-transform: uppercase;
-    color: #6b7280;
-    font-weight: bold;
-    margin-bottom: 8px;
-}
-
-.detail-row {
-    margin-bottom: 9px;
-}
-
-.detail-label {
-    color: #6b7280;
-    font-size: 11px;
-}
-
-.detail-value {
-    font-size: 13px;
-    margin-top: 2px;
-    word-break: break-word;
-}
-
-.assign-box {
-    margin-top: 8px;
-}
-
-.assign-box select {
-    width: 100%;
-    padding: 9px;
-    border: 1px solid #d1d5db;
-    border-radius: 7px;
-    background: white;
-}
-
-.assign-button {
-    width: 100%;
-    margin-top: 8px;
-    border: none;
-    padding: 9px;
-    border-radius: 7px;
-    background: #111827;
-    color: white;
-    cursor: pointer;
-}
-
-.no-chat {
-    color: #9ca3af;
-    font-size: 12px;
-    text-align: center;
-    margin-top: 50px;
-}
-
-/* =====================================================
-   RESPONSIVE
-===================================================== */
-
-@media(max-width: 1000px) {
-
-    .layout {
-        grid-template-columns: 290px minmax(400px, 1fr);
+  <style>
+    * {
+      box-sizing: border-box;
     }
 
-    .details {
-        display: none;
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f4f6f8;
+      color: #202124;
     }
 
-}
-
-@media(max-width: 700px) {
-
-    .layout {
-        grid-template-columns: 1fr;
+    button,
+    input,
+    select,
+    textarea {
+      font-family: inherit;
     }
+
+    /* =========================
+       LOGIN
+    ========================= */
+
+    #loginScreen {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(135deg, #111827, #273449);
+    }
+
+    .login-box {
+      width: 390px;
+      max-width: calc(100% - 30px);
+      background: white;
+      padding: 35px;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.25);
+    }
+
+    .login-box h1 {
+      margin: 0 0 8px;
+      font-size: 25px;
+    }
+
+    .login-box p {
+      margin: 0 0 25px;
+      color: #6b7280;
+    }
+
+    .login-box label {
+      display: block;
+      margin: 15px 0 7px;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    .login-box input {
+      width: 100%;
+      padding: 13px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      outline: none;
+    }
+
+    .login-box input:focus {
+      border-color: #2563eb;
+    }
+
+    .login-btn {
+      width: 100%;
+      margin-top: 22px;
+      padding: 13px;
+      border: none;
+      border-radius: 8px;
+      background: #2563eb;
+      color: white;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .login-btn:hover {
+      background: #1d4ed8;
+    }
+
+    #loginError {
+      margin-top: 15px;
+      padding: 10px;
+      border-radius: 7px;
+      background: #fee2e2;
+      color: #b91c1c;
+      font-size: 14px;
+      display: none;
+    }
+
+    /* =========================
+       APP
+    ========================= */
+
+    #app {
+      display: none;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .topbar {
+      height: 60px;
+      background: #111827;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+    }
+
+    .topbar-title {
+      font-size: 19px;
+      font-weight: bold;
+    }
+
+    .topbar-user {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .logout-btn {
+      border: 1px solid rgba(255,255,255,.25);
+      background: transparent;
+      color: white;
+      padding: 8px 13px;
+      border-radius: 7px;
+      cursor: pointer;
+    }
+
+    .logout-btn:hover {
+      background: rgba(255,255,255,.1);
+    }
+
+    /* =========================
+       LAYOUT
+    ========================= */
+
+    .main-layout {
+      height: calc(100vh - 60px);
+      display: grid;
+      grid-template-columns: 330px minmax(400px, 1fr) 290px;
+    }
+
+    /* =========================
+       SIDEBAR
+    ========================= */
 
     .sidebar {
-        display: none;
+      background: white;
+      border-right: 1px solid #ddd;
+      overflow-y: auto;
     }
 
+    .sidebar-header {
+      padding: 15px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .search-box {
+      width: 100%;
+      padding: 11px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      outline: none;
+    }
+
+    .filters {
+      display: flex;
+      gap: 6px;
+      margin-top: 12px;
+    }
+
+    .filter-btn {
+      flex: 1;
+      border: 1px solid #ddd;
+      background: #fff;
+      padding: 8px 4px;
+      border-radius: 7px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .filter-btn.active {
+      background: #2563eb;
+      color: white;
+      border-color: #2563eb;
+    }
+
+    #conversationList {
+      padding: 5px;
+    }
+
+    .conversation-card {
+      position: relative;
+      padding: 13px;
+      border-bottom: 1px solid #eee;
+      cursor: pointer;
+      transition: background .15s;
+    }
+
+    .conversation-card:hover {
+      background: #f5f7fa;
+    }
+
+    .conversation-card.selected {
+      background: #e8f0fe;
+    }
+
+    .conversation-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .conversation-name {
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    .conversation-time {
+      font-size: 11px;
+      color: #6b7280;
+      white-space: nowrap;
+    }
+
+    .conversation-preview {
+      margin-top: 5px;
+      color: #6b7280;
+      font-size: 12px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    .conversation-meta {
+      margin-top: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 5px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 7px;
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: bold;
+    }
+
+    .badge-active {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .badge-pending {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .badge-finished {
+      background: #e5e7eb;
+      color: #374151;
+    }
+
+    .badge-team {
+      background: #e0e7ff;
+      color: #3730a3;
+    }
+
+    .waiting-timer {
+      color: #dc2626;
+      font-size: 11px;
+      font-weight: bold;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* =========================
+       CHAT
+    ========================= */
+
     .chat {
-        width: 100%;
+      display: flex;
+      flex-direction: column;
+      background: #eef1f5;
+      min-width: 0;
+    }
+
+    .chat-header {
+      min-height: 70px;
+      padding: 12px 18px;
+      background: white;
+      border-bottom: 1px solid #ddd;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .client-info {
+      min-width: 0;
+    }
+
+    .client-name {
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .client-sub {
+      margin-top: 4px;
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    .chat-actions {
+      display: flex;
+      gap: 7px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .action-btn {
+      border: none;
+      padding: 8px 11px;
+      border-radius: 7px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .btn-primary {
+      background: #2563eb;
+      color: white;
+    }
+
+    .btn-warning {
+      background: #f59e0b;
+      color: white;
+    }
+
+    .btn-danger {
+      background: #dc2626;
+      color: white;
+    }
+
+    .btn-gray {
+      background: #e5e7eb;
+      color: #111827;
+    }
+
+    .timer-bar {
+      background: #fff;
+      border-bottom: 1px solid #ddd;
+      padding: 8px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .timer-label {
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    #mainTimer {
+      font-weight: bold;
+      color: #dc2626;
+      font-variant-numeric: tabular-nums;
+    }
+
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+    }
+
+    .empty-chat {
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #9ca3af;
+      text-align: center;
     }
 
     .message {
-        max-width: 85%;
+      display: flex;
+      margin-bottom: 10px;
     }
 
-}
+    .message.client {
+      justify-content: flex-start;
+    }
 
-</style>
+    .message.team {
+      justify-content: flex-end;
+    }
+
+    .message-bubble {
+      max-width: 70%;
+      padding: 10px 13px;
+      border-radius: 12px;
+      font-size: 13px;
+      line-height: 1.4;
+      box-shadow: 0 1px 2px rgba(0,0,0,.08);
+    }
+
+    .message.client .message-bubble {
+      background: white;
+      border-bottom-left-radius: 3px;
+    }
+
+    .message.team .message-bubble {
+      background: #dbeafe;
+      border-bottom-right-radius: 3px;
+    }
+
+    .message-author {
+      font-size: 10px;
+      font-weight: bold;
+      color: #6b7280;
+      margin-bottom: 4px;
+    }
+
+    .message-time {
+      font-size: 9px;
+      color: #9ca3af;
+      margin-top: 4px;
+      text-align: right;
+    }
+
+    .composer {
+      padding: 12px;
+      background: white;
+      border-top: 1px solid #ddd;
+      display: flex;
+      gap: 8px;
+    }
+
+    #messageInput {
+      flex: 1;
+      min-height: 42px;
+      max-height: 130px;
+      resize: vertical;
+      padding: 11px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      outline: none;
+    }
+
+    #sendBtn {
+      width: 90px;
+      border: none;
+      border-radius: 8px;
+      background: #2563eb;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    #sendBtn:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+    }
+
+    /* =========================
+       DETAILS
+    ========================= */
+
+    .details {
+      background: white;
+      border-left: 1px solid #ddd;
+      overflow-y: auto;
+    }
+
+    .details-header {
+      padding: 18px;
+      font-size: 17px;
+      font-weight: bold;
+      border-bottom: 1px solid #eee;
+    }
+
+    .detail-section {
+      padding: 16px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .detail-title {
+      font-size: 11px;
+      color: #6b7280;
+      text-transform: uppercase;
+      margin-bottom: 7px;
+      font-weight: bold;
+    }
+
+    .detail-value {
+      font-size: 14px;
+      word-break: break-word;
+    }
+
+    .detail-timer {
+      font-size: 23px;
+      font-weight: bold;
+      color: #dc2626;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .assignment-select {
+      width: 100%;
+      padding: 9px;
+      border: 1px solid #d1d5db;
+      border-radius: 7px;
+      margin-top: 8px;
+    }
+
+    .no-selection {
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 30px;
+      text-align: center;
+      color: #9ca3af;
+    }
+
+    .loading {
+      padding: 30px;
+      text-align: center;
+      color: #6b7280;
+    }
+
+    /* =========================
+       RESPONSIVE
+    ========================= */
+
+    @media (max-width: 1050px) {
+      .main-layout {
+        grid-template-columns: 290px minmax(350px, 1fr);
+      }
+
+      .details {
+        display: none;
+      }
+    }
+
+    @media (max-width: 700px) {
+      #app {
+        height: auto;
+        min-height: 100vh;
+        overflow: visible;
+      }
+
+      .main-layout {
+        height: auto;
+        min-height: calc(100vh - 60px);
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        height: 350px;
+      }
+
+      .chat {
+        height: calc(100vh - 410px);
+        min-height: 500px;
+      }
+    }
+  </style>
 </head>
 
 <body>
@@ -650,62 +591,43 @@ textarea {
 
 <div id="loginScreen">
 
-    <div class="login-box">
+  <div class="login-box">
 
-        <div class="login-logo">
+    <h1>Centro de Atención</h1>
 
-            <h1>Centro de Atención</h1>
+    <p>Ingreso para asesores</p>
 
-            <p>Estudio Mansilla</p>
+    <form id="loginForm">
 
-        </div>
+      <label for="email">Correo electrónico</label>
 
-        <form id="loginForm">
+      <input
+        type="email"
+        id="email"
+        placeholder="correo@mansillayasoc.com.ar"
+        autocomplete="username"
+        required
+      >
 
-            <div class="field">
+      <label for="password">Contraseña</label>
 
-                <label for="email">
-                    Correo electrónico
-                </label>
+      <input
+        type="password"
+        id="password"
+        placeholder="Contraseña"
+        autocomplete="current-password"
+        required
+      >
 
-                <input
-                    id="email"
-                    type="email"
-                    placeholder="correo@empresa.com"
-                    autocomplete="username"
-                    required
-                >
+      <button class="login-btn" type="submit">
+        Iniciar sesión
+      </button>
 
-            </div>
+    </form>
 
-            <div class="field">
+    <div id="loginError"></div>
 
-                <label for="password">
-                    Contraseña
-                </label>
-
-                <input
-                    id="password"
-                    type="password"
-                    placeholder="••••••••"
-                    autocomplete="current-password"
-                    required
-                >
-
-            </div>
-
-            <button
-                class="btn-login"
-                type="submit"
-            >
-                Ingresar
-            </button>
-
-        </form>
-
-        <div id="loginError"></div>
-
-    </div>
+  </div>
 
 </div>
 
@@ -716,397 +638,198 @@ textarea {
 
 <div id="app">
 
-    <header class="topbar">
+  <!-- TOPBAR -->
 
-        <div class="topbar-left">
+  <div class="topbar">
 
-            <div class="brand">
-                Centro de Atención
-            </div>
+    <div class="topbar-title">
+      Centro de Atención
+    </div>
 
-            <div class="user-info">
+    <div class="topbar-user">
 
-                <span id="userName"></span>
+      <span id="currentUserName">
+        Cargando...
+      </span>
 
-                <span
-                    id="userRole"
-                    class="user-role"
-                ></span>
+      <button id="logoutBtn" class="logout-btn">
+        Cerrar sesión
+      </button>
 
-            </div>
+    </div>
+
+  </div>
+
+
+  <!-- MAIN -->
+
+  <div class="main-layout">
+
+    <!-- =================================================
+         SIDEBAR
+    ================================================== -->
+
+    <aside class="sidebar">
+
+      <div class="sidebar-header">
+
+        <input
+          type="text"
+          id="searchInput"
+          class="search-box"
+          placeholder="Buscar conversación..."
+        >
+
+        <div class="filters">
+
+          <button
+            class="filter-btn active"
+            data-filter="activas"
+          >
+            Activas
+          </button>
+
+          <button
+            class="filter-btn"
+            data-filter="pendientes"
+          >
+            Pendientes
+          </button>
+
+          <button
+            class="filter-btn"
+            data-filter="finalizadas"
+          >
+            Finalizadas
+          </button>
 
         </div>
 
+      </div>
+
+      <div id="conversationList">
+        <div class="loading">
+          Cargando conversaciones...
+        </div>
+      </div>
+
+    </aside>
+
+
+    <!-- =================================================
+         CHAT
+    ================================================== -->
+
+    <main class="chat">
+
+      <div id="chatHeader" class="chat-header">
+
+        <div class="client-info">
+
+          <div id="clientName" class="client-name">
+            Seleccioná una conversación
+          </div>
+
+          <div id="clientSub" class="client-sub">
+            —
+          </div>
+
+        </div>
+
+        <div class="chat-actions">
+
+          <button
+            id="takeBtn"
+            class="action-btn btn-primary"
+            style="display:none;"
+          >
+            Tomar chat
+          </button>
+
+          <button
+            id="transferBtn"
+            class="action-btn btn-warning"
+            style="display:none;"
+          >
+            Transferir
+          </button>
+
+          <button
+            id="finishBtn"
+            class="action-btn btn-danger"
+            style="display:none;"
+          >
+            Finalizar
+          </button>
+
+        </div>
+
+      </div>
+
+
+      <div class="timer-bar">
+
+        <span class="timer-label">
+          Tiempo esperando respuesta:
+        </span>
+
+        <span id="mainTimer">
+          00:00:00
+        </span>
+
+      </div>
+
+
+      <div id="messages">
+
+        <div class="empty-chat">
+          Seleccioná una conversación para comenzar.
+        </div>
+
+      </div>
+
+
+      <div class="composer">
+
+        <textarea
+          id="messageInput"
+          placeholder="Escribí un mensaje..."
+          disabled
+        ></textarea>
+
         <button
-            class="btn-logout"
-            id="logoutBtn"
+          id="sendBtn"
+          disabled
         >
-            Cerrar sesión
+          Enviar
         </button>
 
-    </header>
-
-
-    <main class="layout">
-
-        <!-- =================================================
-             SIDEBAR
-        ================================================== -->
-
-        <aside class="sidebar">
-
-            <div class="sidebar-header">
-
-                <h2>
-                    Conversaciones
-                </h2>
-
-                <input
-                    id="searchInput"
-                    class="search"
-                    type="text"
-                    placeholder="Buscar cliente, DNI..."
-                >
-
-            </div>
-
-
-            <div class="filters">
-
-                <button
-                    class="filter-btn active"
-                    data-filter="activas"
-                >
-                    Activas
-                </button>
-
-                <button
-                    class="filter-btn"
-                    data-filter="pendientes"
-                >
-                    Pendientes
-                </button>
-
-                <button
-                    class="filter-btn"
-                    data-filter="finalizados"
-                >
-                    Finalizados
-                </button>
-
-            </div>
-
-
-            <div id="conversationList"></div>
-
-        </aside>
-
-
-        <!-- =================================================
-             CHAT
-        ================================================== -->
-
-        <section class="chat">
-
-            <div
-                id="emptyChat"
-                class="chat-empty"
-            >
-
-                <div>
-
-                    <h2>
-                        Seleccioná una conversación
-                    </h2>
-
-                    <p>
-                        Los mensajes aparecerán aquí.
-                    </p>
-
-                </div>
-
-            </div>
-
-
-            <div id="chatContent">
-
-                <div class="chat-header">
-
-                    <div>
-
-                        <div
-                            id="clientName"
-                            class="client-title"
-                        ></div>
-
-                        <div
-                            id="clientSubtitle"
-                            class="client-subtitle"
-                        ></div>
-
-                    </div>
-
-
-                    <div class="chat-actions">
-
-                        <button
-                            id="takeBtn"
-                            class="action-btn primary"
-                        >
-                            Tomar chat
-                        </button>
-
-                        <button
-                            id="transferBtn"
-                            class="action-btn"
-                        >
-                            Transferir
-                        </button>
-
-                        <button
-                            id="finishBtn"
-                            class="action-btn danger"
-                        >
-                            Finalizar
-                        </button>
-
-                    </div>
-
-                </div>
-
-
-                <div
-                    id="chatWait"
-                    class="chat-wait"
-                >
-
-                    <span>
-                        🔴 Sin responder
-                    </span>
-
-                    <strong id="chatTimer">
-                        00:00:00
-                    </strong>
-
-                </div>
-
-
-                <div id="messages"></div>
-
-
-                <div class="composer">
-
-                    <textarea
-                        id="messageInput"
-                        placeholder="Escribí una respuesta..."
-                    ></textarea>
-
-                    <button id="sendBtn">
-                        Enviar
-                    </button>
-
-                </div>
-
-            </div>
-
-        </section>
-
-
-        <!-- =================================================
-             DETALLES
-        ================================================== -->
-
-        <aside class="details">
-
-            <div
-                id="detailsContent"
-            >
-
-                <h3>
-                    Información del cliente
-                </h3>
-
-
-                <div class="detail-section">
-
-                    <div class="detail-title">
-                        Cliente
-                    </div>
-
-
-                    <div class="detail-row">
-
-                        <div class="detail-label">
-                            Nombre
-                        </div>
-
-                        <div
-                            id="detailName"
-                            class="detail-value"
-                        >
-                            —
-                        </div>
-
-                    </div>
-
-
-                    <div class="detail-row">
-
-                        <div class="detail-label">
-                            DNI
-                        </div>
-
-                        <div
-                            id="detailDni"
-                            class="detail-value"
-                        >
-                            —
-                        </div>
-
-                    </div>
-
-
-                    <div class="detail-row">
-
-                        <div class="detail-label">
-                            Teléfono
-                        </div>
-
-                        <div
-                            id="detailPhone"
-                            class="detail-value"
-                        >
-                            —
-                        </div>
-
-                    </div>
-
-                </div>
-
-
-                <div class="detail-section">
-
-                    <div class="detail-title">
-                        Conversación
-                    </div>
-
-
-                    <div class="detail-row">
-
-                        <div class="detail-label">
-                            Estado
-                        </div>
-
-                        <div
-                            id="detailStatus"
-                            class="detail-value"
-                        >
-                            —
-                        </div>
-
-                    </div>
-
-
-                    <div class="detail-row">
-
-                        <div class="detail-label">
-                            Asignado a
-                        </div>
-
-                        <div
-                            id="detailAssigned"
-                            class="detail-value"
-                        >
-                            —
-                        </div>
-
-                    </div>
-
-
-                    <div class="detail-row">
-
-                        <div class="detail-label">
-                            Equipo
-                        </div>
-
-                        <div
-                            id="detailTeam"
-                            class="detail-value"
-                        >
-                            —
-                        </div>
-
-                    </div>
-
-                </div>
-
-
-                <div
-                    id="assignmentSection"
-                    class="detail-section"
-                    style="display:none;"
-                >
-
-                    <div class="detail-title">
-                        Asignación
-                    </div>
-
-
-                    <div class="assign-box">
-
-                        <select id="assignSelect">
-
-                            <option value="">
-                                Seleccionar gestor
-                            </option>
-
-                        </select>
-
-
-                        <button
-                            id="assignButton"
-                            class="assign-button"
-                        >
-                            Asignar conversación
-                        </button>
-
-                    </div>
-
-                </div>
-
-
-                <div class="detail-section">
-
-                    <div class="detail-title">
-                        Tiempo de espera
-                    </div>
-
-                    <div
-                        id="detailTimer"
-                        class="detail-value"
-                        style="
-                            font-size:20px;
-                            font-weight:bold;
-                        "
-                    >
-                        00:00:00
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <div
-                id="noDetails"
-                class="no-chat"
-            >
-                Seleccioná una conversación.
-            </div>
-
-        </aside>
+      </div>
 
     </main>
+
+
+    <!-- =================================================
+         DETAILS
+    ================================================== -->
+
+    <aside class="details">
+
+      <div class="details-header">
+        Detalles
+      </div>
+
+      <div id="detailsContent">
+
+        <div class="no-selection">
+          Seleccioná una conversación.
+        </div>
+
+      </div>
+
+    </aside>
+
+  </div>
 
 </div>
 
@@ -1117,18 +840,18 @@ textarea {
 
 <script type="module">
 
-import {
+  import {
     initializeApp
-} from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+  } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
 
-import {
+  import {
     getAuth,
     signInWithEmailAndPassword,
     onAuthStateChanged,
     signOut
-} from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+  } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
 
-import {
+  import {
     getDatabase,
     ref,
     onValue,
@@ -1136,1816 +859,1655 @@ import {
     push,
     set,
     update
-} from "https://www.gstatic.com/firebasejs/11.0.2/firebase-database.js";
+  } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-database.js";
 
 
-/* =====================================================
-   CONFIGURACIÓN FIREBASE
-   PEGÁ ACÁ LA CONFIGURACIÓN DE TU PROYECTO
-===================================================== */
+  /* =====================================================
+     FIREBASE CONFIG
+  ===================================================== */
 
-const firebaseConfig = {
-  apiKey: "REEMPLAZAR_API_KEY",
-  authDomain: "estudiomansilla.firebaseapp.com",
-  databaseURL: "https://estudiomansilla-default-rtdb.firebaseio.com",
-  projectId: "estudiomansilla",
-  storageBucket: "estudiomansilla.firebasestorage.app",
-  messagingSenderId: "REEMPLAZAR_SENDER_ID",
-  appId: "REEMPLAZAR_APP_ID"
-};
+  const firebaseConfig = {
 
-};
+    apiKey: "AIzaSyC1sOc1O1aBwkzz5DXT3GD_OEcFFrkOua8",
 
+    authDomain: "estudiomansilla.firebaseapp.com",
 
-const app =
-    initializeApp(firebaseConfig);
+    databaseURL:
+      "https://estudiomansilla-default-rtdb.firebaseio.com",
 
-const auth =
-    getAuth(app);
+    projectId:
+      "estudiomansilla",
 
-const db =
-    getDatabase(app);
+    storageBucket:
+      "estudiomansilla.firebasestorage.app",
 
+    messagingSenderId:
+      "482010073100",
 
-/* =====================================================
-   VARIABLES
-===================================================== */
+    appId:
+      "1:482010073100:web:d5cb61259de293b1420629",
 
-let currentUser = null;
+    measurementId:
+      "G-8710S26Z8L"
 
-let currentProfile = null;
-
-let conversations = {};
-
-let users = {};
-
-let selectedConversationId = null;
-
-let selectedMessages = {};
-
-let currentFilter = "activas";
-
-let unsubscribeConversations = null;
-
-let unsubscribeMessages = null;
-
-let timerInterval = null;
+  };
 
 
-/* =====================================================
-   ELEMENTOS
-===================================================== */
+  /* =====================================================
+     INIT
+  ===================================================== */
 
-const loginScreen =
+  const app = initializeApp(firebaseConfig);
+
+  const auth = getAuth(app);
+
+  const db = getDatabase(app);
+
+
+  /* =====================================================
+     VARIABLES
+  ===================================================== */
+
+  let currentUser = null;
+
+  let currentProfile = null;
+
+  let conversations = {};
+
+  let messagesByConversation = {};
+
+  let selectedConversationId = null;
+
+  let currentFilter = "activas";
+
+  let searchText = "";
+
+  let timerInterval = null;
+
+
+  /* =====================================================
+     ELEMENTOS
+  ===================================================== */
+
+  const loginScreen =
     document.getElementById("loginScreen");
 
-const appScreen =
+  const appScreen =
     document.getElementById("app");
 
-const loginForm =
+  const loginForm =
     document.getElementById("loginForm");
 
-const loginError =
+  const loginError =
     document.getElementById("loginError");
 
-const logoutBtn =
+  const emailInput =
+    document.getElementById("email");
+
+  const passwordInput =
+    document.getElementById("password");
+
+  const logoutBtn =
     document.getElementById("logoutBtn");
 
-const conversationList =
+  const currentUserName =
+    document.getElementById("currentUserName");
+
+  const conversationList =
     document.getElementById("conversationList");
 
-const searchInput =
+  const searchInput =
     document.getElementById("searchInput");
 
-const emptyChat =
-    document.getElementById("emptyChat");
-
-const chatContent =
-    document.getElementById("chatContent");
-
-const messagesBox =
+  const messagesContainer =
     document.getElementById("messages");
 
-const messageInput =
+  const messageInput =
     document.getElementById("messageInput");
 
-const sendBtn =
+  const sendBtn =
     document.getElementById("sendBtn");
 
-const takeBtn =
+  const clientName =
+    document.getElementById("clientName");
+
+  const clientSub =
+    document.getElementById("clientSub");
+
+  const mainTimer =
+    document.getElementById("mainTimer");
+
+  const detailsContent =
+    document.getElementById("detailsContent");
+
+  const takeBtn =
     document.getElementById("takeBtn");
 
-const transferBtn =
+  const transferBtn =
     document.getElementById("transferBtn");
 
-const finishBtn =
+  const finishBtn =
     document.getElementById("finishBtn");
 
 
-/* =====================================================
-   UTILIDADES
-===================================================== */
+  /* =====================================================
+     UTILS
+  ===================================================== */
 
-function escapeHtml(value) {
+  function normalize(value) {
 
-    if (
-        value === undefined ||
-        value === null
-    ) {
-        return "";
-    }
+    return String(value || "")
+      .trim()
+      .toLowerCase();
 
-    return String(value)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-}
+  }
 
 
-function formatTime(seconds) {
+  function escapeHtml(value) {
 
-    seconds =
-        Math.max(
-            0,
-            Math.floor(seconds || 0)
-        );
+    return String(value ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
 
-    const hours =
-        Math.floor(seconds / 3600);
+  }
 
-    const minutes =
-        Math.floor(
-            (seconds % 3600) / 60
-        );
 
-    const secs =
-        seconds % 60;
+  function formatTime(seconds) {
+
+    seconds = Math.max(0, Math.floor(seconds));
+
+    const h =
+      Math.floor(seconds / 3600);
+
+    const m =
+      Math.floor((seconds % 3600) / 60);
+
+    const s =
+      seconds % 60;
 
     return [
-        hours,
-        minutes,
-        secs
-    ]
-        .map(
-            n =>
-                String(n).padStart(2, "0")
-        )
-        .join(":");
-}
+      String(h).padStart(2, "0"),
+      String(m).padStart(2, "0"),
+      String(s).padStart(2, "0")
+    ].join(":");
+
+  }
 
 
-function getTimestamp(value) {
+  function timestampFromMessage(message) {
 
-    if (!value) {
-        return 0;
-    }
+    if (!message) return 0;
 
-    if (
-        typeof value === "number"
-    ) {
-        return value;
-    }
+    return Number(
+      message.timestamp ||
+      message.createdAt ||
+      message.fecha ||
+      message.hora ||
+      0
+    );
 
-    if (
-        typeof value === "string"
-    ) {
-
-        const parsed =
-            Date.parse(value);
-
-        return Number.isNaN(parsed)
-            ? 0
-            : parsed;
-    }
-
-    return 0;
-}
+  }
 
 
-function normalizeRole(role) {
-
-    if (!role) {
-        return "";
-    }
-
-    role =
-        String(role)
-            .toLowerCase()
-            .trim();
-
-
-    if (
-        role.includes("supervisor") ||
-        role.includes("superior") ||
-        role.includes("senior")
-    ) {
-        return "senior";
-    }
-
-
-    if (
-        role.includes("asesor") ||
-        role.includes("gestor") ||
-        role.includes("agente")
-    ) {
-        return "gestor";
-    }
-
-
-    return role;
-}
-
-
-function isSenior() {
+  function isSenior() {
 
     if (!currentProfile) {
-        return false;
+      return false;
     }
 
-    return normalizeRole(
-        currentProfile.rol ||
-        currentProfile.role ||
-        currentProfile.perfil
-    ) === "senior";
-}
-
-
-function getCurrentTeam() {
+    const role = normalize(
+      currentProfile.rol ||
+      currentProfile.role ||
+      currentProfile.perfil ||
+      ""
+    );
 
     return (
-        currentProfile?.equipo ||
-        currentProfile?.team ||
-        currentProfile?.grupo ||
-        ""
+      role.includes("senior") ||
+      role.includes("supervisor") ||
+      role.includes("supervisor/a") ||
+      role.includes("admin")
     );
-}
+
+  }
 
 
-function getCurrentName() {
+  function getCurrentTeam() {
 
-    return (
-        currentProfile?.nombre ||
-        currentProfile?.name ||
-        currentProfile?.displayName ||
-        currentUser?.displayName ||
-        currentUser?.email ||
-        ""
+    if (!currentProfile) {
+      return "";
+    }
+
+    return normalize(
+      currentProfile.equipo ||
+      currentProfile.team ||
+      currentProfile.grupo ||
+      ""
     );
-}
+
+  }
 
 
-function getConversationTeam(
-    conversation
-) {
+  function getConversationTeam(conversation) {
 
-    return (
-        conversation?.equipo ||
-        conversation?.team ||
-        conversation?.grupo ||
-        ""
+    return normalize(
+      conversation?.equipo ||
+      conversation?.team ||
+      conversation?.grupo ||
+      ""
     );
-}
+
+  }
 
 
-function getAssignedUid(
-    conversation
-) {
+  function getConversationAssignee(conversation) {
 
-    return (
-        conversation?.asignadoUid ||
-        conversation?.assignedUid ||
-        conversation?.asignadoAUid ||
-        ""
+    return normalize(
+      conversation?.asignadoA ||
+      conversation?.assignedTo ||
+      conversation?.gestor ||
+      conversation?.asesor ||
+      ""
     );
-}
+
+  }
 
 
-function getAssignedEmail(
-    conversation
-) {
+  function getConversationStatus(conversation) {
 
-    return (
-        conversation?.asignadoEmail ||
-        conversation?.assignedEmail ||
-        conversation?.emailAsesor ||
-        ""
+    return normalize(
+      conversation?.estado ||
+      conversation?.status ||
+      "activa"
     );
-}
+
+  }
 
 
-function getAssignedName(
-    conversation
-) {
+  function isUnassigned(conversation) {
 
-    return (
-        conversation?.asignadoNombre ||
-        conversation?.assignedName ||
-        conversation?.asesor ||
-        ""
-    );
-}
+    return !getConversationAssignee(conversation);
+
+  }
 
 
-function isUnassigned(
-    conversation
-) {
+  /* =====================================================
+     PERMISOS
+  ===================================================== */
 
-    const uid =
-        getAssignedUid(conversation);
+  function canSeeConversation(conversation) {
 
-    const email =
-        getAssignedEmail(conversation);
+    if (!conversation) {
+      return false;
+    }
 
-    const name =
-        getAssignedName(conversation);
+    if (isSenior()) {
 
-    return (
-        !uid &&
-        !email &&
-        !name
-    );
-}
+      const currentTeam =
+        getCurrentTeam();
+
+      const conversationTeam =
+        getConversationTeam(conversation);
+
+      if (!currentTeam) {
+        return true;
+      }
+
+      return (
+        !conversationTeam ||
+        conversationTeam === currentTeam
+      );
+
+    }
 
 
-/* =====================================================
-   PERMISOS
-===================================================== */
+    // LOS GESTORES NO PUEDEN VER SIN ASIGNAR
 
-function canSeeConversation(
-    conversation
-) {
+    if (isUnassigned(conversation)) {
+      return false;
+    }
+
+
+    const currentTeam =
+      getCurrentTeam();
+
+    const conversationTeam =
+      getConversationTeam(conversation);
+
+
+    // No pueden ver otro equipo
 
     if (
-        !currentProfile ||
-        !conversation
+      currentTeam &&
+      conversationTeam &&
+      currentTeam !== conversationTeam
     ) {
-        return false;
+      return false;
+    }
+
+
+    // Pueden gestionar conversaciones
+    // de compañeros del mismo equipo
+
+    return true;
+
+  }
+
+
+  /* =====================================================
+     LOGIN
+  ===================================================== */
+
+  loginForm.addEventListener(
+    "submit",
+    async function(event) {
+
+      event.preventDefault();
+
+      loginError.style.display = "none";
+
+      const email =
+        emailInput.value.trim();
+
+      const password =
+        passwordInput.value;
+
+      if (!email || !password) {
+        showLoginError(
+          "Ingresá tu correo y contraseña."
+        );
+        return;
+      }
+
+      try {
+
+        await signInWithEmailAndPassword(
+          auth,
+          email,
+          password
+        );
+
+      } catch (error) {
+
+        console.error(error);
+
+        let message =
+          "No se pudo iniciar sesión.";
+
+        if (
+          error.code ===
+          "auth/invalid-credential"
+        ) {
+
+          message =
+            "El correo o la contraseña son incorrectos.";
+
+        } else if (
+          error.code ===
+          "auth/user-not-found"
+        ) {
+
+          message =
+            "No existe un usuario con ese correo.";
+
+        } else if (
+          error.code ===
+          "auth/wrong-password"
+        ) {
+
+          message =
+            "La contraseña es incorrecta.";
+
+        } else if (
+          error.code ===
+          "auth/too-many-requests"
+        ) {
+
+          message =
+            "Demasiados intentos. Esperá unos minutos.";
+
+        } else if (
+          error.code ===
+          "auth/api-key-not-valid"
+        ) {
+
+          message =
+            "La configuración de Firebase no es válida.";
+
+        }
+
+        showLoginError(message);
+
+      }
+
+    }
+  );
+
+
+  function showLoginError(message) {
+
+    loginError.textContent =
+      message;
+
+    loginError.style.display =
+      "block";
+
+  }
+
+
+  /* =====================================================
+     LOGOUT
+  ===================================================== */
+
+  logoutBtn.addEventListener(
+    "click",
+    async function() {
+
+      await signOut(auth);
+
+    }
+  );
+
+
+  /* =====================================================
+     AUTH STATE
+  ===================================================== */
+
+  onAuthStateChanged(
+    auth,
+    async function(user) {
+
+      if (!user) {
+
+        currentUser = null;
+
+        currentProfile = null;
+
+        loginScreen.style.display =
+          "flex";
+
+        appScreen.style.display =
+          "none";
+
+        stopTimer();
+
+        return;
+
+      }
+
+
+      currentUser = user;
+
+
+      try {
+
+        await loadCurrentProfile();
+
+        loginScreen.style.display =
+          "none";
+
+        appScreen.style.display =
+          "block";
+
+        currentUserName.textContent =
+          currentProfile?.nombre ||
+          currentProfile?.name ||
+          user.email ||
+          "Usuario";
+
+
+        startConversationsListener();
+
+      } catch (error) {
+
+        console.error(error);
+
+        showLoginError(
+          "No se pudo cargar tu perfil."
+        );
+
+      }
+
+    }
+  );
+
+
+  /* =====================================================
+     CARGAR PERFIL
+  ===================================================== */
+
+  async function loadCurrentProfile() {
+
+    currentProfile = null;
+
+
+    // Primero intentamos por UID
+
+    const directRef =
+      ref(
+        db,
+        `usuarios/${currentUser.uid}`
+      );
+
+    const directSnap =
+      await get(directRef);
+
+
+    if (directSnap.exists()) {
+
+      currentProfile =
+        directSnap.val();
+
+      return;
+
+    }
+
+
+    // Si no existe por UID,
+    // buscamos por correo
+
+    const usersRef =
+      ref(db, "usuarios");
+
+    const usersSnap =
+      await get(usersRef);
+
+    if (usersSnap.exists()) {
+
+      const users =
+        usersSnap.val();
+
+      for (
+        const [uid, userData]
+        of Object.entries(users)
+      ) {
+
+        const userEmail =
+          normalize(
+            userData.email ||
+            userData.correo
+          );
+
+        if (
+          userEmail ===
+          normalize(currentUser.email)
+        ) {
+
+          currentProfile =
+            {
+              ...userData,
+              uid: uid
+            };
+
+          return;
+
+        }
+
+      }
+
+    }
+
+
+    // Si no hay perfil,
+    // creamos uno básico
+
+    currentProfile = {
+
+      uid: currentUser.uid,
+
+      email: currentUser.email,
+
+      nombre:
+        currentUser.email,
+
+      rol: "gestor",
+
+      equipo: ""
+
+    };
+
+  }
+
+
+  /* =====================================================
+     CONVERSACIONES
+  ===================================================== */
+
+  function startConversationsListener() {
+
+    const conversationsRef =
+      ref(db, "conversaciones");
+
+
+    onValue(
+      conversationsRef,
+      function(snapshot) {
+
+        conversations =
+          snapshot.exists()
+            ? snapshot.val()
+            : {};
+
+        renderConversationList();
+
+        if (selectedConversationId) {
+
+          const conversation =
+            conversations[
+              selectedConversationId
+            ];
+
+          if (conversation) {
+
+            renderChatHeader(
+              selectedConversationId,
+              conversation
+            );
+
+            renderDetails(
+              selectedConversationId,
+              conversation
+            );
+
+          }
+
+        }
+
+      },
+      function(error) {
+
+        console.error(
+          "Error leyendo conversaciones:",
+          error
+        );
+
+        conversationList.innerHTML = `
+          <div class="loading">
+            No se pudieron cargar las conversaciones.
+          </div>
+        `;
+
+      }
+    );
+
+  }
+
+
+  /* =====================================================
+     FILTROS
+  ===================================================== */
+
+  document
+    .querySelectorAll(".filter-btn")
+    .forEach(function(button) {
+
+      button.addEventListener(
+        "click",
+        function() {
+
+          document
+            .querySelectorAll(".filter-btn")
+            .forEach(
+              b =>
+                b.classList.remove("active")
+            );
+
+          button.classList.add("active");
+
+          currentFilter =
+            button.dataset.filter;
+
+          renderConversationList();
+
+        }
+      );
+
+    });
+
+
+  searchInput.addEventListener(
+    "input",
+    function() {
+
+      searchText =
+        normalize(
+          searchInput.value
+        );
+
+      renderConversationList();
+
+    }
+  );
+
+
+  /* =====================================================
+     FILTRAR CONVERSACIONES
+  ===================================================== */
+
+  function getFilteredConversations() {
+
+    return Object.entries(conversations)
+
+      .filter(
+        ([id, conversation]) =>
+          canSeeConversation(conversation)
+      )
+
+      .filter(
+        ([id, conversation]) => {
+
+          const status =
+            getConversationStatus(
+              conversation
+            );
+
+
+          if (
+            currentFilter ===
+            "finalizadas"
+          ) {
+
+            return (
+              status === "finalizada" ||
+              status === "finalizado" ||
+              status === "cerrada" ||
+              status === "cerrado"
+            );
+
+          }
+
+
+          if (
+            currentFilter ===
+            "pendientes"
+          ) {
+
+            return (
+              status === "pendiente" ||
+              status === "pending"
+            );
+
+          }
+
+
+          return !(
+            status === "finalizada" ||
+            status === "finalizado" ||
+            status === "cerrada" ||
+            status === "cerrado"
+          );
+
+        }
+      )
+
+      .filter(
+        ([id, conversation]) => {
+
+          if (!searchText) {
+            return true;
+          }
+
+          const text = normalize(
+            [
+              conversation.nombreCliente,
+              conversation.cliente,
+              conversation.telefono,
+              conversation.email,
+              conversation.asunto,
+              conversation.ultimoMensaje
+            ].join(" ")
+          );
+
+          return text.includes(searchText);
+
+        }
+      )
+
+      .sort(
+        ([idA, a], [idB, b]) => {
+
+          const aTime =
+            Number(
+              a.ultimoMensajeAt ||
+              a.updatedAt ||
+              a.createdAt ||
+              0
+            );
+
+          const bTime =
+            Number(
+              b.ultimoMensajeAt ||
+              b.updatedAt ||
+              b.createdAt ||
+              0
+            );
+
+          return bTime - aTime;
+
+        }
+      );
+
+  }
+
+
+  /* =====================================================
+     RENDER LIST
+  ===================================================== */
+
+  function renderConversationList() {
+
+    const list =
+      getFilteredConversations();
+
+
+    if (!list.length) {
+
+      conversationList.innerHTML = `
+        <div class="loading">
+          No hay conversaciones para mostrar.
+        </div>
+      `;
+
+      return;
+
+    }
+
+
+    conversationList.innerHTML =
+      list
+        .map(
+          ([id, conversation]) =>
+            renderConversationCard(
+              id,
+              conversation
+            )
+        )
+        .join("");
+
+  }
+
+
+  function renderConversationCard(
+    id,
+    conversation
+  ) {
+
+    const name =
+      conversation.nombreCliente ||
+      conversation.cliente ||
+      conversation.nombre ||
+      conversation.telefono ||
+      "Cliente";
+
+
+    const preview =
+      conversation.ultimoMensaje ||
+      conversation.ultimoMensajeTexto ||
+      "Sin mensajes";
+
+
+    const status =
+      getConversationStatus(
+        conversation
+      );
+
+
+    let badgeClass =
+      "badge-active";
+
+    let badgeText =
+      "Activa";
+
+
+    if (
+      status === "pendiente" ||
+      status === "pending"
+    ) {
+
+      badgeClass =
+        "badge-pending";
+
+      badgeText =
+        "Pendiente";
+
+    }
+
+
+    if (
+      status === "finalizada" ||
+      status === "finalizado" ||
+      status === "cerrada" ||
+      status === "cerrado"
+    ) {
+
+      badgeClass =
+        "badge-finished";
+
+      badgeText =
+        "Finalizada";
+
     }
 
 
     const team =
-        getConversationTeam(
-            conversation
+      conversation.equipo ||
+      conversation.team ||
+      "";
+
+
+    const selected =
+      id === selectedConversationId
+        ? "selected"
+        : "";
+
+
+    return `
+
+      <div
+        class="conversation-card ${selected}"
+        onclick="window.openConversation('${escapeHtml(id)}')"
+      >
+
+        <div class="conversation-top">
+
+          <div class="conversation-name">
+            ${escapeHtml(name)}
+          </div>
+
+          <div class="conversation-time">
+            ${formatConversationTime(
+              conversation
+            )}
+          </div>
+
+        </div>
+
+
+        <div class="conversation-preview">
+          ${escapeHtml(preview)}
+        </div>
+
+
+        <div class="conversation-meta">
+
+          <div>
+
+            <span class="badge ${badgeClass}">
+              ${badgeText}
+            </span>
+
+            ${
+              team
+                ? `
+                  <span class="badge badge-team">
+                    ${escapeHtml(team)}
+                  </span>
+                `
+                : ""
+            }
+
+          </div>
+
+
+          <span
+            class="waiting-timer"
+            data-list-timer="${escapeHtml(id)}"
+          >
+            ${formatTime(
+              getWaitingSeconds(
+                conversation
+              )
+            )}
+          </span>
+
+        </div>
+
+      </div>
+
+    `;
+
+  }
+
+
+  function formatConversationTime(
+    conversation
+  ) {
+
+    const timestamp =
+      Number(
+        conversation.ultimoMensajeAt ||
+        conversation.updatedAt ||
+        conversation.createdAt ||
+        0
+      );
+
+    if (!timestamp) {
+      return "";
+    }
+
+    const date =
+      new Date(timestamp);
+
+    return date.toLocaleTimeString(
+      "es-AR",
+      {
+        hour: "2-digit",
+        minute: "2-digit"
+      }
+    );
+
+  }
+
+
+  /* =====================================================
+     OPEN CONVERSATION
+  ===================================================== */
+
+  window.openConversation =
+    async function(id) {
+
+      const conversation =
+        conversations[id];
+
+      if (!conversation) {
+        return;
+      }
+
+
+      if (
+        !canSeeConversation(
+          conversation
+        )
+      ) {
+
+        alert(
+          "No tenés permiso para ver esta conversación."
         );
-
-    const myTeam =
-        getCurrentTeam();
-
-
-    /*
-       SENIOR
-       Puede ver chats de su equipo
-       y chats sin asignar.
-    */
-
-    if (isSenior()) {
-
-        if (
-            team &&
-            myTeam &&
-            team !== myTeam
-        ) {
-            return false;
-        }
-
-        return true;
-    }
-
-
-    /*
-       GESTOR
-       No ve sin asignar.
-       No ve otros equipos.
-       Sí ve chats de compañeros
-       del mismo equipo.
-    */
-
-    if (
-        isUnassigned(conversation)
-    ) {
-        return false;
-    }
-
-
-    if (
-        team &&
-        myTeam &&
-        team !== myTeam
-    ) {
-        return false;
-    }
-
-
-    return true;
-}
-
-
-/* =====================================================
-   PERFIL
-===================================================== */
-
-async function loadCurrentProfile(
-    user
-) {
-
-    currentUser = user;
-
-
-    const userRef =
-        ref(
-            db,
-            `usuarios/${user.uid}`
-        );
-
-
-    const snapshot =
-        await get(userRef);
-
-
-    if (snapshot.exists()) {
-
-        currentProfile =
-            snapshot.val();
 
         return;
-    }
+
+      }
 
 
-    /*
-       Búsqueda alternativa por email.
-    */
-
-    const usersRef =
-        ref(db, "usuarios");
+      selectedConversationId =
+        id;
 
 
-    const usersSnapshot =
-        await get(usersRef);
+      renderConversationList();
 
 
-    let found = null;
+      renderChatHeader(
+        id,
+        conversation
+      );
 
 
-    if (usersSnapshot.exists()) {
-
-        const data =
-            usersSnapshot.val();
-
-
-        Object.entries(data)
-            .forEach(
-                ([uid, profile]) => {
-
-                    if (
-                        profile &&
-                        String(
-                            profile.email || ""
-                        )
-                        .toLowerCase()
-                        ===
-                        String(
-                            user.email || ""
-                        )
-                        .toLowerCase()
-                    ) {
-
-                        found = {
-                            ...profile,
-                            uid
-                        };
-
-                    }
-
-                }
-            );
-    }
+      renderDetails(
+        id,
+        conversation
+      );
 
 
-    currentProfile =
-        found || {
+      await loadMessages(id);
 
-            uid:
-                user.uid,
-
-            email:
-                user.email,
-
-            nombre:
-                user.displayName ||
-                user.email,
-
-            rol:
-                "gestor",
-
-            equipo:
-                ""
-
-        };
-}
+    };
 
 
-/* =====================================================
-   USUARIOS
-===================================================== */
+  /* =====================================================
+     CHAT HEADER
+  ===================================================== */
 
-function loadUsers() {
+  function renderChatHeader(
+    id,
+    conversation
+  ) {
 
-    const usersRef =
-        ref(db, "usuarios");
+    const name =
+      conversation.nombreCliente ||
+      conversation.cliente ||
+      conversation.nombre ||
+      conversation.telefono ||
+      "Cliente";
+
+
+    const phone =
+      conversation.telefono ||
+      "Sin teléfono";
+
+
+    clientName.textContent =
+      name;
+
+    clientSub.textContent =
+      phone;
+
+
+    const assignedTo =
+      getConversationAssignee(
+        conversation
+      );
+
+
+    const status =
+      getConversationStatus(
+        conversation
+      );
+
+
+    const canWrite =
+      status !== "finalizada" &&
+      status !== "finalizado" &&
+      status !== "cerrada" &&
+      status !== "cerrado";
+
+
+    messageInput.disabled =
+      !canWrite;
+
+    sendBtn.disabled =
+      !canWrite;
+
+
+    takeBtn.style.display =
+      (
+        isSenior() &&
+        isUnassigned(conversation) &&
+        canWrite
+      )
+        ? "inline-block"
+        : "none";
+
+
+    transferBtn.style.display =
+      (
+        canWrite &&
+        !isUnassigned(conversation)
+      )
+        ? "inline-block"
+        : "none";
+
+
+    finishBtn.style.display =
+      canWrite
+        ? "inline-block"
+        : "none";
+
+
+    updateMainTimer();
+
+  }
+
+
+  /* =====================================================
+     MESSAGES
+  ===================================================== */
+
+  async function loadMessages(
+    conversationId
+  ) {
+
+    messagesContainer.innerHTML = `
+      <div class="loading">
+        Cargando mensajes...
+      </div>
+    `;
+
+
+    const messagesRef =
+      ref(
+        db,
+        `historial/${conversationId}`
+      );
 
 
     onValue(
-        usersRef,
-        snapshot => {
+      messagesRef,
+      function(snapshot) {
 
-            users =
-                snapshot.exists()
-                    ? snapshot.val()
-                    : {};
+        const messages =
+          snapshot.exists()
+            ? snapshot.val()
+            : {};
 
-
-            renderAssignmentSelect();
-
-        }
-    );
-}
+        messagesByConversation[
+          conversationId
+        ] = messages;
 
 
-/* =====================================================
-   CONVERSACIONES
-===================================================== */
-
-function startConversationListener() {
-
-    if (
-        unsubscribeConversations
-    ) {
-        unsubscribeConversations();
-    }
-
-
-    const conversationsRef =
-        ref(
-            db,
-            "conversaciones"
+        renderMessages(
+          conversationId,
+          messages
         );
 
 
-    unsubscribeConversations =
-        onValue(
-            conversationsRef,
-            snapshot => {
-
-                conversations =
-                    snapshot.exists()
-                        ? snapshot.val()
-                        : {};
-
-
-                renderConversationList();
-
-
-                if (
-                    selectedConversationId
-                ) {
-
-                    const current =
-                        conversations[
-                            selectedConversationId
-                        ];
-
-
-                    if (!current) {
-
-                        clearSelectedConversation();
-
-                        return;
-                    }
-
-
-                    renderConversationHeader(
-                        selectedConversationId,
-                        current
-                    );
-
-                    updateActionButtons();
-                }
-
-            },
-            error => {
-
-                console.error(
-                    "Error conversaciones:",
-                    error
-                );
-
-            }
-        );
-}
-
-
-/* =====================================================
-   FILTROS
-===================================================== */
-
-function matchesFilter(
-    conversation
-) {
-
-    const status =
-        String(
-            conversation?.estado ||
-            conversation?.status ||
-            "pendiente"
-        )
-        .toLowerCase();
-
-
-    if (
-        currentFilter ===
-        "finalizados"
-    ) {
-
-        return (
-            status === "finalizado" ||
-            status === "finalizada"
-        );
-    }
-
-
-    if (
-        currentFilter ===
-        "pendientes"
-    ) {
-
-        return (
-            status === "pendiente" ||
-            status === "pendientes"
-        );
-    }
-
-
-    return !(
-        status === "finalizado" ||
-        status === "finalizada"
-    );
-}
-
-
-/* =====================================================
-   BÚSQUEDA
-===================================================== */
-
-function matchesSearch(
-    conversation
-) {
-
-    const query =
-        searchInput.value
-            .trim()
-            .toLowerCase();
-
-
-    if (!query) {
-        return true;
-    }
-
-
-    const client =
-        conversation?.datosCliente ||
-        conversation?.cliente ||
-        {};
-
-
-    const values = [
-
-        client.nombre,
-
-        client.name,
-
-        client.apellido,
-
-        client.dni,
-
-        client.documento,
-
-        client.telefono,
-
-        client.phone,
-
-        conversation?.nombre,
-
-        conversation?.dni,
-
-        conversation?.telefono
-
-    ];
-
-
-    return values.some(
-        value =>
-            String(value || "")
-                .toLowerCase()
-                .includes(query)
-    );
-}
-
-
-/* =====================================================
-   ORDEN
-===================================================== */
-
-function conversationSort(
-    a,
-    b
-) {
-
-    const aTime =
-        getTimestamp(
-            a[1]?.ultimaActividad ||
-            a[1]?.updatedAt ||
-            a[1]?.timestamp ||
-            a[1]?.ultimoMensajeClienteAt
+        updateConversationWaitingMetadata(
+          conversationId,
+          messages
         );
 
+        updateMainTimer();
 
-    const bTime =
-        getTimestamp(
-            b[1]?.ultimaActividad ||
-            b[1]?.updatedAt ||
-            b[1]?.timestamp ||
-            b[1]?.ultimoMensajeClienteAt
+      },
+      function(error) {
+
+        console.error(
+          "Error leyendo historial:",
+          error
         );
 
-
-    return bTime - aTime;
-}
-
-
-/* =====================================================
-   LISTA
-===================================================== */
-
-function renderConversationList() {
-
-    conversationList.innerHTML = "";
-
-
-    const entries =
-        Object.entries(
-            conversations
-        )
-        .filter(
-            ([id, conversation]) =>
-                canSeeConversation(
-                    conversation
-                )
-        )
-        .filter(
-            ([id, conversation]) =>
-                matchesFilter(
-                    conversation
-                )
-        )
-        .filter(
-            ([id, conversation]) =>
-                matchesSearch(
-                    conversation
-                )
-        )
-        .sort(
-            conversationSort
-        );
-
-
-    if (
-        entries.length === 0
-    ) {
-
-        conversationList.innerHTML = `
-
-            <div style="
-                padding:30px 15px;
-                text-align:center;
-                color:#9ca3af;
-                font-size:12px;
-            ">
-
-                No hay conversaciones.
-
-            </div>
-
+        messagesContainer.innerHTML = `
+          <div class="empty-chat">
+            No se pudieron cargar los mensajes.
+          </div>
         `;
 
-        return;
+      }
+    );
+
+  }
+
+
+  function renderMessages(
+    conversationId,
+    messages
+  ) {
+
+    const entries =
+      Object.entries(messages || {})
+        .sort(
+          ([aKey, a], [bKey, b]) =>
+            timestampFromMessage(a) -
+            timestampFromMessage(b)
+        );
+
+
+    if (!entries.length) {
+
+      messagesContainer.innerHTML = `
+        <div class="empty-chat">
+          No hay mensajes todavía.
+        </div>
+      `;
+
+      return;
+
     }
 
 
-    entries.forEach(
-        ([id, conversation]) => {
+    messagesContainer.innerHTML =
+      entries
+        .map(
+          ([messageId, message]) =>
+            renderMessage(message)
+        )
+        .join("");
 
-            const client =
-                conversation?.datosCliente ||
-                conversation?.cliente ||
-                {};
 
+    messagesContainer.scrollTop =
+      messagesContainer.scrollHeight;
 
-            const name =
-                client.nombre ||
-                client.name ||
-                conversation?.nombre ||
-                "Cliente";
+  }
 
 
-            const dni =
-                client.dni ||
-                client.documento ||
-                conversation?.dni ||
-                "Sin DNI";
+  function renderMessage(message) {
 
+    const sender =
+      normalize(
+        message.remitente ||
+        message.sender ||
+        message.autor ||
+        message.tipo ||
+        ""
+      );
 
-            const preview =
-                conversation?.ultimoMensaje ||
-                conversation?.ultimoMensajeTexto ||
-                "Sin mensajes";
 
+    const isClient =
+      sender.includes("cliente") ||
+      sender.includes("client") ||
+      sender.includes("usuario") ||
+      sender === "inbound" ||
+      sender === "customer";
 
-            const status =
-                String(
-                    conversation?.estado ||
-                    conversation?.status ||
-                    "pendiente"
-                )
-                .toLowerCase();
 
+    const className =
+      isClient
+        ? "client"
+        : "team";
 
-            let statusClass =
-                "badge-pendiente";
 
-            let statusText =
-                "Pendiente";
+    const text =
+      message.texto ||
+      message.mensaje ||
+      message.text ||
+      message.contenido ||
+      "";
 
 
-            if (
-                status === "en atencion" ||
-                status === "en atención" ||
-                status === "atendiendo"
-            ) {
+    const author =
+      message.nombre ||
+      message.autorNombre ||
+      message.senderName ||
+      (isClient
+        ? "Cliente"
+        : "Equipo");
 
-                statusClass =
-                    "badge-atencion";
-
-                statusText =
-                    "En atención";
-
-            }
-            else if (
-                status === "finalizado" ||
-                status === "finalizada"
-            ) {
-
-                statusClass =
-                    "badge-finalizado";
-
-                statusText =
-                    "Finalizado";
-            }
-
-
-            const waitingSeconds =
-                getWaitingSeconds(
-                    conversation
-                );
-
-
-            const unassigned =
-                isUnassigned(
-                    conversation
-                );
-
-
-            const div =
-                document.createElement(
-                    "div"
-                );
-
-
-            div.className =
-                "conversation" +
-                (
-                    id ===
-                    selectedConversationId
-                        ? " selected"
-                        : ""
-                );
-
-
-            div.dataset.id = id;
-
-
-            div.innerHTML = `
-
-                <div class="conversation-top">
-
-                    <div
-                        class="conversation-name"
-                    >
-                        ${escapeHtml(name)}
-                    </div>
-
-                    <div
-                        class="conversation-time"
-                    >
-                        ${formatLastActivity(
-                            conversation
-                        )}
-                    </div>
-
-                </div>
-
-
-                <div
-                    class="conversation-preview"
-                >
-                    ${escapeHtml(
-                        preview
-                    )}
-                </div>
-
-
-                <div
-                    class="conversation-meta"
-                >
-
-                    <div>
-
-                        <span
-                            class="
-                                badge
-                                ${statusClass}
-                            "
-                        >
-                            ${statusText}
-                        </span>
-
-                        ${
-                            unassigned
-                                ? `
-
-                                    <span
-                                        class="unassigned-label"
-                                    >
-                                        Sin asignar
-                                    </span>
-
-                                `
-                                : `
-
-                                    <span
-                                        style="
-                                            font-size:10px;
-                                            color:#6b7280;
-                                            margin-left:4px;
-                                        "
-                                    >
-                                        ${escapeHtml(
-                                            getAssignedName(
-                                                conversation
-                                            ) ||
-                                            getAssignedEmail(
-                                                conversation
-                                            )
-                                        )}
-                                    </span>
-
-                                `
-                        }
-
-                    </div>
-
-
-                    ${
-                        waitingSeconds > 0
-                            ? `
-
-                                <span
-                                    class="wait-time"
-                                    data-timer-id="${id}"
-                                >
-                                    ${formatTime(
-                                        waitingSeconds
-                                    )}
-                                </span>
-
-                            `
-                            : `
-
-                                <span
-                                    class="wait-time ok"
-                                    data-timer-id="${id}"
-                                >
-                                    ✓
-                                </span>
-
-                            `
-                    }
-
-                </div>
-
-
-                <div
-                    style="
-                        margin-top:5px;
-                        font-size:9px;
-                        color:#9ca3af;
-                    "
-                >
-                    DNI:
-                    ${escapeHtml(dni)}
-                </div>
-
-            `;
-
-
-            div.addEventListener(
-                "click",
-                () =>
-                    selectConversation(id)
-            );
-
-
-            conversationList.appendChild(
-                div
-            );
-
-        }
-    );
-}
-
-
-/* =====================================================
-   ÚLTIMA ACTIVIDAD
-===================================================== */
-
-function formatLastActivity(
-    conversation
-) {
 
     const timestamp =
-        getTimestamp(
-            conversation?.ultimaActividad ||
-            conversation?.updatedAt ||
-            conversation?.timestamp
-        );
+      timestampFromMessage(
+        message
+      );
 
 
-    if (!timestamp) {
-        return "";
-    }
-
-
-    const date =
-        new Date(timestamp);
-
-
-    const now =
-        new Date();
-
-
-    const sameDay =
-        date.toDateString()
-        ===
-        now.toDateString();
-
-
-    if (sameDay) {
-
-        return date.toLocaleTimeString(
+    const time =
+      timestamp
+        ? new Date(
+            timestamp
+          ).toLocaleTimeString(
             "es-AR",
             {
-                hour: "2-digit",
-                minute: "2-digit"
+              hour: "2-digit",
+              minute: "2-digit"
             }
-        );
+          )
+        : "";
+
+
+    return `
+
+      <div class="message ${className}">
+
+        <div class="message-bubble">
+
+          <div class="message-author">
+            ${escapeHtml(author)}
+          </div>
+
+          <div>
+            ${escapeHtml(text)}
+          </div>
+
+          <div class="message-time">
+            ${time}
+          </div>
+
+        </div>
+
+      </div>
+
+    `;
+
+  }
+
+
+  /* =====================================================
+     TIMER
+  ===================================================== */
+
+  function getWaitingStart(
+    conversation
+  ) {
+
+    if (!conversation) {
+      return 0;
     }
 
 
-    return date.toLocaleDateString(
-        "es-AR",
-        {
-            day: "2-digit",
-            month: "2-digit"
-        }
-    );
-}
+    const clientAt =
+      Number(
+        conversation.ultimoMensajeClienteAt ||
+        0
+      );
 
 
-/* =====================================================
-   CRONÓMETRO
-===================================================== */
-
-function getWaitingStart(
-    conversation
-) {
-
-    const incoming =
-        getTimestamp(
-            conversation?.ultimoMensajeClienteAt ||
-            conversation?.ultimoMensajeCliente ||
-            conversation?.clienteUltimoMensajeAt ||
-            conversation?.lastClientMessageAt
-        );
+    const responseAt =
+      Number(
+        conversation.ultimaRespuestaAt ||
+        0
+      );
 
 
-    const response =
-        getTimestamp(
-            conversation?.ultimaRespuestaAt ||
-            conversation?.ultimoMensajeEquipoAt ||
-            conversation?.asesorUltimoMensajeAt ||
-            conversation?.lastTeamResponseAt
-        );
-
-
-    if (!incoming) {
-        return 0;
+    if (!clientAt) {
+      return 0;
     }
 
 
     if (
-        !response ||
-        incoming > response
+      responseAt &&
+      responseAt >= clientAt
     ) {
 
-        return incoming;
+      return 0;
+
     }
 
 
-    return 0;
-}
+    return clientAt;
+
+  }
 
 
-function getWaitingSeconds(
+  function getWaitingSeconds(
     conversation
-) {
+  ) {
 
     const start =
-        getWaitingStart(
-            conversation
-        );
+      getWaitingStart(
+        conversation
+      );
 
 
     if (!start) {
-        return 0;
+      return 0;
     }
 
 
     return Math.floor(
-        (
-            Date.now() -
-            start
-        ) / 1000
+      (
+        Date.now() -
+        start
+      ) / 1000
     );
-}
+
+  }
 
 
-function updateTimers() {
+  function updateMainTimer() {
 
-    document
-        .querySelectorAll(
-            "[data-timer-id]"
-        )
-        .forEach(
-            element => {
+    if (!selectedConversationId) {
 
-                const id =
-                    element.dataset.timerId;
+      mainTimer.textContent =
+        "00:00:00";
 
-
-                const conversation =
-                    conversations[id];
-
-
-                if (!conversation) {
-                    return;
-                }
-
-
-                const seconds =
-                    getWaitingSeconds(
-                        conversation
-                    );
-
-
-                if (seconds > 0) {
-
-                    element.textContent =
-                        formatTime(
-                            seconds
-                        );
-
-                    element.classList.remove(
-                        "ok"
-                    );
-
-                }
-                else {
-
-                    element.textContent =
-                        "✓";
-
-                    element.classList.add(
-                        "ok"
-                    );
-                }
-
-            }
-        );
-
-
-    if (
-        selectedConversationId
-    ) {
-
-        const conversation =
-            conversations[
-                selectedConversationId
-            ];
-
-
-        if (conversation) {
-
-            const seconds =
-                getWaitingSeconds(
-                    conversation
-                );
-
-
-            document.getElementById(
-                "chatTimer"
-            ).textContent =
-                formatTime(seconds);
-
-
-            document.getElementById(
-                "detailTimer"
-            ).textContent =
-                formatTime(seconds);
-
-
-            const waitBox =
-                document.getElementById(
-                    "chatWait"
-                );
-
-
-            waitBox.style.display =
-                seconds > 0
-                    ? "flex"
-                    : "none";
-
-        }
+      return;
 
     }
-
-}
-
-
-/* =====================================================
-   SELECCIONAR CONVERSACIÓN
-===================================================== */
-
-async function selectConversation(
-    id
-) {
-
-    selectedConversationId =
-        id;
 
 
     const conversation =
-        conversations[id];
+      conversations[
+        selectedConversationId
+      ];
 
 
     if (!conversation) {
-        return;
+
+      mainTimer.textContent =
+        "00:00:00";
+
+      return;
+
     }
 
 
-    renderConversationList();
-
-
-    emptyChat.style.display =
-        "none";
-
-
-    chatContent.style.display =
-        "flex";
-
-
-    renderConversationHeader(
-        id,
-        conversation
-    );
-
-
-    showDetails();
-
-
-    await loadMessages(id);
-
-
-    renderAssignmentSelect();
-
-
-    updateActionButtons();
-
-
-    scrollMessagesToBottom();
-}
-
-
-/* =====================================================
-   HEADER CHAT
-===================================================== */
-
-function renderConversationHeader(
-    id,
-    conversation
-) {
-
-    const client =
-        conversation?.datosCliente ||
-        conversation?.cliente ||
-        {};
-
-
-    const name =
-        client.nombre ||
-        client.name ||
-        conversation?.nombre ||
-        "Cliente";
-
-
-    const dni =
-        client.dni ||
-        client.documento ||
-        conversation?.dni ||
-        "No informado";
-
-
-    const phone =
-        client.telefono ||
-        client.phone ||
-        conversation?.telefono ||
-        "No informado";
-
-
-    document.getElementById(
-        "clientName"
-    ).textContent =
-        name;
-
-
-    document.getElementById(
-        "clientSubtitle"
-    ).textContent =
-        `DNI: ${dni}`;
-
-
-    document.getElementById(
-        "detailName"
-    ).textContent =
-        name;
-
-
-    document.getElementById(
-        "detailDni"
-    ).textContent =
-        dni;
-
-
-    document.getElementById(
-        "detailPhone"
-    ).textContent =
-        phone;
-
-
-    document.getElementById(
-        "detailStatus"
-    ).textContent =
-        conversation?.estado ||
-        conversation?.status ||
-        "Pendiente";
-
-
-    document.getElementById(
-        "detailAssigned"
-    ).textContent =
-        getAssignedName(
-            conversation
-        ) ||
-        getAssignedEmail(
-            conversation
-        ) ||
-        "Sin asignar";
-
-
-    document.getElementById(
-        "detailTeam"
-    ).textContent =
-        getConversationTeam(
-            conversation
-        ) ||
-        "Sin equipo";
-
-
-    const seconds =
+    mainTimer.textContent =
+      formatTime(
         getWaitingSeconds(
-            conversation
-        );
-
-
-    document.getElementById(
-        "chatTimer"
-    ).textContent =
-        formatTime(seconds);
-
-
-    document.getElementById(
-        "detailTimer"
-    ).textContent =
-        formatTime(seconds);
-
-
-    document.getElementById(
-        "chatWait"
-    ).style.display =
-        seconds > 0
-            ? "flex"
-            : "none";
-}
-
-
-/* =====================================================
-   MENSAJES
-===================================================== */
-
-async function loadMessages(
-    id
-) {
-
-    if (unsubscribeMessages) {
-
-        unsubscribeMessages();
-
-        unsubscribeMessages =
-            null;
-    }
-
-
-    selectedMessages = {};
-
-
-    const messagesRef =
-        ref(
-            db,
-            `historial/${id}`
-        );
-
-
-    unsubscribeMessages =
-        onValue(
-            messagesRef,
-            snapshot => {
-
-                selectedMessages =
-                    snapshot.exists()
-                        ? snapshot.val()
-                        : {};
-
-
-                renderMessages();
-
-                updateConversationMetadataFromMessages(
-                    id,
-                    selectedMessages
-                );
-
-            },
-            error => {
-
-                console.error(
-                    "Error historial:",
-                    error
-                );
-
-
-                messagesBox.innerHTML = `
-
-                    <div style="
-                        text-align:center;
-                        color:#991b1b;
-                        padding:20px;
-                    ">
-
-                        No se pudieron cargar
-                        los mensajes.
-
-                    </div>
-
-                `;
-            }
-        );
-}
-
-
-/* =====================================================
-   RENDER MENSAJES
-===================================================== */
-
-function renderMessages() {
-
-    messagesBox.innerHTML = "";
-
-
-    const entries =
-        Object.entries(
-            selectedMessages
+          conversation
         )
-        .sort(
-            ([,a], [,b]) =>
-                getTimestamp(
-                    a?.timestamp ||
-                    a?.fecha
-                )
-                -
-                getTimestamp(
-                    b?.timestamp ||
-                    b?.fecha
-                )
-        );
+      );
+
+  }
 
 
-    if (
-        entries.length === 0
-    ) {
+  function updateTimers() {
 
-        messagesBox.innerHTML = `
-
-            <div style="
-                text-align:center;
-                color:#9ca3af;
-                margin-top:40px;
-                font-size:12px;
-            ">
-
-                No hay mensajes todavía.
-
-            </div>
-
-        `;
-
-        return;
-    }
+    updateMainTimer();
 
 
-    entries.forEach(
-        ([messageId, message]) => {
+    document
+      .querySelectorAll(
+        "[data-list-timer]"
+      )
+      .forEach(
+        function(element) {
 
-            const sender =
-                String(
-                    message?.remitente ||
-                    message?.sender ||
-                    message?.tipo ||
-                    "cliente"
-                )
-                .toLowerCase();
+          const id =
+            element.dataset.listTimer;
 
+          const conversation =
+            conversations[id];
 
-            let className =
-                "client";
+          if (!conversation) {
+            return;
+          }
 
-
-            if (
-                sender.includes("asesor") ||
-                sender.includes("gestor") ||
-                sender.includes("agente") ||
-                sender.includes("equipo")
-            ) {
-
-                className =
-                    "asesor";
-
-            }
-            else if (
-                sender.includes("ia") ||
-                sender.includes("bot")
-            ) {
-
-                className =
-                    "ia";
-
-            }
-            else if (
-                sender.includes("system") ||
-                sender.includes("sistema")
-            ) {
-
-                className =
-                    "system";
-            }
-
-
-            const author =
-                message?.nombreRemitente ||
-                message?.autor ||
-                (
-                    className === "client"
-                        ? "Cliente"
-                        : className === "ia"
-                            ? "IA"
-                            : getCurrentName()
-                );
-
-
-            const text =
-                message?.texto ||
-                message?.mensaje ||
-                message?.text ||
-                "";
-
-
-            const timestamp =
-                getTimestamp(
-                    message?.timestamp ||
-                    message?.fecha
-                );
-
-
-            const date =
-                timestamp
-                    ? new Date(timestamp)
-                    : null;
-
-
-            const time =
-                date
-                    ? date.toLocaleTimeString(
-                        "es-AR",
-                        {
-                            hour: "2-digit",
-                            minute: "2-digit"
-                        }
-                    )
-                    : "";
-
-
-            const div =
-                document.createElement(
-                    "div"
-                );
-
-
-            div.className =
-                `message ${className}`;
-
-
-            div.innerHTML = `
-
-                <div
-                    class="message-author"
-                >
-                    ${escapeHtml(author)}
-                </div>
-
-                <div>
-                    ${escapeHtml(text)}
-                </div>
-
-                <div
-                    class="message-time"
-                >
-                    ${time}
-                </div>
-
-            `;
-
-
-            messagesBox.appendChild(
-                div
+          element.textContent =
+            formatTime(
+              getWaitingSeconds(
+                conversation
+              )
             );
 
         }
-    );
+      );
+
+  }
 
 
-    scrollMessagesToBottom();
-}
+  function startTimer() {
+
+    stopTimer();
+
+    timerInterval =
+      setInterval(
+        updateTimers,
+        1000
+      );
+
+    updateTimers();
+
+  }
 
 
-function scrollMessagesToBottom() {
+  function stopTimer() {
 
-    setTimeout(
-        () => {
+    if (timerInterval) {
 
-            messagesBox.scrollTop =
-                messagesBox.scrollHeight;
+      clearInterval(
+        timerInterval
+      );
 
-        },
-        50
-    );
-}
+      timerInterval = null;
+
+    }
+
+  }
 
 
-/* =====================================================
-   METADATA AUTOMÁTICA
-===================================================== */
+  startTimer();
 
-async function updateConversationMetadataFromMessages(
+
+  /* =====================================================
+     ACTUALIZAR METADATA DEL TIMER
+  ===================================================== */
+
+  async function updateConversationWaitingMetadata(
     conversationId,
     messages
-) {
+  ) {
 
     const conversation =
-        conversations[
-            conversationId
-        ];
+      conversations[
+        conversationId
+      ];
 
 
     if (!conversation) {
-        return;
+      return;
     }
 
 
-    let lastClient = 0;
+    let lastClientMessage =
+      0;
 
-    let lastTeam = 0;
+    let lastTeamMessage =
+      0;
 
 
     Object.values(
-        messages || {}
-    )
-    .forEach(
-        message => {
+      messages || {}
+    ).forEach(
+      function(message) {
 
-            const timestamp =
-                getTimestamp(
-                    message?.timestamp ||
-                    message?.fecha
-                );
+        const timestamp =
+          timestampFromMessage(
+            message
+          );
 
 
-            if (!timestamp) {
-                return;
-            }
+        if (!timestamp) {
+          return;
+        }
 
 
-            const sender =
-                String(
-                    message?.remitente ||
-                    message?.sender ||
-                    message?.tipo ||
-                    ""
-                )
-                .toLowerCase();
+        const sender =
+          normalize(
+            message.remitente ||
+            message.sender ||
+            message.autor ||
+            message.tipo ||
+            ""
+          );
 
 
-            const isClient =
-                sender === "cliente" ||
-                sender === "client" ||
-                sender === "usuario" ||
-                sender === "user";
+        const isClient =
+          sender.includes("cliente") ||
+          sender.includes("client") ||
+          sender.includes("usuario") ||
+          sender === "inbound" ||
+          sender === "customer";
 
 
-            const isTeam =
-                sender.includes("asesor") ||
-                sender.includes("gestor") ||
-                sender.includes("agente") ||
-                sender.includes("equipo");
+        if (isClient) {
 
+          if (
+            timestamp >
+            lastClientMessage
+          ) {
 
-            if (
-                isClient &&
-                timestamp > lastClient
-            ) {
+            lastClientMessage =
+              timestamp;
 
-                lastClient =
-                    timestamp;
-            }
+          }
 
+        } else {
 
-            if (
-                isTeam &&
-                timestamp > lastTeam
-            ) {
+          if (
+            timestamp >
+            lastTeamMessage
+          ) {
 
-                lastTeam =
-                    timestamp;
-            }
+            lastTeamMessage =
+              timestamp;
+
+          }
 
         }
+
+      }
     );
 
 
@@ -2953,1424 +2515,769 @@ async function updateConversationMetadataFromMessages(
 
 
     if (
-        lastClient &&
-        !conversation.ultimoMensajeClienteAt
+      lastClientMessage &&
+      Number(
+        conversation.ultimoMensajeClienteAt ||
+        0
+      ) !== lastClientMessage
     ) {
 
-        updates.ultimoMensajeClienteAt =
-            lastClient;
+      updates.ultimoMensajeClienteAt =
+        lastClientMessage;
+
     }
 
 
     if (
-        lastTeam &&
-        !conversation.ultimaRespuestaAt
+      lastTeamMessage &&
+      Number(
+        conversation.ultimaRespuestaAt ||
+        0
+      ) !== lastTeamMessage
     ) {
 
-        updates.ultimaRespuestaAt =
-            lastTeam;
+      updates.ultimaRespuestaAt =
+        lastTeamMessage;
+
     }
 
 
     if (
-        Object.keys(updates).length
+      Object.keys(updates).length
     ) {
 
-        try {
+      try {
 
-            await update(
-                ref(
-                    db,
-                    `conversaciones/${conversationId}`
-                ),
-                updates
-            );
-
-        }
-        catch(error) {
-
-            console.warn(
-                "No se pudo actualizar metadata",
-                error
-            );
-
-        }
-
-    }
-
-}
-
-
-/* =====================================================
-   BOTONES
-===================================================== */
-
-function updateActionButtons() {
-
-    const conversation =
-        conversations[
-            selectedConversationId
-        ];
-
-
-    if (!conversation) {
-        return;
-    }
-
-
-    const assigned =
-        getAssignedUid(
-            conversation
-        ) ||
-        getAssignedEmail(
-            conversation
+        await update(
+          ref(
+            db,
+            `conversaciones/${conversationId}`
+          ),
+          updates
         );
 
+      } catch (error) {
 
-    const status =
-        String(
-            conversation?.estado ||
-            conversation?.status ||
-            ""
-        )
-        .toLowerCase();
+        console.error(
+          "No se pudo actualizar el timer:",
+          error
+        );
 
-
-    if (
-        status === "finalizado" ||
-        status === "finalizada"
-    ) {
-
-        sendBtn.disabled =
-            true;
-
-        messageInput.disabled =
-            true;
-
-        takeBtn.style.display =
-            "none";
-
-        transferBtn.style.display =
-            "none";
-
-        finishBtn.style.display =
-            "none";
-
-        return;
-    }
-
-
-    messageInput.disabled =
-        false;
-
-    sendBtn.disabled =
-        false;
-
-
-    finishBtn.style.display =
-        "inline-block";
-
-
-    transferBtn.style.display =
-        "inline-block";
-
-
-    if (!assigned) {
-
-        if (isSenior()) {
-
-            takeBtn.style.display =
-                "inline-block";
-
-            takeBtn.textContent =
-                "Tomar chat";
-
-        }
-        else {
-
-            takeBtn.style.display =
-                "none";
-        }
-
-        return;
-    }
-
-
-    takeBtn.style.display =
-        "none";
-}
-
-
-/* =====================================================
-   TOMAR CHAT
-===================================================== */
-
-takeBtn.addEventListener(
-    "click",
-    async () => {
-
-        const id =
-            selectedConversationId;
-
-
-        if (!id) {
-            return;
-        }
-
-
-        const conversation =
-            conversations[id];
-
-
-        if (!conversation) {
-            return;
-        }
-
-
-        if (!isSenior()) {
-            return;
-        }
-
-
-        const updates = {
-
-            asignadoUid:
-                currentUser.uid,
-
-            asignadoEmail:
-                currentUser.email,
-
-            asignadoNombre:
-                getCurrentName(),
-
-            estado:
-                "en atención",
-
-            equipo:
-                getCurrentTeam(),
-
-            ultimaActividad:
-                Date.now()
-
-        };
-
-
-        try {
-
-            await update(
-                ref(
-                    db,
-                    `conversaciones/${id}`
-                ),
-                updates
-            );
-
-        }
-        catch(error) {
-
-            alert(
-                "No se pudo tomar el chat."
-            );
-
-            console.error(error);
-
-        }
+      }
 
     }
-);
 
+  }
 
-/* =====================================================
-   TRANSFERIR
-===================================================== */
 
-transferBtn.addEventListener(
-    "click",
-    async () => {
+  /* =====================================================
+     ENVIAR MENSAJE
+  ===================================================== */
 
-        const id =
-            selectedConversationId;
-
-
-        if (!id) {
-            return;
-        }
-
-
-        const conversation =
-            conversations[id];
-
-
-        if (!conversation) {
-            return;
-        }
-
-
-        const team =
-            getConversationTeam(
-                conversation
-            ) ||
-            getCurrentTeam();
-
-
-        const teamUsers =
-            getUsersForTeam(team)
-            .filter(
-                user => {
-
-                    const uid =
-                        user.uid ||
-                        user.id;
-
-
-                    return (
-                        uid &&
-                        uid !==
-                        currentUser.uid
-                    );
-
-                }
-            );
-
-
-        if (
-            teamUsers.length === 0
-        ) {
-
-            alert(
-                "No hay compañeros disponibles para transferir."
-            );
-
-            return;
-        }
-
-
-        const options =
-            teamUsers
-            .map(
-                (user, index) =>
-                    `${index + 1}. ${
-                        user.nombre ||
-                        user.name ||
-                        user.email
-                    }`
-            )
-            .join("\n");
-
-
-        const answer =
-            prompt(
-                "Elegí el número del compañero:\n\n"
-                +
-                options
-            );
-
-
-        if (!answer) {
-            return;
-        }
-
-
-        const index =
-            Number(answer) - 1;
-
-
-        if (
-            Number.isNaN(index) ||
-            !teamUsers[index]
-        ) {
-
-            alert(
-                "Selección inválida."
-            );
-
-            return;
-        }
-
-
-        const target =
-            teamUsers[index];
-
-
-        try {
-
-            await update(
-                ref(
-                    db,
-                    `conversaciones/${id}`
-                ),
-                {
-
-                    asignadoUid:
-                        target.uid ||
-                        target.id,
-
-                    asignadoEmail:
-                        target.email ||
-                        "",
-
-                    asignadoNombre:
-                        target.nombre ||
-                        target.name ||
-                        target.email,
-
-                    equipo:
-                        team,
-
-                    estado:
-                        "en atención",
-
-                    ultimaActividad:
-                        Date.now()
-
-                }
-            );
-
-
-            await addSystemMessage(
-                id,
-                `Chat transferido a ${
-                    target.nombre ||
-                    target.name ||
-                    target.email
-                }`
-            );
-
-        }
-        catch(error) {
-
-            console.error(error);
-
-            alert(
-                "No se pudo transferir el chat."
-            );
-
-        }
-
-    }
-);
-
-
-/* =====================================================
-   FINALIZAR
-===================================================== */
-
-finishBtn.addEventListener(
-    "click",
-    async () => {
-
-        const id =
-            selectedConversationId;
-
-
-        if (!id) {
-            return;
-        }
-
-
-        const confirmFinish =
-            confirm(
-                "¿Querés finalizar esta conversación?"
-            );
-
-
-        if (!confirmFinish) {
-            return;
-        }
-
-
-        try {
-
-            await update(
-                ref(
-                    db,
-                    `conversaciones/${id}`
-                ),
-                {
-
-                    estado:
-                        "finalizado",
-
-                    finalizadoAt:
-                        Date.now(),
-
-                    finalizadoPorUid:
-                        currentUser.uid,
-
-                    finalizadoPor:
-                        getCurrentName(),
-
-                    ultimaActividad:
-                        Date.now()
-
-                }
-            );
-
-
-            await addSystemMessage(
-                id,
-                "Conversación finalizada."
-            );
-
-        }
-        catch(error) {
-
-            console.error(error);
-
-            alert(
-                "No se pudo finalizar."
-            );
-
-        }
-
-    }
-);
-
-
-/* =====================================================
-   ENVIAR MENSAJE
-===================================================== */
-
-sendBtn.addEventListener(
+  sendBtn.addEventListener(
     "click",
     sendMessage
-);
+  );
 
 
-messageInput.addEventListener(
+  messageInput.addEventListener(
     "keydown",
-    event => {
+    function(event) {
 
-        if (
-            event.key === "Enter" &&
-            !event.shiftKey
-        ) {
+      if (
+        event.key === "Enter" &&
+        !event.shiftKey
+      ) {
 
-            event.preventDefault();
+        event.preventDefault();
 
-            sendMessage();
+        sendMessage();
 
-        }
+      }
 
     }
-);
+  );
 
 
-async function sendMessage() {
+  async function sendMessage() {
 
-    const id =
-        selectedConversationId;
-
-
-    if (!id) {
-        return;
+    if (!selectedConversationId) {
+      return;
     }
 
 
     const text =
-        messageInput.value.trim();
+      messageInput.value.trim();
 
 
     if (!text) {
-        return;
+      return;
     }
 
 
     const conversation =
-        conversations[id];
+      conversations[
+        selectedConversationId
+      ];
 
 
     if (!conversation) {
-        return;
+      return;
     }
 
 
-    const status =
-        String(
-            conversation?.estado ||
-            ""
-        )
-        .toLowerCase();
-
-
-    if (
-        status === "finalizado" ||
-        status === "finalizada"
-    ) {
-
-        alert(
-            "Esta conversación está finalizada."
-        );
-
-        return;
-    }
-
-
-    sendBtn.disabled =
-        true;
+    const now =
+      Date.now();
 
 
     try {
 
-        const messagesRef =
-            ref(
-                db,
-                `historial/${id}`
-            );
-
-
-        const newMessage =
-            push(messagesRef);
-
-
-        const now =
-            Date.now();
-
-
-        await set(
-            newMessage,
-            {
-
-                remitente:
-                    "asesor",
-
-                remitenteUid:
-                    currentUser.uid,
-
-                nombreRemitente:
-                    getCurrentName(),
-
-                texto:
-                    text,
-
-                timestamp:
-                    now
-
-            }
+      const messageRef =
+        push(
+          ref(
+            db,
+            `historial/${selectedConversationId}`
+          )
         );
 
 
-        /*
-           La respuesta del equipo
-           detiene el cronómetro.
-        */
+      await set(
+        messageRef,
+        {
 
-        await update(
-            ref(
-                db,
-                `conversaciones/${id}`
-            ),
-            {
+          texto: text,
 
-                ultimoMensaje:
-                    text,
+          mensaje: text,
 
-                ultimaRespuestaAt:
-                    now,
+          remitente:
+            "equipo",
 
-                ultimoMensajeEquipoAt:
-                    now,
+          sender:
+            "team",
 
-                estado:
-                    "en atención",
+          autor:
+            currentUser.email,
 
-                ultimaActividad:
-                    now,
+          autorNombre:
+            currentProfile?.nombre ||
+            currentUser.email,
 
-                asignadoUid:
-                    getAssignedUid(
-                        conversation
-                    ) ||
-                    currentUser.uid,
+          timestamp:
+            now,
 
-                asignadoEmail:
-                    getAssignedEmail(
-                        conversation
-                    ) ||
-                    currentUser.email,
+          createdAt:
+            now
 
-                asignadoNombre:
-                    getAssignedName(
-                        conversation
-                    ) ||
-                    getCurrentName(),
-
-                equipo:
-                    getConversationTeam(
-                        conversation
-                    ) ||
-                    getCurrentTeam()
-
-            }
-        );
+        }
+      );
 
 
-        messageInput.value = "";
+      await update(
+        ref(
+          db,
+          `conversaciones/${selectedConversationId}`
+        ),
+        {
+
+          ultimoMensaje:
+            text,
+
+          ultimoMensajeAt:
+            now,
+
+          ultimaRespuestaAt:
+            now,
+
+          ultimoMensajeEquipoAt:
+            now,
+
+          actualizadoEn:
+            now
+
+        }
+      );
+
+
+      messageInput.value = "";
+
+
+    } catch (error) {
+
+      console.error(
+        "Error enviando mensaje:",
+        error
+      );
+
+      alert(
+        "No se pudo enviar el mensaje."
+      );
 
     }
-    catch(error) {
+
+  }
+
+
+  /* =====================================================
+     TOMAR CHAT
+  ===================================================== */
+
+  takeBtn.addEventListener(
+    "click",
+    async function() {
+
+      if (!selectedConversationId) {
+        return;
+      }
+
+
+      const conversation =
+        conversations[
+          selectedConversationId
+        ];
+
+
+      if (!isSenior()) {
+        return;
+      }
+
+
+      try {
+
+        await update(
+          ref(
+            db,
+            `conversaciones/${selectedConversationId}`
+          ),
+          {
+
+            asignadoA:
+              currentUser.email,
+
+            assignedTo:
+              currentUser.email,
+
+            gestor:
+              currentUser.email,
+
+            asignadoNombre:
+              currentProfile?.nombre ||
+              currentUser.email,
+
+            actualizadoEn:
+              Date.now()
+
+          }
+        );
+
+
+        alert(
+          "Chat tomado correctamente."
+        );
+
+
+      } catch (error) {
 
         console.error(error);
 
         alert(
-            "No se pudo enviar el mensaje."
+          "No se pudo tomar el chat."
         );
 
-    }
-    finally {
-
-        sendBtn.disabled =
-            false;
+      }
 
     }
+  );
 
-}
+
+  /* =====================================================
+     TRANSFERIR
+  ===================================================== */
+
+  transferBtn.addEventListener(
+    "click",
+    async function() {
+
+      if (!selectedConversationId) {
+        return;
+      }
 
 
-/* =====================================================
-   MENSAJE SISTEMA
-===================================================== */
+      const currentTeam =
+        getCurrentTeam();
 
-async function addSystemMessage(
-    conversationId,
-    text
-) {
 
-    const messagesRef =
-        ref(
-            db,
-            `historial/${conversationId}`
+      if (!currentTeam) {
+
+        alert(
+          "Tu usuario no tiene un equipo configurado."
         );
 
+        return;
 
-    const newMessage =
-        push(messagesRef);
-
-
-    await set(
-        newMessage,
-        {
-
-            remitente:
-                "sistema",
-
-            texto:
-                text,
-
-            timestamp:
-                Date.now(),
-
-            autor:
-                getCurrentName()
-
-        }
-    );
+      }
 
 
-    await update(
-        ref(
-            db,
-            `conversaciones/${conversationId}`
-        ),
-        {
-
-            ultimaActividad:
-                Date.now()
-
-        }
-    );
-
-}
+      const usersRef =
+        ref(db, "usuarios");
 
 
-/* =====================================================
-   USUARIOS POR EQUIPO
-===================================================== */
-
-function getUsersForTeam(
-    team
-) {
-
-    return Object.entries(
-        users
-    )
-    .map(
-        ([uid, user]) => ({
-            ...user,
-            uid
-        })
-    )
-    .filter(
-        user => {
-
-            const role =
-                normalizeRole(
-                    user.rol ||
-                    user.role ||
-                    user.perfil
-                );
+      const usersSnap =
+        await get(usersRef);
 
 
-            if (
-                role !== "gestor"
-            ) {
-                return false;
-            }
+      if (!usersSnap.exists()) {
+
+        alert(
+          "No se encontraron usuarios."
+        );
+
+        return;
+
+      }
 
 
-            const userTeam =
+      const users =
+        usersSnap.val();
+
+
+      const available = [];
+
+
+      Object.entries(users)
+        .forEach(
+          ([uid, user]) => {
+
+            const team =
+              normalize(
                 user.equipo ||
                 user.team ||
                 user.grupo ||
-                "";
+                ""
+              );
 
 
-            return (
-                !team ||
-                !userTeam ||
-                userTeam === team
-            );
-
-        }
-    );
-
-}
+            const role =
+              normalize(
+                user.rol ||
+                user.role ||
+                ""
+              );
 
 
-/* =====================================================
-   SELECT ASIGNACIÓN
-===================================================== */
+            const email =
+              user.email ||
+              user.correo ||
+              "";
 
-function renderAssignmentSelect() {
 
-    const section =
-        document.getElementById(
-            "assignmentSection"
+            if (
+              team === currentTeam &&
+              email &&
+              !role.includes("supervisor") &&
+              !role.includes("senior")
+            ) {
+
+              available.push({
+                email,
+                nombre:
+                  user.nombre ||
+                  email
+              });
+
+            }
+
+          }
         );
 
 
-    const select =
-        document.getElementById(
-            "assignSelect"
+      if (!available.length) {
+
+        alert(
+          "No hay gestores disponibles en tu equipo."
         );
-
-
-    if (
-        !selectedConversationId ||
-        !isSenior()
-    ) {
-
-        section.style.display =
-            "none";
 
         return;
+
+      }
+
+
+      const options =
+        available
+          .map(
+            (user, index) =>
+              `${index + 1}. ${user.nombre} - ${user.email}`
+          )
+          .join("\n");
+
+
+      const answer =
+        prompt(
+          "Elegí el gestor escribiendo el número:\n\n" +
+          options
+        );
+
+
+      if (!answer) {
+        return;
+      }
+
+
+      const index =
+        Number(answer) - 1;
+
+
+      if (
+        !Number.isInteger(index) ||
+        !available[index]
+      ) {
+
+        alert(
+          "Selección inválida."
+        );
+
+        return;
+
+      }
+
+
+      const selected =
+        available[index];
+
+
+      try {
+
+        await update(
+          ref(
+            db,
+            `conversaciones/${selectedConversationId}`
+          ),
+          {
+
+            asignadoA:
+              selected.email,
+
+            assignedTo:
+              selected.email,
+
+            gestor:
+              selected.email,
+
+            asignadoNombre:
+              selected.nombre,
+
+            actualizadoEn:
+              Date.now()
+
+          }
+        );
+
+
+        alert(
+          "Chat transferido correctamente."
+        );
+
+
+      } catch (error) {
+
+        console.error(error);
+
+        alert(
+          "No se pudo transferir el chat."
+        );
+
+      }
+
+    }
+  );
+
+
+  /* =====================================================
+     FINALIZAR
+  ===================================================== */
+
+  finishBtn.addEventListener(
+    "click",
+    async function() {
+
+      if (!selectedConversationId) {
+        return;
+      }
+
+
+      const confirmFinish =
+        confirm(
+          "¿Querés finalizar esta conversación?"
+        );
+
+
+      if (!confirmFinish) {
+        return;
+      }
+
+
+      try {
+
+        await update(
+          ref(
+            db,
+            `conversaciones/${selectedConversationId}`
+          ),
+          {
+
+            estado:
+              "finalizada",
+
+            status:
+              "finalizada",
+
+            finalizadaEn:
+              Date.now(),
+
+            finalizadaPor:
+              currentUser.email,
+
+            actualizadoEn:
+              Date.now()
+
+          }
+        );
+
+
+        messageInput.disabled =
+          true;
+
+        sendBtn.disabled =
+          true;
+
+
+      } catch (error) {
+
+        console.error(error);
+
+        alert(
+          "No se pudo finalizar la conversación."
+        );
+
+      }
+
+    }
+  );
+
+
+  /* =====================================================
+     DETAILS
+  ===================================================== */
+
+  function renderDetails(
+    id,
+    conversation
+  ) {
+
+    const name =
+      conversation.nombreCliente ||
+      conversation.cliente ||
+      conversation.nombre ||
+      "Sin nombre";
+
+
+    const phone =
+      conversation.telefono ||
+      "Sin teléfono";
+
+
+    const email =
+      conversation.email ||
+      conversation.correo ||
+      "Sin correo";
+
+
+    const team =
+      conversation.equipo ||
+      conversation.team ||
+      "Sin equipo";
+
+
+    const assigned =
+      conversation.asignadoNombre ||
+      conversation.asignadoA ||
+      conversation.assignedTo ||
+      "Sin asignar";
+
+
+    const status =
+      conversation.estado ||
+      conversation.status ||
+      "activa";
+
+
+    detailsContent.innerHTML = `
+
+      <div class="detail-section">
+
+        <div class="detail-title">
+          Cliente
+        </div>
+
+        <div class="detail-value">
+          ${escapeHtml(name)}
+        </div>
+
+      </div>
+
+
+      <div class="detail-section">
+
+        <div class="detail-title">
+          Teléfono
+        </div>
+
+        <div class="detail-value">
+          ${escapeHtml(phone)}
+        </div>
+
+      </div>
+
+
+      <div class="detail-section">
+
+        <div class="detail-title">
+          Email
+        </div>
+
+        <div class="detail-value">
+          ${escapeHtml(email)}
+        </div>
+
+      </div>
+
+
+      <div class="detail-section">
+
+        <div class="detail-title">
+          Estado
+        </div>
+
+        <div class="detail-value">
+          ${escapeHtml(status)}
+        </div>
+
+      </div>
+
+
+      <div class="detail-section">
+
+        <div class="detail-title">
+          Equipo
+        </div>
+
+        <div class="detail-value">
+          ${escapeHtml(team)}
+        </div>
+
+      </div>
+
+
+      <div class="detail-section">
+
+        <div class="detail-title">
+          Asignado a
+        </div>
+
+        <div class="detail-value">
+          ${escapeHtml(assigned)}
+        </div>
+
+      </div>
+
+
+      <div class="detail-section">
+
+        <div class="detail-title">
+          Tiempo esperando
+        </div>
+
+        <div
+          id="detailsTimer"
+          class="detail-timer"
+        >
+          ${formatTime(
+            getWaitingSeconds(
+              conversation
+            )
+          )}
+        </div>
+
+      </div>
+
+    `;
+
+  }
+
+
+  /* =====================================================
+     ACTUALIZAR TIMER DEL PANEL DERECHO
+  ===================================================== */
+
+  const originalUpdateTimers =
+    updateTimers;
+
+
+  function updateDetailsTimer() {
+
+    if (!selectedConversationId) {
+      return;
     }
 
 
     const conversation =
-        conversations[
-            selectedConversationId
-        ];
+      conversations[
+        selectedConversationId
+      ];
 
 
     if (!conversation) {
-
-        section.style.display =
-            "none";
-
-        return;
+      return;
     }
 
 
-    if (
-        !isUnassigned(
+    const timer =
+      document.getElementById(
+        "detailsTimer"
+      );
+
+
+    if (timer) {
+
+      timer.textContent =
+        formatTime(
+          getWaitingSeconds(
             conversation
-        )
-    ) {
+          )
+        );
 
-        section.style.display =
-            "none";
-
-        return;
     }
 
+  }
 
-    section.style.display =
-        "block";
 
+  setInterval(
+    updateDetailsTimer,
+    1000
+  );
 
-    const team =
-        getConversationTeam(
-            conversation
-        ) ||
-        getCurrentTeam();
 
+  /* =====================================================
+     DEBUG
+  ===================================================== */
 
-    const teamUsers =
-        getUsersForTeam(team);
+  console.log(
+    "Centro de Atención iniciado correctamente."
+  );
 
-
-    select.innerHTML = `
-
-        <option value="">
-            Seleccionar gestor
-        </option>
-
-    `;
-
-
-    teamUsers.forEach(
-        user => {
-
-            const uid =
-                user.uid ||
-                user.id;
-
-
-            if (!uid) {
-                return;
-            }
-
-
-            const option =
-                document.createElement(
-                    "option"
-                );
-
-
-            option.value =
-                uid;
-
-
-            option.textContent =
-                user.nombre ||
-                user.name ||
-                user.email;
-
-
-            select.appendChild(
-                option
-            );
-
-        }
-    );
-
-}
-
-
-/* =====================================================
-   ASIGNAR
-===================================================== */
-
-document.getElementById(
-    "assignButton"
-)
-.addEventListener(
-    "click",
-    async () => {
-
-        if (!isSenior()) {
-            return;
-        }
-
-
-        const id =
-            selectedConversationId;
-
-
-        if (!id) {
-            return;
-        }
-
-
-        const uid =
-            document.getElementById(
-                "assignSelect"
-            ).value;
-
-
-        if (!uid) {
-
-            alert(
-                "Seleccioná un gestor."
-            );
-
-            return;
-        }
-
-
-        const team =
-            getConversationTeam(
-                conversations[id]
-            ) ||
-            getCurrentTeam();
-
-
-        const selectedUser =
-            getUsersForTeam(team)
-            .find(
-                user =>
-                    (
-                        user.uid ||
-                        user.id
-                    ) === uid
-            );
-
-
-        if (!selectedUser) {
-
-            alert(
-                "No se encontró el gestor."
-            );
-
-            return;
-        }
-
-
-        try {
-
-            await update(
-                ref(
-                    db,
-                    `conversaciones/${id}`
-                ),
-                {
-
-                    asignadoUid:
-                        uid,
-
-                    asignadoEmail:
-                        selectedUser.email ||
-                        "",
-
-                    asignadoNombre:
-                        selectedUser.nombre ||
-                        selectedUser.name ||
-                        selectedUser.email,
-
-                    estado:
-                        "en atención",
-
-                    equipo:
-                        team,
-
-                    asignadoAt:
-                        Date.now(),
-
-                    asignadoPorUid:
-                        currentUser.uid,
-
-                    ultimaActividad:
-                        Date.now()
-
-                }
-            );
-
-
-            await addSystemMessage(
-                id,
-                `Conversación asignada a ${
-                    selectedUser.nombre ||
-                    selectedUser.name ||
-                    selectedUser.email
-                }`
-            );
-
-
-            renderAssignmentSelect();
-
-        }
-        catch(error) {
-
-            console.error(error);
-
-            alert(
-                "No se pudo asignar."
-            );
-
-        }
-
-    }
-);
-
-
-/* =====================================================
-   LIMPIAR
-===================================================== */
-
-function clearSelectedConversation() {
-
-    selectedConversationId =
-        null;
-
-
-    selectedMessages = {};
-
-
-    if (unsubscribeMessages) {
-
-        unsubscribeMessages();
-
-        unsubscribeMessages =
-            null;
-    }
-
-
-    emptyChat.style.display =
-        "flex";
-
-
-    chatContent.style.display =
-        "none";
-
-
-    messagesBox.innerHTML =
-        "";
-
-
-    document.getElementById(
-        "noDetails"
-    ).style.display =
-        "block";
-
-
-    document.getElementById(
-        "detailsContent"
-    ).style.display =
-        "none";
-}
-
-
-/* =====================================================
-   DETALLES
-===================================================== */
-
-function showDetails() {
-
-    document.getElementById(
-        "noDetails"
-    ).style.display =
-        "none";
-
-
-    document.getElementById(
-        "detailsContent"
-    ).style.display =
-        "block";
-}
-
-
-/* =====================================================
-   FILTROS
-===================================================== */
-
-document
-    .querySelectorAll(
-        ".filter-btn"
-    )
-    .forEach(
-        button => {
-
-            button.addEventListener(
-                "click",
-                () => {
-
-                    document
-                        .querySelectorAll(
-                            ".filter-btn"
-                        )
-                        .forEach(
-                            btn =>
-                                btn.classList
-                                    .remove(
-                                        "active"
-                                    )
-                        );
-
-
-                    button.classList.add(
-                        "active"
-                    );
-
-
-                    currentFilter =
-                        button.dataset.filter;
-
-
-                    renderConversationList();
-
-                }
-            );
-
-        }
-    );
-
-
-/* =====================================================
-   BUSCADOR
-===================================================== */
-
-searchInput.addEventListener(
-    "input",
-    () => {
-
-        renderConversationList();
-
-    }
-);
-
-
-/* =====================================================
-   LOGIN
-===================================================== */
-
-loginForm.addEventListener(
-    "submit",
-    async event => {
-
-        event.preventDefault();
-
-
-        loginError.style.display =
-            "none";
-
-
-        const email =
-            document.getElementById(
-                "email"
-            ).value.trim();
-
-
-        const password =
-            document.getElementById(
-                "password"
-            ).value;
-
-
-        try {
-
-            await signInWithEmailAndPassword(
-                auth,
-                email,
-                password
-            );
-
-        }
-        catch(error) {
-
-            console.error(error);
-
-
-            let message =
-                "No se pudo iniciar sesión.";
-
-
-            if (
-                error.code ===
-                "auth/invalid-credential"
-            ) {
-
-                message =
-                    "Correo o contraseña incorrectos.";
-
-            }
-            else if (
-                error.code ===
-                "auth/user-not-found"
-            ) {
-
-                message =
-                    "No existe un usuario con ese correo.";
-
-            }
-            else if (
-                error.code ===
-                "auth/wrong-password"
-            ) {
-
-                message =
-                    "La contraseña es incorrecta.";
-
-            }
-            else if (
-                error.code ===
-                "auth/too-many-requests"
-            ) {
-
-                message =
-                    "Demasiados intentos. Esperá unos minutos.";
-
-            }
-
-
-            loginError.textContent =
-                message;
-
-
-            loginError.style.display =
-                "block";
-
-        }
-
-    }
-);
-
-
-/* =====================================================
-   LOGOUT
-===================================================== */
-
-logoutBtn.addEventListener(
-    "click",
-    async () => {
-
-        try {
-
-            await signOut(auth);
-
-        }
-        catch(error) {
-
-            console.error(error);
-
-        }
-
-    }
-);
-
-
-/* =====================================================
-   AUTH STATE
-===================================================== */
-
-onAuthStateChanged(
-    auth,
-    async user => {
-
-        if (!user) {
-
-            currentUser =
-                null;
-
-            currentProfile =
-                null;
-
-
-            appScreen.style.display =
-                "none";
-
-
-            loginScreen.style.display =
-                "flex";
-
-
-            if (
-                unsubscribeConversations
-            ) {
-
-                unsubscribeConversations();
-            }
-
-
-            if (
-                unsubscribeMessages
-            ) {
-
-                unsubscribeMessages();
-            }
-
-
-            if (timerInterval) {
-
-                clearInterval(
-                    timerInterval
-                );
-            }
-
-
-            return;
-        }
-
-
-        try {
-
-            await loadCurrentProfile(
-                user
-            );
-
-
-            document.getElementById(
-                "userName"
-            ).textContent =
-                getCurrentName();
-
-
-            document.getElementById(
-                "userRole"
-            ).textContent =
-                isSenior()
-                    ? "Senior / Supervisor"
-                    : "Gestor";
-
-
-            loginScreen.style.display =
-                "none";
-
-
-            appScreen.style.display =
-                "flex";
-
-
-            showDetails();
-
-
-            loadUsers();
-
-
-            startConversationListener();
-
-
-            if (timerInterval) {
-
-                clearInterval(
-                    timerInterval
-                );
-            }
-
-
-            timerInterval =
-                setInterval(
-                    updateTimers,
-                    1000
-                );
-
-
-            updateTimers();
-
-        }
-        catch(error) {
-
-            console.error(error);
-
-
-            alert(
-                "No se pudo cargar el perfil del usuario."
-            );
-
-        }
-
-    }
-);
-
-
-/* =====================================================
-   INICIO
-===================================================== */
-
-document.getElementById(
-    "detailsContent"
-).style.display =
-    "none";
+  console.log(
+    "Usuario:",
+    currentUser
+  );
 
 </script>
 
