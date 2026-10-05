@@ -632,8 +632,10 @@ function nombreCorto(n){
 
 function obtenerDatosCliente(c){
   const d = c?.datosCliente || c?.cliente || c?.datos || c?.clienteData || {};
-  const dni = d.dni || d.DNI || d.documento || d.document || d.numeroDni || d.numeroDocumento ||
-              c.dni || c.DNI || c.documento || c.document || c.documentNumber || c.numeroDni || c.numeroDocumento || "";
+  const dni = d.dni || d.DNI || d.documento || d.document || d.documentNumber || d.numeroDni || d.numeroDocumento ||
+              d.nroDni || d.nroDocumento || d.numero_documento || d.document_id ||
+              c.dni || c.DNI || c.documento || c.document || c.documentNumber || c.numeroDni || c.numeroDocumento ||
+              c.nroDni || c.nroDocumento || c.numero_documento || c.document_id || "";
   const nombre = d.nombre || d.name || d.nombreCompleto || c.nombre || c.nombreCliente || c.clienteNombre || c.cliente || "";
   const telefono = d.telefono || d.celular || d.phone || c.telefono || c.celular || c.phone || c.numeroTelefono || "";
   return {
@@ -699,7 +701,10 @@ function estaActiva(c){
 }
 
 function estaSinAsignar(c){
-  return !obtenerGestorDeConversacion(c) && !obtenerEmailGestor(c);
+  const gestor=normalizarTexto(obtenerGestorDeConversacion(c));
+  const email=normalizarTexto(obtenerEmailGestor(c));
+  const vacios=["","null","undefined","sin asignar","no asignado","none"];
+  return vacios.includes(gestor) && vacios.includes(email);
 }
 
 function puedeVerPorEquipo(c){
@@ -923,7 +928,16 @@ function renderizarSinAsignar(){
     return;
   }
 
-  lista=aplicarFiltroLista(lista);
+  // En Sin asignar el filtro de búsqueda solo busca por datos del cliente;
+  // nunca vuelve a aplicar el filtro de equipo.
+  const q=normalizarTexto($("listSearch")?.value);
+  if(q){
+    lista=lista.filter(c=>{
+      const d=obtenerDatosCliente(c);
+      const texto=[d.nombre,d.dni,d.telefono,c.nombre,c.nombreCliente].map(normalizarTexto).join(" ");
+      return texto.includes(q);
+    });
+  }
   lista.sort((a,b)=>(b.fechaCreacion||0)-(a.fechaCreacion||0));
   $("sectionTitle").textContent="Conversaciones sin asignar";
 
@@ -999,7 +1013,7 @@ function actualizarContadores(){
   }else if(esSenior()){
     principal=activas.filter(c=>conversacionEsMia(c)).length;
     agentes=activas.filter(c=>!estaSinAsignar(c)&&puedeVerPorEquipo(c)).length;
-    sinAsignar=activas.filter(c=>estaSinAsignar(c)&&puedeVerPorEquipo(c)).length;
+    sinAsignar=activas.filter(estaSinAsignar).length;
   }else{
     principal=activas.filter(c=>conversacionEsMia(c)).length;
     agentes=activas.filter(c=>!estaSinAsignar(c)&&puedeVerPorEquipo(c)).length;
@@ -1733,8 +1747,11 @@ function escucharVencimientos(){
 
 async function resolverUsuarioPorEmail(user){
   const email=normalizarTexto(user.email);
-  let nombre=emailsPorNombre[email]||user.displayName||"";
-  let perfil="";
+  // La identidad conocida por correo tiene prioridad absoluta.
+  // Así evitamos que /usuarios tenga un nombre o perfil viejo y quite permisos.
+  const nombreConfiguradoPorEmail=emailsPorNombre[email] || "";
+  let nombre=nombreConfiguradoPorEmail || user.displayName || "";
+  let perfil=nombreConfiguradoPorEmail ? (perfiles[nombreConfiguradoPorEmail] || "") : "";
 
   try{
     const snap=await get(ref(db,"usuarios"));
@@ -1743,8 +1760,10 @@ async function resolverUsuarioPorEmail(user){
     for(const [key,u] of Object.entries(usuariosDB)){
       const ue=normalizarTexto(u?.email||key);
       if(ue===email){
-        nombre=u.nombre||u.displayName||nombre;
-        perfil=u.perfil||u.rol||perfil;
+        // Si el correo está configurado localmente, NO dejamos que /usuarios
+        // sobrescriba el nombre o perfil definido para esa cuenta.
+        if(!nombreConfiguradoPorEmail) nombre=u.nombre||u.displayName||nombre;
+        if(!nombreConfiguradoPorEmail) perfil=u.perfil||u.rol||perfil;
         break;
       }
     }
@@ -1760,9 +1779,10 @@ async function resolverUsuarioPorEmail(user){
     nombre="Alejo Mansilla"; perfil="supervisor";
   }
 
-  // Para las cuentas conocidas, la configuración local tiene prioridad sobre
-  // un perfil viejo o incorrecto guardado en /usuarios.
-  const perfilConfigurado = perfiles[nombre];
+  // Para todas las cuentas conocidas, el perfil local es la fuente de verdad.
+  const nombreFinalConfigurado = emailsPorNombre[email] || nombre;
+  if(emailsPorNombre[email]) nombre = emailsPorNombre[email];
+  const perfilConfigurado = perfiles[nombreFinalConfigurado];
   if(perfilConfigurado) perfil = perfilConfigurado;
   if(!perfil) perfil = "";
 
