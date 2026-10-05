@@ -1,1427 +1,3053 @@
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
-  import {
-    getAuth,
-    signInWithEmailAndPassword,
-    onAuthStateChanged,
-    signOut
-  } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Centro de Atención</title>
 
-  import {
-    getDatabase,
-    ref,
-    onValue,
-    push,
-    update,
-    set,
-    onDisconnect
-  } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-database.js";
-
-  /* =========================
-     FIREBASE
-  ========================= */
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyC1sOc1OaBwkzz5DXT3GD_OEcFFrkOua8",
-    authDomain: "estudiomansilla.firebaseapp.com",
-    databaseURL: "https://estudiomansilla-default-rtdb.firebaseio.com",
-    projectId: "estudiomansilla",
-    storageBucket: "estudiomansilla.firebasestorage.app",
-    messagingSenderId: "482010073100",
-    appId: "1:482010073100:web:d5cb61259de293b1420629",
-    measurementId: "G-8710S26Z8L"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getDatabase(app);
-
-  /* =========================
-     PERFILES
-  ========================= */
-
-  const perfiles = {
-    "Milagros": "supervisor",
-
-    "Rocio": "senior",
-    "Antonela": "senior",
-    "Pilar": "senior",
-    "Daniela": "senior",
-    "Moriana": "senior",
-
-    "Paula": "asesor",
-    "Ana": "asesor",
-    "Maria Paz": "asesor",
-    "Agustina": "asesor",
-    "Pablo": "asesor",
-    "Giuliana": "asesor",
-    "Candela": "asesor",
-    "Belen": "asesor",
-    "Delfina": "asesor",
-    "Julieta": "asesor",
-    "Keila": "asesor",
-    "Alejandra": "asesor",
-    "Maica": "asesor",
-    "Natalia": "asesor",
-    "Gustavo": "asesor",
-    "Alejo": "asesor",
-    "Gregorio": "asesor",
-    "Francesca": "asesor",
-    "Florencia": "asesor",
-    "Valentina": "asesor",
-    "Marcela": "asesor"
-  };
-
-  /* =========================
-     EQUIPOS
-  ========================= */
-
-  const equipos = {
-    "Verde": {
-      seniors: ["Daniela", "Rocio"],
-      gestores: ["Maria Paz", "Agustina", "Pablo", "Florencia"]
-    },
-
-    "Rojo": {
-      seniors: ["Antonela"],
-      gestores: ["Ana", "Delfina", "Marcela", "Valentina", "Julieta"]
-    },
-
-    "Azul": {
-      seniors: ["Pilar"],
-      gestores: ["Paula", "Giuliana", "Candela", "Francesca", "Belen"]
-    },
-
-    "1142": {
-      seniors: ["Moriana"],
-      gestores: ["Natalia", "Maica", "Alejandra", "Keila", "Gustavo"]
-    },
-
-    "Cuoteros": {
-      seniors: ["Rocio", "Daniela", "Antonela", "Pilar", "Moriana"],
-      gestores: ["Alejo", "Gregorio"]
-    }
-  };
-
-  /* =========================
-     EMAILS
-  ========================= */
-
-  const emailsPorNombre = {
-    "rocio.lopez@mansillayasoc.com.ar": "Rocio",
-    "antonela.lopez@mansillayasoc.com.ar": "Antonela",
-    "pilar.solano@mansillayasoc.com.ar": "Pilar",
-    "daniela.cortez@mansillayasoc.com.ar": "Daniela",
-
-    "paula.lopez@mansillayasoc.com.ar": "Paula",
-    "ana.rueda@mansillayasoc.com.ar": "Ana",
-    "ana.paz@mansillayasoc.com.ar": "Maria Paz",
-    "agustina.baez@mansillayasoc.com.ar": "Agustina",
-    "pablo.medina@mansillayasoc.com.ar": "Pablo",
-    "giulina.pancelo@mansillayasoc.com.ar": "Giuliana",
-    "candela.espeche@mansillayasoc.com.ar": "Candela",
-    "delfina.sesto@mansillayasoc.com.ar": "Delfina",
-    "julieta.araoz@mansillayasoc.com.ar": "Julieta",
-    "moriana.rey@mansillayasoc.com.ar": "Moriana",
-    "keila.luduena@mansillayasoc.com.ar": "Keila",
-    "natalia.lopez@mansillayasoc.com.ar": "Natalia",
-    "mavillegas@mansillayasoc.com.ar": "Milagros"
-  };
-
-  /* =========================
-     ESTADO
-  ========================= */
-
-  let usuarioActual = null;
-  let nombreUsuarioActual = "";
-  let rolUsuarioActual = "";
-  let conversacionesArray = [];
-
-  let conversacionActualId = null;
-
-  let vistaActual = "conversations";
-
-  // principal = cuentas propias
-  // agente = cuentas de un gestor
-  let vistaConversacionesModo = "principal";
-  let gestorConsultado = "";
-
-  /* =========================
-     HELPERS
-  ========================= */
-
-  function esc(valor) {
-    return String(valor ?? "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
-  }
-
-  function esSupervisor() {
-    return rolUsuarioActual === "supervisor";
-  }
-
-  function esSenior() {
-    return rolUsuarioActual === "senior";
-  }
-
-  function esAdministrador() {
-    return esSupervisor() || esSenior();
-  }
-
-  function normalizarDni(valor) {
-    return String(valor ?? "").replace(/\D/g, "");
-  }
-
-  function obtenerDniConversacion(c) {
-    if (!c) return "";
-
-    const candidatos = [
-      c.dni,
-      c.DNI,
-      c.documento,
-      c.document,
-      c.documentNumber,
-      c.numeroDocumento,
-      c.nroDocumento,
-      c.nroDni,
-      c.dniCliente,
-      c.clienteDni,
-      c.clienteDNI,
-      c.clienteDocumento,
-      c.documentoCliente,
-      c.clientDni,
-      c.clientDNI,
-      c.customerDni,
-      c.customerDNI,
-
-      c.cliente?.dni,
-      c.cliente?.DNI,
-      c.cliente?.documento,
-      c.cliente?.documentNumber,
-      c.cliente?.numeroDocumento,
-
-      c.datosCliente?.dni,
-      c.datosCliente?.DNI,
-      c.datosCliente?.documento,
-      c.datosCliente?.documentNumber,
-      c.datosCliente?.numeroDocumento,
-
-      c.usuario?.dni,
-      c.usuario?.DNI,
-      c.usuario?.documento,
-
-      c.customer?.dni,
-      c.customer?.DNI,
-      c.customer?.documento,
-
-      c.client?.dni,
-      c.client?.DNI,
-      c.client?.documento
-    ];
-
-    for (const valor of candidatos) {
-      const dni = normalizarDni(valor);
-      if (dni) return dni;
+  <style>
+    * {
+      box-sizing: border-box;
     }
 
-    return "";
-  }
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f4f6f8;
+      color: #1f2937;
+    }
 
-  function obtenerNombreCliente(c) {
-    if (!c) return "";
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
 
-    const candidatos = [
-      c.clienteNombre,
-      c.nombreCliente,
-      c.nombreCompletoCliente,
-      c.clienteNombreCompleto,
-      c.nombreCompleto,
-      c.nombre,
+    button {
+      cursor: pointer;
+    }
 
-      c.cliente?.nombreCompleto,
-      c.cliente?.nombre,
+    .hidden {
+      display: none !important;
+    }
 
-      c.datosCliente?.nombreCompleto,
-      c.datosCliente?.nombre,
+    /* =========================
+       LOGIN
+    ========================= */
 
-      c.customer?.name,
-      c.customer?.nombre,
+    #loginScreen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #111827, #374151);
+      padding: 20px;
+    }
 
-      c.client?.name,
-      c.client?.nombre
-    ];
+    .login-box {
+      width: 100%;
+      max-width: 420px;
+      background: white;
+      border-radius: 18px;
+      padding: 35px;
+      box-shadow: 0 20px 50px rgba(0,0,0,.25);
+    }
 
-    for (const valor of candidatos) {
-      if (typeof valor === "string" && valor.trim()) {
-        return valor.trim();
+    .login-box h1 {
+      margin: 0 0 8px;
+      text-align: center;
+      font-size: 28px;
+    }
+
+    .login-box p {
+      text-align: center;
+      color: #6b7280;
+      margin-bottom: 28px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 7px;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 12px 13px;
+      border: 1px solid #d1d5db;
+      border-radius: 9px;
+      outline: none;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      border-color: #2563eb;
+    }
+
+    .login-error {
+      color: #dc2626;
+      margin-top: 12px;
+      font-size: 14px;
+      text-align: center;
+      min-height: 20px;
+    }
+
+    /* =========================
+       APP
+    ========================= */
+
+    #appScreen {
+      min-height: 100vh;
+      display: none;
+    }
+
+    .app-layout {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* =========================
+       SIDEBAR
+    ========================= */
+
+    .sidebar {
+      width: 240px;
+      background: #111827;
+      color: white;
+      padding: 20px 12px;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+
+    .brand {
+      padding: 10px 12px 25px;
+    }
+
+    .brand h2 {
+      margin: 0;
+      font-size: 21px;
+    }
+
+    .brand small {
+      color: #9ca3af;
+    }
+
+    .nav {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .nav button {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      color: #d1d5db;
+      text-align: left;
+      padding: 12px 13px;
+      border-radius: 9px;
+    }
+
+    .nav button:hover,
+    .nav button.active {
+      background: #374151;
+      color: white;
+    }
+
+    .sidebar-user {
+      margin-top: auto;
+      padding: 15px 12px;
+      border-top: 1px solid #374151;
+      margin-bottom: 10px;
+    }
+
+    .sidebar-user strong {
+      display: block;
+    }
+
+    .sidebar-user small {
+      color: #9ca3af;
+    }
+
+    /* =========================
+       MAIN
+    ========================= */
+
+    .main {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .topbar {
+      height: 64px;
+      background: white;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 22px;
+    }
+
+    .topbar h1 {
+      margin: 0;
+      font-size: 20px;
+    }
+
+    .topbar-user {
+      font-size: 14px;
+      color: #6b7280;
+    }
+
+    .content {
+      padding: 20px;
+      flex: 1;
+      min-height: 0;
+    }
+
+    /* =========================
+       BUTTONS
+    ========================= */
+
+    .btn {
+      border: 0;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-weight: 600;
+    }
+
+    .btn-primary {
+      background: #2563eb;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #1d4ed8;
+    }
+
+    .btn-success {
+      background: #16a34a;
+      color: white;
+    }
+
+    .btn-success:hover {
+      background: #15803d;
+    }
+
+    .btn-danger {
+      background: #dc2626;
+      color: white;
+    }
+
+    .btn-secondary {
+      background: #e5e7eb;
+      color: #111827;
+    }
+
+    .btn-secondary:hover {
+      background: #d1d5db;
+    }
+
+    .btn-block {
+      width: 100%;
+    }
+
+    /* =========================
+       VIEWS
+    ========================= */
+
+    .view {
+      display: none;
+      height: calc(100vh - 104px);
+    }
+
+    #conversationsView {
+      height: calc(100vh - 104px);
+    }
+
+    /* =========================
+       CONVERSATIONS
+    ========================= */
+
+    .conversation-layout {
+      height: 100%;
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 16px;
+    }
+
+    .conversation-sidebar,
+    .chat-panel,
+    .panel {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    .conversation-sidebar {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .list-header {
+      padding: 15px;
+      border-bottom: 1px solid #e5e7eb;
+      flex-shrink: 0;
+    }
+
+    .list-header h3 {
+      margin: 0 0 12px;
+      font-size: 17px;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 11px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      outline: none;
+    }
+
+    .search-input:focus {
+      border-color: #2563eb;
+    }
+
+    #conversationItems {
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .conversation-item {
+      padding: 14px 15px;
+      border-bottom: 1px solid #f0f0f0;
+      cursor: pointer;
+      transition: background .15s;
+    }
+
+    .conversation-item:hover {
+      background: #f8fafc;
+    }
+
+    .conversation-item strong {
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    .conversation-item small {
+      display: block;
+      color: #6b7280;
+      font-size: 12px;
+      margin-top: 3px;
+    }
+
+    .empty-state {
+      padding: 35px 20px;
+      text-align: center;
+      color: #9ca3af;
+    }
+
+    /* =========================
+       CHAT
+    ========================= */
+
+    .chat-panel {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .chat-header {
+      padding: 16px 18px;
+      border-bottom: 1px solid #e5e7eb;
+      flex-shrink: 0;
+    }
+
+    .chat-header h2 {
+      margin: 0 0 4px;
+      font-size: 18px;
+    }
+
+    .chat-header small {
+      color: #6b7280;
+      display: block;
+      margin-top: 3px;
+    }
+
+    #chatMessages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      background: #f8fafc;
+      min-height: 0;
+    }
+
+    .message {
+      max-width: 75%;
+      padding: 10px 13px;
+      margin-bottom: 10px;
+      border-radius: 12px;
+      word-break: break-word;
+    }
+
+    .message-own {
+      margin-left: auto;
+      background: #dbeafe;
+    }
+
+    .message-client {
+      margin-right: auto;
+      background: white;
+      border: 1px solid #e5e7eb;
+    }
+
+    .message-author {
+      font-weight: bold;
+      font-size: 12px;
+      margin-bottom: 4px;
+    }
+
+    .message small {
+      display: block;
+      margin-top: 6px;
+      color: #6b7280;
+      font-size: 10px;
+    }
+
+    #chatActions {
+      padding: 10px 16px;
+      border-top: 1px solid #e5e7eb;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    #messageDisabled {
+      display: none;
+      padding: 12px 16px;
+      color: #6b7280;
+      background: #f3f4f6;
+      border-top: 1px solid #e5e7eb;
+      font-size: 13px;
+    }
+
+    #messageForm {
+      display: flex;
+      gap: 8px;
+      padding: 12px 16px;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    #messageInput {
+      flex: 1;
+      resize: none;
+      border: 1px solid #d1d5db;
+      border-radius: 9px;
+      padding: 11px;
+      min-height: 44px;
+      max-height: 120px;
+      outline: none;
+    }
+
+    #messageInput:focus {
+      border-color: #2563eb;
+    }
+
+    .finalized-notice {
+      color: #6b7280;
+      font-size: 13px;
+      padding: 4px;
+    }
+
+    /* =========================
+       AGENTS
+    ========================= */
+
+    .page-panel {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      padding: 20px;
+      height: 100%;
+      overflow-y: auto;
+    }
+
+    .page-title {
+      margin: 0 0 18px;
+      font-size: 22px;
+    }
+
+    .filters {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .filters input,
+    .filters select {
+      padding: 11px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+    }
+
+    .filters input {
+      flex: 1;
+    }
+
+    #agentsGrid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 15px;
+    }
+
+    .agent-card {
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 16px;
+      background: #fff;
+    }
+
+    .agent-card strong {
+      font-size: 17px;
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .agent-card small {
+      display: block;
+      color: #6b7280;
+      margin-bottom: 10px;
+    }
+
+    .agent-card .btn {
+      margin-top: 14px;
+      width: 100%;
+    }
+
+    /* =========================
+       HISTORY
+    ========================= */
+
+    .history-table-wrapper {
+      overflow-x: auto;
+    }
+
+    .history-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .history-table th,
+    .history-table td {
+      text-align: left;
+      padding: 12px;
+      border-bottom: 1px solid #e5e7eb;
+      font-size: 13px;
+    }
+
+    .history-table th {
+      background: #f9fafb;
+      font-weight: bold;
+    }
+
+    #historyCounter {
+      color: #6b7280;
+      font-size: 13px;
+      margin-bottom: 12px;
+    }
+
+    /* =========================
+       MODAL
+    ========================= */
+
+    #transferModal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.5);
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 1000;
+    }
+
+    .modal {
+      width: 100%;
+      max-width: 450px;
+      background: white;
+      border-radius: 14px;
+      padding: 22px;
+    }
+
+    .modal h2 {
+      margin-top: 0;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 18px;
+    }
+
+    /* =========================
+       RESPONSIVE
+    ========================= */
+
+    @media (max-width: 850px) {
+
+      .sidebar {
+        width: 190px;
+      }
+
+      .conversation-layout {
+        grid-template-columns: 300px 1fr;
       }
     }
 
-    if (
-      typeof c.cliente === "string" &&
-      c.cliente.trim()
-    ) {
-      return c.cliente.trim();
+    @media (max-width: 700px) {
+
+      .app-layout {
+        display: block;
+      }
+
+      .sidebar {
+        width: 100%;
+        min-height: auto;
+      }
+
+      .sidebar-user {
+        display: none;
+      }
+
+      .nav {
+        flex-direction: row;
+        overflow-x: auto;
+      }
+
+      .nav button {
+        white-space: nowrap;
+      }
+
+      .conversation-layout {
+        grid-template-columns: 1fr;
+        height: auto;
+      }
+
+      .conversation-sidebar {
+        min-height: 350px;
+      }
+
+      .chat-panel {
+        min-height: 500px;
+      }
+
+      .view,
+      #conversationsView {
+        height: auto;
+      }
+
+      .filters {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- =========================
+       LOGIN
+  ========================= -->
+
+  <div id="loginScreen">
+
+    <div class="login-box">
+
+      <h1>Centro de Atención</h1>
+
+      <p>
+        Ingresá con tu cuenta de trabajo
+      </p>
+
+      <form id="loginForm">
+
+        <div class="form-group">
+          <label for="loginEmail">
+            Correo electrónico
+          </label>
+
+          <input
+            type="email"
+            id="loginEmail"
+            placeholder="correo@mansillayasoc.com.ar"
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="loginPassword">
+            Contraseña
+          </label>
+
+          <input
+            type="password"
+            id="loginPassword"
+            placeholder="Contraseña"
+            required
+          >
+        </div>
+
+        <button
+          type="submit"
+          class="btn btn-primary btn-block"
+        >
+          Iniciar sesión
+        </button>
+
+        <div
+          id="loginError"
+          class="login-error"
+        ></div>
+
+      </form>
+
+    </div>
+
+  </div>
+
+
+  <!-- =========================
+       APP
+  ========================= -->
+
+  <div id="appScreen">
+
+    <div class="app-layout">
+
+      <!-- SIDEBAR -->
+
+      <aside class="sidebar">
+
+        <div class="brand">
+          <h2>Centro de Atención</h2>
+          <small>Estudio Mansilla</small>
+        </div>
+
+        <nav class="nav">
+
+          <button
+            id="navConversations"
+            class="active"
+            onclick="mostrarVista('conversations')"
+          >
+            💬 Conversaciones
+          </button>
+
+          <button
+            id="navUnassigned"
+            onclick="mostrarVista('unassigned')"
+          >
+            📥 Chats sin gestor
+          </button>
+
+          <button
+            id="navAgents"
+            onclick="mostrarVista('agents')"
+          >
+            👥 Agentes
+          </button>
+
+          <button
+            id="navHistory"
+            onclick="mostrarVista('history')"
+          >
+            🗂️ Historial
+          </button>
+
+        </nav>
+
+        <div class="sidebar-user">
+
+          <strong id="currentUserName">
+            -
+          </strong>
+
+          <small id="currentUserRole">
+            -
+          </small>
+
+        </div>
+
+        <button
+          class="btn btn-danger btn-block"
+          onclick="cerrarSesion()"
+        >
+          Cerrar sesión
+        </button>
+
+      </aside>
+
+
+      <!-- MAIN -->
+
+      <main class="main">
+
+        <header class="topbar">
+
+          <h1>
+            Centro de Atención
+          </h1>
+
+          <div class="topbar-user">
+            Usuario conectado
+          </div>
+
+        </header>
+
+
+        <div class="content">
+
+          <!-- =========================
+               CONVERSATIONS
+          ========================= -->
+
+          <section
+            id="conversationsView"
+            class="view"
+          >
+
+            <div class="conversation-layout">
+
+              <!-- LISTA -->
+
+              <div class="conversation-sidebar">
+
+                <div class="list-header">
+
+                  <h3
+                    id="conversationListTitle"
+                  >
+                    Mis conversaciones
+                  </h3>
+
+                  <button
+                    id="backToAgentsButton"
+                    class="btn btn-secondary btn-block"
+                    style="display:none; margin-bottom:10px;"
+                    onclick="volverAListaPrincipal()"
+                  >
+                    ← Volver
+                  </button>
+
+                  <input
+                    id="conversationSearch"
+                    class="search-input"
+                    type="text"
+                    placeholder="Buscar nombre o DNI..."
+                  >
+
+                </div>
+
+                <div
+                  id="conversationItems"
+                ></div>
+
+              </div>
+
+
+              <!-- CHAT -->
+
+              <div class="chat-panel">
+
+                <div class="chat-header">
+
+                  <h2 id="chatClientName">
+                    Seleccioná una conversación
+                  </h2>
+
+                  <small id="chatClientDni"></small>
+
+                  <small>
+                    Gestor:
+                    <span id="chatGestor">
+                      -
+                    </span>
+                  </small>
+
+                </div>
+
+                <div
+                  id="chatMessages"
+                >
+
+                  <div class="empty-state">
+                    Seleccioná una conversación
+                    para ver la gestión.
+                  </div>
+
+                </div>
+
+                <div
+                  id="chatActions"
+                ></div>
+
+                <div
+                  id="messageDisabled"
+                ></div>
+
+                <form
+                  id="messageForm"
+                >
+
+                  <textarea
+                    id="messageInput"
+                    placeholder="Escribí un mensaje..."
+                    rows="1"
+                  ></textarea>
+
+                  <button
+                    type="submit"
+                    class="btn btn-primary"
+                  >
+                    Enviar
+                  </button>
+
+                </form>
+
+              </div>
+
+            </div>
+
+          </section>
+
+
+          <!-- =========================
+               SIN GESTOR
+          ========================= -->
+
+          <section
+            id="unassignedView"
+            class="view"
+          >
+
+            <div class="page-panel">
+
+              <h2 class="page-title">
+                Chats sin gestor
+              </h2>
+
+              <div
+                id="unassignedItems"
+              ></div>
+
+            </div>
+
+          </section>
+
+
+          <!-- =========================
+               AGENTES
+          ========================= -->
+
+          <section
+            id="agentsView"
+            class="view"
+          >
+
+            <div class="page-panel">
+
+              <h2 class="page-title">
+                Agentes
+              </h2>
+
+              <div class="filters">
+
+                <input
+                  id="agentSearch"
+                  type="text"
+                  placeholder="Buscar gestor..."
+                >
+
+                <select
+                  id="agentTeamFilter"
+                >
+                  <option value="">
+                    Todos los equipos
+                  </option>
+                </select>
+
+              </div>
+
+              <div id="agentsGrid"></div>
+
+            </div>
+
+          </section>
+
+
+          <!-- =========================
+               HISTORIAL
+          ========================= -->
+
+          <section
+            id="historyView"
+            class="view"
+          >
+
+            <div class="page-panel">
+
+              <h2 class="page-title">
+                Historial
+              </h2>
+
+              <div class="filters">
+
+                <input
+                  id="historySearch"
+                  type="text"
+                  placeholder="Buscar por nombre o DNI..."
+                >
+
+              </div>
+
+              <div
+                id="historyCounter"
+              >
+                0 conversaciones
+              </div>
+
+              <div class="history-table-wrapper">
+
+                <table class="history-table">
+
+                  <thead>
+
+                    <tr>
+                      <th>Cliente</th>
+                      <th>DNI</th>
+                      <th>Gestor</th>
+                      <th>Equipo</th>
+                      <th>Fecha</th>
+                      <th>Gestión</th>
+                    </tr>
+
+                  </thead>
+
+                  <tbody
+                    id="historyItems"
+                  ></tbody>
+
+                </table>
+
+              </div>
+
+            </div>
+
+          </section>
+
+        </div>
+
+      </main>
+
+    </div>
+
+  </div>
+
+
+  <!-- =========================
+       MODAL TRANSFERENCIA
+  ========================= -->
+
+  <div id="transferModal">
+
+    <div class="modal">
+
+      <h2>
+        Transferir conversación
+      </h2>
+
+      <div class="form-group">
+
+        <label for="transferTeam">
+          Equipo
+        </label>
+
+        <select id="transferTeam">
+          <option value="">
+            Seleccionar equipo
+          </option>
+        </select>
+
+      </div>
+
+      <div class="form-group">
+
+        <label for="transferAgent">
+          Gestor
+        </label>
+
+        <select id="transferAgent">
+          <option value="">
+            Seleccionar gestor
+          </option>
+        </select>
+
+      </div>
+
+      <div class="modal-actions">
+
+        <button
+          class="btn btn-secondary"
+          onclick="cerrarTransferencia()"
+        >
+          Cancelar
+        </button>
+
+        <button
+          class="btn btn-primary"
+          onclick="confirmarTransferencia()"
+        >
+          Transferir
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- =========================
+       FIREBASE + SISTEMA
+  ========================= -->
+
+  <script type="module">
+
+    import {
+      initializeApp
+    } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+
+    import {
+      getAuth,
+      signInWithEmailAndPassword,
+      onAuthStateChanged,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+
+    import {
+      getDatabase,
+      ref,
+      onValue,
+      push,
+      update
+    } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-database.js";
+
+
+    /* =========================
+       FIREBASE
+    ========================= */
+
+    const firebaseConfig = {
+
+      apiKey:
+        "AIzaSyC1sOc1OaBwkzz5DXT3GD_OEcFFrkOua8",
+
+      authDomain:
+        "estudiomansilla.firebaseapp.com",
+
+      databaseURL:
+        "https://estudiomansilla-default-rtdb.firebaseio.com",
+
+      projectId:
+        "estudiomansilla",
+
+      storageBucket:
+        "estudiomansilla.firebasestorage.app",
+
+      messagingSenderId:
+        "482010073100",
+
+      appId:
+        "1:482010073100:web:d5cb61259de293b1420629",
+
+      measurementId:
+        "G-8710S26Z8L"
+    };
+
+
+    const app =
+      initializeApp(firebaseConfig);
+
+    const auth =
+      getAuth(app);
+
+    const db =
+      getDatabase(app);
+
+
+    /* =========================
+       PERFILES
+    ========================= */
+
+    const perfiles = {
+
+      "Milagros": "supervisor",
+
+      "Rocio": "senior",
+      "Antonela": "senior",
+      "Pilar": "senior",
+      "Daniela": "senior",
+      "Moriana": "senior",
+
+      "Paula": "asesor",
+      "Ana": "asesor",
+      "Maria Paz": "asesor",
+      "Agustina": "asesor",
+      "Pablo": "asesor",
+      "Giuliana": "asesor",
+      "Candela": "asesor",
+      "Belen": "asesor",
+      "Delfina": "asesor",
+      "Julieta": "asesor",
+      "Keila": "asesor",
+      "Alejandra": "asesor",
+      "Maica": "asesor",
+      "Natalia": "asesor",
+      "Gustavo": "asesor",
+      "Alejo": "asesor",
+      "Gregorio": "asesor",
+      "Francesca": "asesor",
+      "Florencia": "asesor",
+      "Valentina": "asesor",
+      "Marcela": "asesor"
+    };
+
+
+    /* =========================
+       EQUIPOS
+    ========================= */
+
+    const equipos = {
+
+      "Verde": {
+
+        seniors: [
+          "Daniela",
+          "Rocio"
+        ],
+
+        gestores: [
+          "Maria Paz",
+          "Agustina",
+          "Pablo",
+          "Florencia"
+        ]
+
+      },
+
+      "Rojo": {
+
+        seniors: [
+          "Antonela"
+        ],
+
+        gestores: [
+          "Ana",
+          "Delfina",
+          "Marcela",
+          "Valentina",
+          "Julieta"
+        ]
+
+      },
+
+      "Azul": {
+
+        seniors: [
+          "Pilar"
+        ],
+
+        gestores: [
+          "Paula",
+          "Giuliana",
+          "Candela",
+          "Francesca",
+          "Belen"
+        ]
+
+      },
+
+      "1142": {
+
+        seniors: [
+          "Moriana"
+        ],
+
+        gestores: [
+          "Natalia",
+          "Maica",
+          "Alejandra",
+          "Keila",
+          "Gustavo"
+        ]
+
+      },
+
+      "Cuoteros": {
+
+        seniors: [
+          "Rocio",
+          "Daniela",
+          "Antonela",
+          "Pilar",
+          "Moriana"
+        ],
+
+        gestores: [
+          "Alejo",
+          "Gregorio"
+        ]
+
+      }
+
+    };
+
+
+    /* =========================
+       EMAILS
+    ========================= */
+
+    const emailsPorNombre = {
+
+      "rocio.lopez@mansillayasoc.com.ar":
+        "Rocio",
+
+      "antonela.lopez@mansillayasoc.com.ar":
+        "Antonela",
+
+      "pilar.solano@mansillayasoc.com.ar":
+        "Pilar",
+
+      "daniela.cortez@mansillayasoc.com.ar":
+        "Daniela",
+
+      "paula.lopez@mansillayasoc.com.ar":
+        "Paula",
+
+      "ana.rueda@mansillayasoc.com.ar":
+        "Ana",
+
+      "ana.paz@mansillayasoc.com.ar":
+        "Maria Paz",
+
+      "agustina.baez@mansillayasoc.com.ar":
+        "Agustina",
+
+      "pablo.medina@mansillayasoc.com.ar":
+        "Pablo",
+
+      "giulina.pancelo@mansillayasoc.com.ar":
+        "Giuliana",
+
+      "candela.espeche@mansillayasoc.com.ar":
+        "Candela",
+
+      "delfina.sesto@mansillayasoc.com.ar":
+        "Delfina",
+
+      "julieta.araoz@mansillayasoc.com.ar":
+        "Julieta",
+
+      "moriana.rey@mansillayasoc.com.ar":
+        "Moriana",
+
+      "keila.luduena@mansillayasoc.com.ar":
+        "Keila",
+
+      "natalia.lopez@mansillayasoc.com.ar":
+        "Natalia",
+
+      "mavillegas@mansillayasoc.com.ar":
+        "Milagros"
+    };
+
+
+    /* =========================
+       VARIABLES
+    ========================= */
+
+    let usuarioActual = null;
+
+    let nombreUsuarioActual = "";
+
+    let rolUsuarioActual = "";
+
+    let conversacionesArray = [];
+
+    let conversacionActualId = null;
+
+    let vistaConversacionesModo =
+      "principal";
+
+    let gestorConsultado = "";
+
+
+    /* =========================
+       HELPERS
+    ========================= */
+
+    function esc(valor) {
+
+      return String(valor ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
     }
 
-    return "";
-  }
 
-  function obtenerCliente(c) {
-    const nombre = obtenerNombreCliente(c);
+    function esSupervisor() {
 
-    if (nombre) return nombre;
+      return rolUsuarioActual ===
+        "supervisor";
+    }
 
-    const dni = obtenerDniConversacion(c);
 
-    if (dni) return "DNI " + dni;
+    function esSenior() {
 
-    return "Sin identificar";
-  }
+      return rolUsuarioActual ===
+        "senior";
+    }
 
-  function obtenerEquipoDePersona(nombre) {
-    for (const [equipo, datos] of Object.entries(equipos)) {
-      if (
-        datos.seniors.includes(nombre) ||
-        datos.gestores.includes(nombre)
+
+    function esAdministrador() {
+
+      return (
+        esSupervisor() ||
+        esSenior()
+      );
+    }
+
+
+    function normalizarDni(valor) {
+
+      return String(
+        valor ?? ""
+      ).replace(/\D/g, "");
+    }
+
+
+    function obtenerDniConversacion(c) {
+
+      if (!c) return "";
+
+      const candidatos = [
+
+        c.dni,
+        c.DNI,
+        c.documento,
+        c.document,
+        c.documentNumber,
+        c.numeroDocumento,
+        c.nroDocumento,
+        c.nroDni,
+        c.dniCliente,
+        c.clienteDni,
+        c.clienteDNI,
+        c.clienteDocumento,
+        c.documentoCliente,
+        c.clientDni,
+        c.clientDNI,
+        c.customerDni,
+        c.customerDNI,
+
+        c.cliente?.dni,
+        c.cliente?.DNI,
+        c.cliente?.documento,
+        c.cliente?.documentNumber,
+        c.cliente?.numeroDocumento,
+
+        c.datosCliente?.dni,
+        c.datosCliente?.DNI,
+        c.datosCliente?.documento,
+        c.datosCliente?.documentNumber,
+        c.datosCliente?.numeroDocumento,
+
+        c.usuario?.dni,
+        c.usuario?.DNI,
+        c.usuario?.documento,
+
+        c.customer?.dni,
+        c.customer?.DNI,
+        c.customer?.documento,
+
+        c.client?.dni,
+        c.client?.DNI,
+        c.client?.documento
+      ];
+
+      for (
+        const valor of candidatos
       ) {
-        return equipo;
+
+        const dni =
+          normalizarDni(valor);
+
+        if (dni) return dni;
       }
+
+      return "";
     }
 
-    return "";
-  }
 
-  function obtenerEquiposDelUsuario(nombre) {
-    const resultado = [];
+    function obtenerNombreCliente(c) {
 
-    for (const [equipo, datos] of Object.entries(equipos)) {
-      if (
-        datos.seniors.includes(nombre) ||
-        datos.gestores.includes(nombre)
+      if (!c) return "";
+
+      const candidatos = [
+
+        c.clienteNombre,
+        c.nombreCliente,
+        c.nombreCompletoCliente,
+        c.clienteNombreCompleto,
+        c.nombreCompleto,
+        c.nombre,
+
+        c.cliente?.nombreCompleto,
+        c.cliente?.nombre,
+
+        c.datosCliente?.nombreCompleto,
+        c.datosCliente?.nombre,
+
+        c.customer?.name,
+        c.customer?.nombre,
+
+        c.client?.name,
+        c.client?.nombre
+      ];
+
+      for (
+        const valor of candidatos
       ) {
-        resultado.push(equipo);
+
+        if (
+          typeof valor === "string" &&
+          valor.trim()
+        ) {
+
+          return valor.trim();
+        }
       }
+
+      if (
+        typeof c.cliente === "string" &&
+        c.cliente.trim()
+      ) {
+
+        return c.cliente.trim();
+      }
+
+      return "";
     }
 
-    return resultado;
-  }
 
-  function usuarioTieneEquipo(equipo) {
-    return obtenerEquiposDelUsuario(
-      nombreUsuarioActual
-    ).includes(equipo);
-  }
+    function obtenerCliente(c) {
 
-  function obtenerEquipoConversacion(c) {
-    if (!c) return "";
-
-    if (c.equipo) return c.equipo;
-
-    if (c.asesorAsignado) {
-      return obtenerEquipoDePersona(c.asesorAsignado);
-    }
-
-    if (c.asesorEmail) {
       const nombre =
-        emailsPorNombre[
-          c.asesorEmail.toLowerCase()
-        ];
+        obtenerNombreCliente(c);
 
       if (nombre) {
-        return obtenerEquipoDePersona(nombre);
+        return nombre;
       }
+
+      const dni =
+        obtenerDniConversacion(c);
+
+      if (dni) {
+        return "DNI " + dni;
+      }
+
+      return "Sin identificar";
     }
 
-    return "";
-  }
 
-  function esCuentaAsignadaAlUsuario(c) {
-    if (!c) return false;
-
-    if (
-      c.asesorAsignado ===
-      nombreUsuarioActual
+    function obtenerEquipoDePersona(
+      nombre
     ) {
-      return true;
+
+      for (
+        const [
+          equipo,
+          datos
+        ] of Object.entries(equipos)
+      ) {
+
+        if (
+          datos.seniors.includes(
+            nombre
+          ) ||
+          datos.gestores.includes(
+            nombre
+          )
+        ) {
+
+          return equipo;
+        }
+      }
+
+      return "";
     }
 
-    if (
-      c.asesorEmail &&
-      usuarioActual?.email &&
-      c.asesorEmail.toLowerCase() ===
+
+    function obtenerEquiposDelUsuario(
+      nombre
+    ) {
+
+      const resultado = [];
+
+      for (
+        const [
+          equipo,
+          datos
+        ] of Object.entries(equipos)
+      ) {
+
+        if (
+          datos.seniors.includes(
+            nombre
+          ) ||
+          datos.gestores.includes(
+            nombre
+          )
+        ) {
+
+          resultado.push(equipo);
+        }
+      }
+
+      return resultado;
+    }
+
+
+    function usuarioTieneEquipo(
+      equipo
+    ) {
+
+      return obtenerEquiposDelUsuario(
+        nombreUsuarioActual
+      ).includes(equipo);
+    }
+
+
+    function obtenerEquipoConversacion(c) {
+
+      if (!c) return "";
+
+      if (c.equipo) {
+        return c.equipo;
+      }
+
+      if (c.asesorAsignado) {
+
+        return obtenerEquipoDePersona(
+          c.asesorAsignado
+        );
+      }
+
+      if (c.asesorEmail) {
+
+        const nombre =
+          emailsPorNombre[
+            c.asesorEmail.toLowerCase()
+          ];
+
+        if (nombre) {
+
+          return obtenerEquipoDePersona(
+            nombre
+          );
+        }
+      }
+
+      return "";
+    }
+
+
+    function esCuentaAsignadaAlUsuario(c) {
+
+      if (!c) return false;
+
+      if (
+        c.asesorAsignado ===
+        nombreUsuarioActual
+      ) {
+
+        return true;
+      }
+
+      if (
+        c.asesorEmail &&
+        usuarioActual?.email &&
+        c.asesorEmail.toLowerCase() ===
         usuarioActual.email.toLowerCase()
+      ) {
+
+        return true;
+      }
+
+      return false;
+    }
+
+
+    /* =========================
+       PERMISOS
+    ========================= */
+
+    function puedeVerEnPrincipal(c) {
+
+      if (!c) return false;
+
+      if (
+        c.estado === "finalizada"
+      ) {
+
+        return false;
+      }
+
+      if (esSupervisor()) {
+
+        return false;
+      }
+
+      return esCuentaAsignadaAlUsuario(c);
+    }
+
+
+    function puedeVerPorEquipo(c) {
+
+      if (!c) return false;
+
+      if (
+        c.estado === "finalizada"
+      ) {
+
+        return false;
+      }
+
+      if (esSupervisor()) {
+
+        return true;
+      }
+
+      const equipo =
+        obtenerEquipoConversacion(c);
+
+      if (!equipo) return false;
+
+      return usuarioTieneEquipo(
+        equipo
+      );
+    }
+
+
+    function puedeGestionarConversacion(
+      c,
+      origen = "principal"
     ) {
-      return true;
+
+      if (!c) return false;
+
+      if (
+        c.estado === "finalizada"
+      ) {
+
+        return false;
+      }
+
+      if (esSupervisor()) {
+
+        return true;
+      }
+
+      if (
+        origen === "equipo" ||
+        origen === "agente"
+      ) {
+
+        return puedeVerPorEquipo(c);
+      }
+
+      return puedeVerEnPrincipal(c);
     }
 
-    return false;
-  }
 
-  /* =========================
-     PERMISOS
-  ========================= */
+    function puedeTomarConversacion(c) {
 
-  function puedeVerEnPrincipal(c) {
-    if (!c) return false;
+      if (!c) return false;
 
-    if (c.estado === "finalizada") {
-      return false;
+      if (
+        c.estado === "finalizada"
+      ) {
+
+        return false;
+      }
+
+      if (
+        c.asesorAsignado ||
+        c.asesorEmail
+      ) {
+
+        return false;
+      }
+
+      return esAdministrador();
     }
 
-    // La supervisora no ve cuentas en la principal.
-    // Ve gestores.
-    if (esSupervisor()) {
-      return false;
+
+    function puedeTransferirConversacion(c) {
+
+      if (!c) return false;
+
+      if (
+        c.estado === "finalizada"
+      ) {
+
+        return false;
+      }
+
+      return esAdministrador();
     }
 
-    // Senior y asesor:
-    // solamente sus propias cuentas.
-    return esCuentaAsignadaAlUsuario(c);
-  }
 
-  function puedeVerPorEquipo(c) {
-    if (!c) return false;
+    /* =========================
+       LOGIN
+    ========================= */
 
-    if (c.estado === "finalizada") {
-      return false;
-    }
+    const loginForm =
+      document.getElementById(
+        "loginForm"
+      );
 
-    if (esSupervisor()) {
-      return true;
-    }
-
-    const equipo = obtenerEquipoConversacion(c);
-
-    if (!equipo) return false;
-
-    return usuarioTieneEquipo(equipo);
-  }
-
-  function puedeGestionarConversacion(
-    c,
-    origen = "principal"
-  ) {
-    if (!c) return false;
-
-    if (c.estado === "finalizada") {
-      return false;
-    }
-
-    if (esSupervisor()) {
-      return true;
-    }
-
-    if (
-      origen === "equipo" ||
-      origen === "agente"
-    ) {
-      return puedeVerPorEquipo(c);
-    }
-
-    return puedeVerEnPrincipal(c);
-  }
-
-  function puedeTomarConversacion(c) {
-    if (!c) return false;
-
-    if (c.estado === "finalizada") {
-      return false;
-    }
-
-    if (
-      c.asesorAsignado ||
-      c.asesorEmail
-    ) {
-      return false;
-    }
-
-    return esAdministrador();
-  }
-
-  function puedeTransferirConversacion(c) {
-    if (!c) return false;
-
-    if (c.estado === "finalizada") {
-      return false;
-    }
-
-    // SOLAMENTE SENIOR Y SUPERVISOR
-    return esAdministrador();
-  }
-
-  function puedeVerHistorial(c) {
-    return !!c &&
-      c.estado === "finalizada";
-  }
-
-  /* =========================
-     LOGIN
-  ========================= */
-
-  const loginScreen =
-    document.getElementById("loginScreen");
-
-  const appScreen =
-    document.getElementById("appScreen");
-
-  const loginForm =
-    document.getElementById("loginForm");
-
-  const loginEmail =
-    document.getElementById("loginEmail");
-
-  const loginPassword =
-    document.getElementById("loginPassword");
-
-  const loginError =
-    document.getElementById("loginError");
-
-  if (loginForm) {
     loginForm.addEventListener(
       "submit",
-      async e => {
+      async function(e) {
+
         e.preventDefault();
 
-        loginError.textContent = "";
+        const email =
+          document
+            .getElementById(
+              "loginEmail"
+            )
+            .value
+            .trim();
+
+        const password =
+          document
+            .getElementById(
+              "loginPassword"
+            )
+            .value;
+
+        const error =
+          document.getElementById(
+            "loginError"
+          );
+
+        error.textContent = "";
 
         try {
+
           await signInWithEmailAndPassword(
             auth,
-            loginEmail.value.trim(),
-            loginPassword.value
+            email,
+            password
           );
-        } catch (error) {
-          console.error(error);
 
-          loginError.textContent =
+        } catch (err) {
+
+          console.error(err);
+
+          error.textContent =
             "No se pudo iniciar sesión: " +
-            error.message;
+            err.message;
         }
       }
     );
-  }
 
-  /* =========================
-     AUTH
-  ========================= */
 
-  onAuthStateChanged(
-    auth,
-    async user => {
+    /* =========================
+       AUTH
+    ========================= */
 
-      if (!user) {
-        usuarioActual = null;
-        nombreUsuarioActual = "";
-        rolUsuarioActual = "";
+    onAuthStateChanged(
+      auth,
+      async function(user) {
 
-        if (loginScreen)
-          loginScreen.style.display = "flex";
+        if (!user) {
 
-        if (appScreen)
-          appScreen.style.display = "none";
+          usuarioActual = null;
 
-        return;
-      }
+          document
+            .getElementById(
+              "loginScreen"
+            )
+            .style.display = "flex";
 
-      usuarioActual = user;
+          document
+            .getElementById(
+              "appScreen"
+            )
+            .style.display = "none";
 
-      const email =
-        user.email?.toLowerCase() || "";
+          return;
+        }
 
-      nombreUsuarioActual =
-        emailsPorNombre[email] || "";
 
-      rolUsuarioActual =
-        perfiles[nombreUsuarioActual] || "";
+        usuarioActual = user;
 
-      if (!nombreUsuarioActual) {
-        alert(
-          "Tu correo está autenticado en Firebase, pero todavía no está asociado a un usuario del sistema."
-        );
 
-        await signOut(auth);
-        return;
-      }
+        const email =
+          (
+            user.email || ""
+          ).toLowerCase();
 
-      if (!rolUsuarioActual) {
-        alert(
-          "Tu usuario no tiene un perfil configurado."
-        );
 
-        await signOut(auth);
-        return;
-      }
+        nombreUsuarioActual =
+          emailsPorNombre[email] || "";
 
-      if (loginScreen)
-        loginScreen.style.display = "none";
 
-      if (appScreen)
-        appScreen.style.display = "flex";
+        rolUsuarioActual =
+          perfiles[
+            nombreUsuarioActual
+          ] || "";
 
-      const nombreElement =
-        document.getElementById("currentUserName");
 
-      if (nombreElement) {
-        nombreElement.textContent =
+        if (!nombreUsuarioActual) {
+
+          alert(
+            "El correo está autenticado en Firebase, pero todavía no está configurado en el sistema."
+          );
+
+          await signOut(auth);
+
+          return;
+        }
+
+
+        if (!rolUsuarioActual) {
+
+          alert(
+            "Este usuario no tiene un perfil configurado."
+          );
+
+          await signOut(auth);
+
+          return;
+        }
+
+
+        document
+          .getElementById(
+            "loginScreen"
+          )
+          .style.display = "none";
+
+
+        document
+          .getElementById(
+            "appScreen"
+          )
+          .style.display = "block";
+
+
+        document
+          .getElementById(
+            "currentUserName"
+          )
+          .textContent =
           nombreUsuarioActual;
-      }
 
-      const rolElement =
-        document.getElementById("currentUserRole");
 
-      if (rolElement) {
-        rolElement.textContent =
+        document
+          .getElementById(
+            "currentUserRole"
+          )
+          .textContent =
           rolUsuarioActual;
-      }
 
-      escucharConversaciones();
 
-      mostrarVista("conversations");
-    }
-  );
+        escucharConversaciones();
 
-  /* =========================
-     LOGOUT
-  ========================= */
-
-  window.cerrarSesion = async function () {
-    try {
-      await signOut(auth);
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  /* =========================
-     CONVERSACIONES
-  ========================= */
-
-  function escucharConversaciones() {
-
-    const conversacionesRef =
-      ref(db, "conversaciones");
-
-    onValue(
-      conversacionesRef,
-      snapshot => {
-
-        const datos =
-          snapshot.val() || {};
-
-        conversacionesArray =
-          Object.entries(datos)
-            .map(([id, valor]) => ({
-              id,
-              ...valor
-            }));
-
-        renderizarVistaConversaciones();
-
-        renderizarAgentes();
-
-        renderizarHistorial();
-
-        renderizarSinGestor();
-      },
-      error => {
-        console.error(
-          "Error leyendo conversaciones:",
-          error
-        );
-
-        alert(
-          "No se pudieron cargar las conversaciones: " +
-          error.message
+        mostrarVista(
+          "conversations"
         );
       }
     );
-  }
 
-  /* =========================
-     VISTA PRINCIPAL
-  ========================= */
 
-  function renderizarVistaConversaciones() {
+    /* =========================
+       LOGOUT
+    ========================= */
 
-    if (
-      esSupervisor() &&
-      vistaConversacionesModo === "principal"
-    ) {
-      renderizarGestoresPrincipal();
-      return;
+    window.cerrarSesion =
+      async function() {
+
+        await signOut(auth);
+      };
+
+
+    /* =========================
+       FIREBASE CONVERSACIONES
+    ========================= */
+
+    function escucharConversaciones() {
+
+      const conversacionesRef =
+        ref(
+          db,
+          "conversaciones"
+        );
+
+
+      onValue(
+        conversacionesRef,
+        function(snapshot) {
+
+          const datos =
+            snapshot.val() || {};
+
+
+          conversacionesArray =
+            Object.entries(datos)
+              .map(
+                ([id, valor]) => ({
+                  id,
+                  ...valor
+                })
+              );
+
+
+          renderizarVistaConversaciones();
+
+          renderizarAgentes();
+
+          renderizarHistorial();
+
+          renderizarSinGestor();
+
+        },
+        function(error) {
+
+          console.error(
+            "Firebase:",
+            error
+          );
+
+          alert(
+            "No se pudieron cargar las conversaciones: " +
+            error.message
+          );
+        }
+      );
     }
 
-    if (
-      vistaConversacionesModo === "agente" &&
-      gestorConsultado
-    ) {
-      renderizarConversacionesDeAgente(
+
+    /* =========================
+       VISTA CONVERSACIONES
+    ========================= */
+
+    function renderizarVistaConversaciones() {
+
+      if (
+        esSupervisor() &&
+        vistaConversacionesModo ===
+        "principal"
+      ) {
+
+        renderizarGestoresPrincipal();
+
+        return;
+      }
+
+
+      if (
+        vistaConversacionesModo ===
+        "agente" &&
         gestorConsultado
-      );
-      return;
+      ) {
+
+        renderizarConversacionesDeAgente(
+          gestorConsultado
+        );
+
+        return;
+      }
+
+
+      renderizarConversaciones();
     }
 
-    renderizarConversaciones();
-  }
 
-  /* =========================
-     PRINCIPAL ASESOR/SENIOR
-  ========================= */
+    /* =========================
+       PRINCIPAL
+    ========================= */
 
-  function renderizarConversaciones() {
+    function renderizarConversaciones() {
 
-    const container =
-      document.getElementById(
-        "conversationItems"
-      );
+      const container =
+        document.getElementById(
+          "conversationItems"
+        );
 
-    if (!container) return;
+      const title =
+        document.getElementById(
+          "conversationListTitle"
+        );
 
-    const search =
-      document.getElementById(
-        "conversationSearch"
-      );
+      const back =
+        document.getElementById(
+          "backToAgentsButton"
+        );
 
-    if (search) {
-      search.placeholder =
-        "Buscar nombre o DNI...";
-    }
+      const search =
+        document.getElementById(
+          "conversationSearch"
+        );
 
-    const back =
-      document.getElementById(
-        "backToAgentsButton"
-      );
 
-    if (back) {
-      back.style.display = "none";
-    }
-
-    const title =
-      document.getElementById(
-        "conversationListTitle"
-      );
-
-    if (title) {
       title.textContent =
         "Mis conversaciones";
-    }
 
-    let lista =
-      conversacionesArray
-        .filter(c =>
-          c.estado !== "finalizada"
-        )
-        .filter(c =>
-          puedeVerEnPrincipal(c)
-        );
 
-    aplicarTextoBusqueda(
-      lista,
-      container
-    );
-  }
+      back.style.display =
+        "none";
 
-  /* =========================
-     SUPERVISORA:
-     GESTORES EN PRINCIPAL
-  ========================= */
 
-  function renderizarGestoresPrincipal() {
-
-    const container =
-      document.getElementById(
-        "conversationItems"
-      );
-
-    if (!container) return;
-
-    const title =
-      document.getElementById(
-        "conversationListTitle"
-      );
-
-    if (title) {
-      title.textContent =
-        "Gestores";
-    }
-
-    const search =
-      document.getElementById(
-        "conversationSearch"
-      );
-
-    if (search) {
-      search.placeholder =
-        "Buscar gestor...";
-    }
-
-    const back =
-      document.getElementById(
-        "backToAgentsButton"
-      );
-
-    if (back) {
-      back.style.display = "none";
-    }
-
-    const texto =
-      (
-        search?.value || ""
-      )
-        .trim()
-        .toLowerCase();
-
-    const gestores =
-      Object.values(equipos)
-        .flatMap(e => e.gestores)
-        .filter(
-          (nombre, index, arr) =>
-            arr.indexOf(nombre) === index
-        )
-        .filter(nombre =>
-          !texto ||
-          nombre
-            .toLowerCase()
-            .includes(texto)
-        );
-
-    if (!gestores.length) {
-      container.innerHTML = `
-        <div class="empty-state">
-          No hay gestores para mostrar.
-        </div>
-      `;
-      return;
-    }
-
-    container.innerHTML =
-      gestores
-        .map(nombre => {
-
-          const equipo =
-            obtenerEquipoDePersona(
-              nombre
-            );
-
-          const activas =
-            conversacionesArray.filter(
-              c =>
-                c.estado !== "finalizada" &&
-                c.asesorAsignado === nombre
-            ).length;
-
-          return `
-            <div
-              class="conversation-item"
-              onclick="verCuentasDelAgente('${esc(nombre)}')"
-            >
-              <div>
-                <strong>👤 ${esc(nombre)}</strong>
-              </div>
-
-              <small>
-                Equipo ${esc(equipo)}
-                · ${activas} activas
-              </small>
-            </div>
-          `;
-        })
-        .join("");
-  }
-
-  /* =========================
-     CUENTAS DE UN GESTOR
-  ========================= */
-
-  function renderizarConversacionesDeAgente(
-    nombreAgente
-  ) {
-
-    const container =
-      document.getElementById(
-        "conversationItems"
-      );
-
-    if (!container) return;
-
-    const title =
-      document.getElementById(
-        "conversationListTitle"
-      );
-
-    if (title) {
-      title.textContent =
-        "Cuentas de " +
-        nombreAgente;
-    }
-
-    const search =
-      document.getElementById(
-        "conversationSearch"
-      );
-
-    if (search) {
       search.placeholder =
         "Buscar nombre o DNI...";
+
+
+      const lista =
+        conversacionesArray
+          .filter(
+            c =>
+              c.estado !==
+              "finalizada"
+          )
+          .filter(
+            c =>
+              puedeVerEnPrincipal(c)
+          );
+
+
+      pintarListaConversaciones(
+        aplicarFiltroLista(
+          lista,
+          search.value
+        ),
+        container
+      );
     }
 
-    const back =
-      document.getElementById(
-        "backToAgentsButton"
-      );
 
-    if (back) {
-      back.style.display = "block";
+    /* =========================
+       SUPERVISORA
+    ========================= */
+
+    function renderizarGestoresPrincipal() {
+
+      const container =
+        document.getElementById(
+          "conversationItems"
+        );
+
+      const title =
+        document.getElementById(
+          "conversationListTitle"
+        );
+
+      const back =
+        document.getElementById(
+          "backToAgentsButton"
+        );
+
+      const search =
+        document.getElementById(
+          "conversationSearch"
+        );
+
+
+      title.textContent =
+        "Gestores";
+
+
+      back.style.display =
+        "none";
+
+
+      search.placeholder =
+        "Buscar gestor...";
+
+
+      const texto =
+        search.value
+          .trim()
+          .toLowerCase();
+
+
+      const gestores =
+        Object.values(equipos)
+          .flatMap(
+            e => e.gestores
+          )
+          .filter(
+            (nombre, index, arr) =>
+              arr.indexOf(nombre) ===
+              index
+          )
+          .filter(
+            nombre =>
+              !texto ||
+              nombre
+                .toLowerCase()
+                .includes(texto)
+          );
+
+
+      if (!gestores.length) {
+
+        container.innerHTML = `
+          <div class="empty-state">
+            No hay gestores.
+          </div>
+        `;
+
+        return;
+      }
+
+
+      container.innerHTML =
+        gestores
+          .map(
+            nombre => {
+
+              const equipo =
+                obtenerEquipoDePersona(
+                  nombre
+                );
+
+
+              const activas =
+                conversacionesArray
+                  .filter(
+                    c =>
+                      c.estado !==
+                      "finalizada" &&
+                      c.asesorAsignado ===
+                      nombre
+                  )
+                  .length;
+
+
+              return `
+                <div
+                  class="conversation-item"
+                  onclick="verCuentasDelAgente('${esc(nombre)}')"
+                >
+
+                  <strong>
+                    👤 ${esc(nombre)}
+                  </strong>
+
+                  <small>
+                    Equipo:
+                    ${esc(equipo)}
+                  </small>
+
+                  <small>
+                    ${activas}
+                    cuentas activas
+                  </small>
+
+                </div>
+              `;
+            }
+          )
+          .join("");
+    }
+
+
+    /* =========================
+       CUENTAS DE GESTOR
+    ========================= */
+
+    function renderizarConversacionesDeAgente(
+      nombre
+    ) {
+
+      const container =
+        document.getElementById(
+          "conversationItems"
+        );
+
+      const title =
+        document.getElementById(
+          "conversationListTitle"
+        );
+
+      const back =
+        document.getElementById(
+          "backToAgentsButton"
+        );
+
+      const search =
+        document.getElementById(
+          "conversationSearch"
+        );
+
+
+      title.textContent =
+        "Cuentas de " +
+        nombre;
+
+
+      back.style.display =
+        "block";
+
 
       back.textContent =
         esSupervisor()
           ? "← Volver a gestores"
           : "← Volver a mis cuentas";
-    }
 
-    let lista =
-      conversacionesArray
-        .filter(c =>
-          c.estado !== "finalizada"
-        )
-        .filter(c =>
-          c.asesorAsignado ===
-          nombreAgente
-        )
-        .filter(c =>
-          puedeVerPorEquipo(c)
-        );
 
-    aplicarTextoBusqueda(
-      lista,
-      container
-    );
-  }
+      search.placeholder =
+        "Buscar nombre o DNI...";
 
-  /* =========================
-     BÚSQUEDA
-  ========================= */
 
-  function aplicarTextoBusqueda(
-    lista,
-    container
-  ) {
+      const lista =
+        conversacionesArray
+          .filter(
+            c =>
+              c.estado !==
+              "finalizada"
+          )
+          .filter(
+            c =>
+              c.asesorAsignado ===
+              nombre
+          )
+          .filter(
+            c =>
+              puedeVerPorEquipo(c)
+          );
 
-    const search =
-      document.getElementById(
-        "conversationSearch"
-      );
 
-    const texto =
-      (
-        search?.value || ""
-      ).trim();
-
-    if (!texto) {
       pintarListaConversaciones(
-        lista,
+        aplicarFiltroLista(
+          lista,
+          search.value
+        ),
         container
       );
-      return;
     }
 
-    const lower =
-      texto.toLowerCase();
 
-    const textoDni =
-      normalizarDni(texto);
+    /* =========================
+       FILTRO
+    ========================= */
 
-    const filtradas =
-      lista.filter(c => {
+    function aplicarFiltroLista(
+      lista,
+      texto
+    ) {
 
-        const cliente =
-          obtenerCliente(c)
-            .toLowerCase();
+      texto =
+        String(
+          texto || ""
+        ).trim();
 
-        const nombre =
-          obtenerNombreCliente(c)
-            .toLowerCase();
 
-        const dni =
-          obtenerDniConversacion(c);
-
-        const gestor =
-          String(
-            c.asesorAsignado || ""
-          ).toLowerCase();
-
-        const equipo =
-          obtenerEquipoConversacion(c)
-            .toLowerCase();
-
-        return (
-          cliente.includes(lower) ||
-          nombre.includes(lower) ||
-          (
-            textoDni &&
-            dni.includes(textoDni)
-          ) ||
-          gestor.includes(lower) ||
-          equipo.includes(lower)
-        );
-      });
-
-    pintarListaConversaciones(
-      filtradas,
-      container
-    );
-  }
-
-  window.aplicarBusquedaConversaciones =
-    function () {
-
-      if (
-        esSupervisor() &&
-        vistaConversacionesModo ===
-          "principal"
-      ) {
-        renderizarGestoresPrincipal();
-        return;
+      if (!texto) {
+        return lista;
       }
 
-      renderizarVistaConversaciones();
-    };
 
-  /* =========================
-     PINTAR LISTA
-  ========================= */
+      const lower =
+        texto.toLowerCase();
 
-  function pintarListaConversaciones(
-    lista,
-    container
-  ) {
 
-    if (!lista.length) {
+      const dniBusqueda =
+        normalizarDni(texto);
 
-      container.innerHTML = `
-        <div class="empty-state">
-          No hay conversaciones para mostrar.
-        </div>
-      `;
 
-      return;
-    }
-
-    container.innerHTML =
-      lista
-        .sort(
-          (a, b) =>
-            (b.ultimaActividad || 0) -
-            (a.ultimaActividad || 0)
-        )
-        .map(c => {
+      return lista.filter(
+        c => {
 
           const cliente =
-            obtenerCliente(c);
+            obtenerCliente(c)
+              .toLowerCase();
+
+
+          const nombre =
+            obtenerNombreCliente(c)
+              .toLowerCase();
+
 
           const dni =
             obtenerDniConversacion(c);
 
+
           const gestor =
-            c.asesorAsignado ||
-            "Sin gestor";
+            String(
+              c.asesorAsignado || ""
+            ).toLowerCase();
 
-          return `
-            <div
-              class="conversation-item"
-              onclick="mostrarConversacion('${esc(c.id)}','${vistaConversacionesModo === "agente" ? "equipo" : "principal"}')"
-            >
 
-              <div>
-                <strong>
-                  ${esc(cliente)}
-                </strong>
-              </div>
+          const equipo =
+            obtenerEquipoConversacion(c)
+              .toLowerCase();
 
-              ${
-                dni
-                  ? `<small>DNI: ${esc(dni)}</small>`
-                  : ""
-              }
 
-              <small>
-                Gestor: ${esc(gestor)}
-              </small>
+          return (
+            cliente.includes(lower) ||
+            nombre.includes(lower) ||
+            (
+              dniBusqueda &&
+              dni.includes(
+                dniBusqueda
+              )
+            ) ||
+            gestor.includes(lower) ||
+            equipo.includes(lower)
+          );
+        }
+      );
+    }
 
-              <small>
-                Equipo:
-                ${esc(
-                  obtenerEquipoConversacion(c) ||
-                  "Sin equipo"
-                )}
-              </small>
 
-            </div>
-          `;
-        })
-        .join("");
-  }
+    /* =========================
+       PINTAR CONVERSACIONES
+    ========================= */
 
-  /* =========================
-     ABRIR CONVERSACIÓN
-  ========================= */
-
-  window.mostrarConversacion =
-    function (
-      id,
-      origen = "principal"
+    function pintarListaConversaciones(
+      lista,
+      container
     ) {
 
-      const conversation =
-        conversacionesArray.find(
-          c => c.id === id
-        );
+      if (!lista.length) {
 
-      if (!conversation) return;
+        container.innerHTML = `
+          <div class="empty-state">
+            No hay conversaciones para mostrar.
+          </div>
+        `;
 
-      const finalizada =
-        conversation.estado ===
-        "finalizada";
-
-      let puedeVer = false;
-
-      if (finalizada) {
-
-        puedeVer =
-          origen === "historial";
-
-      } else if (esSupervisor()) {
-
-        puedeVer = true;
-
-      } else if (
-        origen === "equipo" ||
-        origen === "agente"
-      ) {
-
-        puedeVer =
-          puedeVerPorEquipo(
-            conversation
-          );
-
-      } else {
-
-        puedeVer =
-          puedeVerEnPrincipal(
-            conversation
-          );
-      }
-
-      if (!puedeVer) {
-        alert(
-          "No tenés permisos para ver esta conversación."
-        );
         return;
       }
 
-      conversacionActualId = id;
 
-      const title =
-        document.getElementById(
-          "chatClientName"
-        );
+      lista.sort(
+        (a, b) =>
+          (
+            b.ultimaActividad ||
+            b.timestamp ||
+            0
+          ) -
+          (
+            a.ultimaActividad ||
+            a.timestamp ||
+            0
+          )
+      );
 
-      if (title) {
-        title.textContent =
-          obtenerCliente(conversation);
-      }
 
-      const dni =
-        document.getElementById(
-          "chatClientDni"
-        );
+      container.innerHTML =
+        lista
+          .map(
+            c => {
 
-      if (dni) {
-        const valor =
+              const cliente =
+                obtenerCliente(c);
+
+
+              const dni =
+                obtenerDniConversacion(c);
+
+
+              const gestor =
+                c.asesorAsignado ||
+                "Sin gestor";
+
+
+              const origen =
+                vistaConversacionesModo ===
+                "agente"
+                  ? "equipo"
+                  : "principal";
+
+
+              return `
+                <div
+                  class="conversation-item"
+                  onclick="mostrarConversacion('${esc(c.id)}','${origen}')"
+                >
+
+                  <strong>
+                    ${esc(cliente)}
+                  </strong>
+
+                  ${
+                    dni
+                      ? `
+                        <small>
+                          DNI: ${esc(dni)}
+                        </small>
+                      `
+                      : ""
+                  }
+
+
+                  <small>
+                    Gestor:
+                    ${esc(gestor)}
+                  </small>
+
+
+                  <small>
+                    Equipo:
+                    ${esc(
+                      obtenerEquipoConversacion(c) ||
+                      "Sin equipo"
+                    )}
+                  </small>
+
+                </div>
+              `;
+            }
+          )
+          .join("");
+    }
+
+
+    /* =========================
+       MOSTRAR CONVERSACIÓN
+    ========================= */
+
+    window.mostrarConversacion =
+      function(
+        id,
+        origen = "principal"
+      ) {
+
+        const conversation =
+          conversacionesArray.find(
+            c => c.id === id
+          );
+
+
+        if (!conversation) {
+          return;
+        }
+
+
+        let puedeVer = false;
+
+
+        if (
+          conversation.estado ===
+          "finalizada"
+        ) {
+
+          puedeVer =
+            origen === "historial";
+
+        } else if (
+          esSupervisor()
+        ) {
+
+          puedeVer = true;
+
+        } else if (
+          origen === "equipo"
+        ) {
+
+          puedeVer =
+            puedeVerPorEquipo(
+              conversation
+            );
+
+        } else {
+
+          puedeVer =
+            puedeVerEnPrincipal(
+              conversation
+            );
+        }
+
+
+        if (!puedeVer) {
+
+          alert(
+            "No tenés permisos para ver esta conversación."
+          );
+
+          return;
+        }
+
+
+        conversacionActualId =
+          id;
+
+
+        document
+          .getElementById(
+            "chatClientName"
+          )
+          .textContent =
+          obtenerCliente(
+            conversation
+          );
+
+
+        const dni =
           obtenerDniConversacion(
             conversation
           );
 
-        dni.textContent =
-          valor
-            ? "DNI: " + valor
+
+        document
+          .getElementById(
+            "chatClientDni"
+          )
+          .textContent =
+          dni
+            ? "DNI: " + dni
             : "";
-      }
 
-      const gestor =
-        document.getElementById(
-          "chatGestor"
-        );
 
-      if (gestor) {
-        gestor.textContent =
+        document
+          .getElementById(
+            "chatGestor"
+          )
+          .textContent =
           conversation.asesorAsignado ||
           "Sin gestor";
-      }
 
-      renderizarMensajes(
-        conversation
-      );
 
-      renderizarAccionesChat(
-        conversation,
-        origen
-      );
-
-      actualizarFormularioMensaje(
-        conversation,
-        origen
-      );
-    };
-
-  /* =========================
-     MENSAJES
-  ========================= */
-
-  function renderizarMensajes(
-    conversation
-  ) {
-
-    const container =
-      document.getElementById(
-        "chatMessages"
-      );
-
-    if (!container) return;
-
-    const mensajes =
-      conversation.mensajes ||
-      conversation.messages ||
-      {};
-
-    const array =
-      Object.entries(mensajes)
-        .map(([id, valor]) => ({
-          id,
-          ...valor
-        }))
-        .sort(
-          (a, b) =>
-            (a.timestamp || 0) -
-            (b.timestamp || 0)
+        renderizarMensajes(
+          conversation
         );
 
-    if (!array.length) {
 
-      container.innerHTML = `
-        <div class="empty-state">
-          No hay mensajes.
-        </div>
-      `;
+        renderizarAccionesChat(
+          conversation,
+          origen
+        );
 
-      return;
-    }
 
-    container.innerHTML =
-      array
-        .map(m => {
+        actualizarFormularioMensaje(
+          conversation,
+          origen
+        );
+      };
 
-          const esMio =
-            m.autor ===
-            nombreUsuarioActual ||
-            m.remitente ===
-            nombreUsuarioActual;
 
-          return `
-            <div
-              class="message ${
-                esMio
-                  ? "message-own"
-                  : "message-client"
-              }"
-            >
-              <div class="message-author">
-                ${esc(
-                  m.autor ||
-                  m.remitente ||
-                  "Cliente"
-                )}
-              </div>
+    /* =========================
+       MENSAJES
+    ========================= */
 
-              <div>
-                ${esc(
-                  m.texto ||
-                  m.mensaje ||
-                  m.text ||
-                  ""
-                )}
-              </div>
-
-              <small>
-                ${
-                  m.timestamp
-                    ? new Date(
-                        m.timestamp
-                      ).toLocaleString(
-                        "es-AR"
-                      )
-                    : ""
-                }
-              </small>
-            </div>
-          `;
-        })
-        .join("");
-
-    container.scrollTop =
-      container.scrollHeight;
-  }
-
-  /* =========================
-     ACCIONES DEL CHAT
-  ========================= */
-
-  function renderizarAccionesChat(
-    conversation,
-    origen
-  ) {
-
-    const container =
-      document.getElementById(
-        "chatActions"
-      );
-
-    if (!container) return;
-
-    if (
-      conversation.estado ===
-      "finalizada"
+    function renderizarMensajes(
+      conversation
     ) {
 
-      container.innerHTML = `
-        <div class="finalized-notice">
-          🔒 Conversación finalizada.
-          Solo lectura.
-        </div>
-      `;
+      const container =
+        document.getElementById(
+          "chatMessages"
+        );
 
-      return;
+
+      const mensajes =
+        conversation.mensajes ||
+        conversation.messages ||
+        {};
+
+
+      const lista =
+        Object.entries(mensajes)
+          .map(
+            ([id, valor]) => ({
+              id,
+              ...valor
+            })
+          )
+          .sort(
+            (a, b) =>
+              (
+                a.timestamp || 0
+              ) -
+              (
+                b.timestamp || 0
+              )
+          );
+
+
+      if (!lista.length) {
+
+        container.innerHTML = `
+          <div class="empty-state">
+            No hay mensajes.
+          </div>
+        `;
+
+        return;
+      }
+
+
+      container.innerHTML =
+        lista
+          .map(
+            m => {
+
+              const propio =
+                m.autor ===
+                nombreUsuarioActual ||
+                m.remitente ===
+                nombreUsuarioActual;
+
+
+              return `
+                <div
+                  class="message ${
+                    propio
+                      ? "message-own"
+                      : "message-client"
+                  }"
+                >
+
+                  <div
+                    class="message-author"
+                  >
+                    ${esc(
+                      m.autor ||
+                      m.remitente ||
+                      "Cliente"
+                    )}
+                  </div>
+
+                  <div>
+                    ${esc(
+                      m.texto ||
+                      m.mensaje ||
+                      m.text ||
+                      ""
+                    )}
+                  </div>
+
+                  <small>
+                    ${
+                      m.timestamp
+                        ? new Date(
+                            m.timestamp
+                          ).toLocaleString(
+                            "es-AR"
+                          )
+                        : ""
+                    }
+                  </small>
+
+                </div>
+              `;
+            }
+          )
+          .join("");
+
+
+      container.scrollTop =
+        container.scrollHeight;
     }
 
-    const puedeGestionar =
-      puedeGestionarConversacion(
-        conversation,
-        origen
-      );
 
-    let html = "";
+    /* =========================
+       ACCIONES CHAT
+    ========================= */
 
-    if (puedeGestionar) {
-
-      html += `
-        <button
-          class="btn btn-success"
-          onclick="finalizarConversacion()"
-        >
-          Finalizar
-        </button>
-      `;
-    }
-
-    if (
-      puedeTransferirConversacion(
-        conversation
-      )
+    function renderizarAccionesChat(
+      conversation,
+      origen
     ) {
 
-      html += `
-        <button
-          class="btn btn-secondary"
-          onclick="abrirTransferencia()"
-        >
-          Transferir
-        </button>
-      `;
+      const container =
+        document.getElementById(
+          "chatActions"
+        );
+
+
+      if (
+        conversation.estado ===
+        "finalizada"
+      ) {
+
+        container.innerHTML = `
+          <div class="finalized-notice">
+            🔒 Conversación finalizada.
+            Solo lectura.
+          </div>
+        `;
+
+        return;
+      }
+
+
+      const puedeGestionar =
+        puedeGestionarConversacion(
+          conversation,
+          origen
+        );
+
+
+      let html = "";
+
+
+      if (puedeGestionar) {
+
+        html += `
+          <button
+            class="btn btn-success"
+            onclick="finalizarConversacion()"
+          >
+            Finalizar
+          </button>
+        `;
+      }
+
+
+      if (
+        puedeTransferirConversacion(
+          conversation
+        )
+      ) {
+
+        html += `
+          <button
+            class="btn btn-secondary"
+            onclick="abrirTransferencia()"
+          >
+            Transferir
+          </button>
+        `;
+      }
+
+
+      container.innerHTML =
+        html;
     }
 
-    container.innerHTML = html;
-  }
 
-  /* =========================
-     FORMULARIO MENSAJE
-  ========================= */
+    /* =========================
+       FORM MENSAJE
+    ========================= */
 
-  function actualizarFormularioMensaje(
-    conversation,
-    origen
-  ) {
+    function actualizarFormularioMensaje(
+      conversation,
+      origen
+    ) {
 
-    const form =
-      document.getElementById(
-        "messageForm"
-      );
+      const form =
+        document.getElementById(
+          "messageForm"
+        );
 
-    const notice =
-      document.getElementById(
-        "messageDisabled"
-      );
+      const disabled =
+        document.getElementById(
+          "messageDisabled"
+        );
 
-    if (!form) return;
 
-    const puede =
-      conversation.estado !==
-        "finalizada" &&
-      puedeGestionarConversacion(
-        conversation,
-        origen
-      );
+      const puede =
+        conversation.estado !==
+          "finalizada" &&
+        puedeGestionarConversacion(
+          conversation,
+          origen
+        );
 
-    if (puede) {
 
-      form.style.display =
-        "flex";
+      if (puede) {
 
-      if (notice)
-        notice.style.display =
+        form.style.display =
+          "flex";
+
+        disabled.style.display =
           "none";
 
-    } else {
+      } else {
 
-      form.style.display =
-        "none";
+        form.style.display =
+          "none";
 
-      if (notice) {
-
-        notice.style.display =
+        disabled.style.display =
           "block";
 
-        notice.textContent =
+
+        disabled.textContent =
           conversation.estado ===
           "finalizada"
             ? "🔒 Conversación finalizada. Solo lectura."
             : "No tenés permisos para gestionar esta conversación.";
       }
     }
-  }
 
-  /* =========================
-     ENVIAR MENSAJE
-  ========================= */
 
-  const messageForm =
-    document.getElementById(
-      "messageForm"
-    );
+    /* =========================
+       ENVIAR MENSAJE
+    ========================= */
 
-  if (messageForm) {
+    document
+      .getElementById(
+        "messageForm"
+      )
+      .addEventListener(
+        "submit",
+        async function(e) {
 
-    messageForm.addEventListener(
-      "submit",
-      async e => {
+          e.preventDefault();
 
-        e.preventDefault();
 
-        if (!conversacionActualId)
+          if (
+            !conversacionActualId
+          ) {
+            return;
+          }
+
+
+          const conversation =
+            conversacionesArray.find(
+              c =>
+                c.id ===
+                conversacionActualId
+            );
+
+
+          if (!conversation) {
+            return;
+          }
+
+
+          const origen =
+            vistaConversacionesModo ===
+            "agente"
+              ? "equipo"
+              : "principal";
+
+
+          if (
+            !puedeGestionarConversacion(
+              conversation,
+              origen
+            )
+          ) {
+
+            alert(
+              "No tenés permisos para gestionar esta conversación."
+            );
+
+            return;
+          }
+
+
+          const input =
+            document.getElementById(
+              "messageInput"
+            );
+
+
+          const texto =
+            input.value.trim();
+
+
+          if (!texto) {
+            return;
+          }
+
+
+          try {
+
+            await push(
+              ref(
+                db,
+                `conversaciones/${conversacionActualId}/mensajes`
+              ),
+              {
+                autor:
+                  nombreUsuarioActual,
+
+                autorEmail:
+                  usuarioActual.email,
+
+                texto,
+
+                timestamp:
+                  Date.now()
+              }
+            );
+
+
+            await update(
+              ref(
+                db,
+                `conversaciones/${conversacionActualId}`
+              ),
+              {
+                ultimaActividad:
+                  Date.now()
+              }
+            );
+
+
+            input.value = "";
+
+          } catch (error) {
+
+            console.error(error);
+
+            alert(
+              "No se pudo enviar el mensaje: " +
+              error.message
+            );
+          }
+        }
+      );
+
+
+    /* =========================
+       FINALIZAR
+    ========================= */
+
+    window.finalizarConversacion =
+      async function() {
+
+        if (
+          !conversacionActualId
+        ) {
           return;
+        }
+
 
         const conversation =
           conversacionesArray.find(
@@ -1430,8 +3056,11 @@
               conversacionActualId
           );
 
-        if (!conversation)
+
+        if (!conversation) {
           return;
+        }
+
 
         const origen =
           vistaConversacionesModo ===
@@ -1439,50 +3068,33 @@
             ? "equipo"
             : "principal";
 
+
         if (
           !puedeGestionarConversacion(
             conversation,
             origen
           )
         ) {
+
           alert(
-            "No tenés permisos para gestionar esta conversación."
+            "No tenés permisos para finalizar esta conversación."
           );
+
           return;
         }
 
-        const input =
-          document.getElementById(
-            "messageInput"
-          );
 
-        if (!input) return;
+        if (
+          !confirm(
+            "¿Querés finalizar esta conversación?"
+          )
+        ) {
 
-        const texto =
-          input.value.trim();
+          return;
+        }
 
-        if (!texto) return;
 
         try {
-
-          const mensajesRef =
-            ref(
-              db,
-              `conversaciones/${conversacionActualId}/mensajes`
-            );
-
-          await push(
-            mensajesRef,
-            {
-              autor:
-                nombreUsuarioActual,
-              autorEmail:
-                usuarioActual.email,
-              texto,
-              timestamp:
-                Date.now()
-            }
-          );
 
           await update(
             ref(
@@ -1490,1047 +3102,1177 @@
               `conversaciones/${conversacionActualId}`
             ),
             {
-              ultimaActividad:
-                Date.now()
+              estado:
+                "finalizada",
+
+              fechaFinalizacion:
+                Date.now(),
+
+              finalizadaPor:
+                nombreUsuarioActual
             }
           );
 
-          input.value = "";
+
+          conversacionActualId =
+            null;
+
+
+          document
+            .getElementById(
+              "chatClientName"
+            )
+            .textContent =
+            "Seleccioná una conversación";
+
+
+          document
+            .getElementById(
+              "chatClientDni"
+            )
+            .textContent = "";
+
+
+          document
+            .getElementById(
+              "chatGestor"
+            )
+            .textContent = "-";
+
+
+          document
+            .getElementById(
+              "chatMessages"
+            )
+            .innerHTML = `
+              <div class="empty-state">
+                Conversación finalizada.
+              </div>
+            `;
+
+
+          renderizarAccionesChat(
+            {
+              estado:
+                "finalizada"
+            },
+            "historial"
+          );
+
+
+          actualizarFormularioMensaje(
+            {
+              estado:
+                "finalizada"
+            },
+            "historial"
+          );
+
+
+          renderizarVistaConversaciones();
+
+          renderizarHistorial();
 
         } catch (error) {
 
           console.error(error);
 
           alert(
-            "No se pudo enviar el mensaje: " +
+            "No se pudo finalizar: " +
             error.message
           );
         }
-      }
-    );
-  }
+      };
 
-  /* =========================
-     FINALIZAR
-  ========================= */
 
-  window.finalizarConversacion =
-    async function () {
+    /* =========================
+       AGENTES
+    ========================= */
 
-      if (!conversacionActualId)
-        return;
+    function obtenerAgentesVisibles() {
 
-      const conversation =
-        conversacionesArray.find(
-          c =>
-            c.id ===
-            conversacionActualId
-        );
-
-      if (!conversation)
-        return;
-
-      const origen =
-        vistaConversacionesModo ===
-        "agente"
-          ? "equipo"
-          : "principal";
-
-      if (
-        !puedeGestionarConversacion(
-          conversation,
-          origen
-        )
-      ) {
-
-        alert(
-          "No tenés permisos para finalizar esta conversación."
-        );
-
-        return;
-      }
-
-      if (
-        !confirm(
-          "¿Querés finalizar esta conversación?"
-        )
-      ) {
-        return;
-      }
-
-      try {
-
-        await update(
-          ref(
-            db,
-            `conversaciones/${conversacionActualId}`
-          ),
-          {
-            estado: "finalizada",
-            fechaFinalizacion:
-              Date.now(),
-            finalizadaPor:
-              nombreUsuarioActual
-          }
-        );
-
-        alert(
-          "Conversación finalizada."
-        );
-
-        conversacionActualId =
-          null;
-
-        const title =
-          document.getElementById(
-            "chatClientName"
+      const todos =
+        Object.values(equipos)
+          .flatMap(
+            e => e.gestores
+          )
+          .filter(
+            (
+              nombre,
+              index,
+              arr
+            ) =>
+              arr.indexOf(nombre) ===
+              index
           );
 
-        if (title)
-          title.textContent =
-            "Seleccioná una conversación";
 
-        renderizarVistaConversaciones();
-
-        renderizarHistorial();
-
-      } catch (error) {
-
-        console.error(error);
-
-        alert(
-          "No se pudo finalizar: " +
-          error.message
-        );
+      if (esSupervisor()) {
+        return todos;
       }
-    };
 
-  /* =========================
-     AGENTES
-  ========================= */
 
-  function obtenerAgentesVisibles() {
-
-    const todos =
-      Object.values(equipos)
-        .flatMap(e =>
-          e.gestores
-        )
-        .filter(
-          (nombre, index, arr) =>
-            arr.indexOf(nombre) === index
+      const misEquipos =
+        obtenerEquiposDelUsuario(
+          nombreUsuarioActual
         );
 
-    if (esSupervisor()) {
-      return todos;
-    }
 
-    const misEquipos =
-      obtenerEquiposDelUsuario(
-        nombreUsuarioActual
-      );
-
-    return todos.filter(
-      nombre =>
-        misEquipos.includes(
-          obtenerEquipoDePersona(nombre)
-        )
-    );
-  }
-
-  function contarCuentasDeAgente(
-    nombre
-  ) {
-
-    return conversacionesArray.filter(
-      c =>
-        c.estado !== "finalizada" &&
-        c.asesorAsignado === nombre
-    ).length;
-  }
-
-  function renderizarAgentes() {
-
-    const grid =
-      document.getElementById(
-        "agentsGrid"
-      );
-
-    if (!grid) return;
-
-    const search =
-      document.getElementById(
-        "agentSearch"
-      );
-
-    const filtroEquipo =
-      document.getElementById(
-        "agentTeamFilter"
-      );
-
-    const texto =
-      (
-        search?.value || ""
-      )
-        .trim()
-        .toLowerCase();
-
-    const equipoFiltro =
-      filtroEquipo?.value || "";
-
-    const agentes =
-      obtenerAgentesVisibles()
-        .filter(nombre => {
-
-          const equipo =
+      return todos.filter(
+        nombre =>
+          misEquipos.includes(
             obtenerEquipoDePersona(
               nombre
-            );
+            )
+          )
+      );
+    }
 
-          const coincideTexto =
-            !texto ||
+
+    function contarCuentasDeAgente(
+      nombre
+    ) {
+
+      return conversacionesArray.filter(
+        c =>
+          c.estado !==
+            "finalizada" &&
+          c.asesorAsignado ===
             nombre
-              .toLowerCase()
-              .includes(texto);
-
-          const coincideEquipo =
-            !equipoFiltro ||
-            equipo === equipoFiltro;
-
-          return (
-            coincideTexto &&
-            coincideEquipo
-          );
-        });
-
-    if (!agentes.length) {
-
-      grid.innerHTML = `
-        <div class="empty-state">
-          No hay gestores para mostrar.
-        </div>
-      `;
-
-      return;
+      ).length;
     }
 
-    grid.innerHTML =
-      agentes
-        .map(nombre => {
 
-          const equipo =
-            obtenerEquipoDePersona(
-              nombre
-            );
+    function renderizarAgentes() {
 
-          const cuentas =
-            contarCuentasDeAgente(
-              nombre
-            );
-
-          return `
-            <div class="agent-card">
-
-              <div>
-                <strong>
-                  👤 ${esc(nombre)}
-                </strong>
-              </div>
-
-              <small>
-                Equipo ${esc(equipo)}
-              </small>
-
-              <div>
-                ${cuentas} cuentas activas
-              </div>
-
-              <button
-                class="btn btn-primary"
-                onclick="verCuentasDelAgente('${esc(nombre)}')"
-              >
-                Ver cuentas
-              </button>
-
-            </div>
-          `;
-        })
-        .join("");
-  }
-
-  window.verCuentasDelAgente =
-    function (nombre) {
-
-      if (
-        !obtenerAgentesVisibles()
-          .includes(nombre)
-      ) {
-
-        alert(
-          "No tenés permisos para ver este gestor."
+      const grid =
+        document.getElementById(
+          "agentsGrid"
         );
 
+
+      if (!grid) {
         return;
       }
 
-      vistaActual =
-        "conversations";
-
-      vistaConversacionesModo =
-        "agente";
-
-      gestorConsultado =
-        nombre;
-
-      mostrarVista(
-        "conversations"
-      );
-
-      renderizarVistaConversaciones();
-    };
-
-  window.volverAListaPrincipal =
-    function () {
-
-      vistaConversacionesModo =
-        "principal";
-
-      gestorConsultado =
-        "";
 
       const search =
         document.getElementById(
-          "conversationSearch"
+          "agentSearch"
         );
 
-      if (search)
-        search.value = "";
 
-      renderizarVistaConversaciones();
-    };
-
-  /* =========================
-     SIN GESTOR
-  ========================= */
-
-  function renderizarSinGestor() {
-
-    const container =
-      document.getElementById(
-        "unassignedItems"
-      );
-
-    if (!container) return;
-
-    const lista =
-      conversacionesArray.filter(
-        c =>
-          c.estado !== "finalizada" &&
-          !c.asesorAsignado &&
-          !c.asesorEmail
-      );
-
-    if (!lista.length) {
-
-      container.innerHTML = `
-        <div class="empty-state">
-          No hay conversaciones sin gestor.
-        </div>
-      `;
-
-      return;
-    }
-
-    container.innerHTML =
-      lista
-        .map(c => {
-
-          const puede =
-            puedeTomarConversacion(
-              c
-            );
-
-          return `
-            <div class="conversation-item">
-
-              <strong>
-                ${esc(
-                  obtenerCliente(c)
-                )}
-              </strong>
-
-              ${
-                puede
-                  ? `
-                    <button
-                      class="btn btn-primary"
-                      onclick="tomarConversacion('${esc(c.id)}')"
-                    >
-                      Tomar
-                    </button>
-                  `
-                  : ""
-              }
-
-            </div>
-          `;
-        })
-        .join("");
-  }
-
-  /* =========================
-     TOMAR CONVERSACIÓN
-  ========================= */
-
-  window.tomarConversacion =
-    async function (id) {
-
-      const conversation =
-        conversacionesArray.find(
-          c => c.id === id
-        );
-
-      if (!conversation)
-        return;
-
-      if (
-        !puedeTomarConversacion(
-          conversation
-        )
-      ) {
-
-        alert(
-          "No tenés permisos para tomar esta conversación."
-        );
-
-        return;
-      }
-
-      try {
-
-        await update(
-          ref(
-            db,
-            `conversaciones/${id}`
-          ),
-          {
-            asesorAsignado:
-              nombreUsuarioActual,
-            asesorEmail:
-              usuarioActual.email,
-            equipo:
-              obtenerEquipoDePersona(
-                nombreUsuarioActual
-              ),
-            fechaAsignacion:
-              Date.now()
-          }
-        );
-
-      } catch (error) {
-
-        console.error(error);
-
-        alert(
-          "No se pudo tomar la conversación: " +
-          error.message
-        );
-      }
-    };
-
-  /* =========================
-     TRANSFERENCIA
-  ========================= */
-
-  window.abrirTransferencia =
-    function () {
-
-      if (!conversacionActualId)
-        return;
-
-      const conversation =
-        conversacionesArray.find(
-          c =>
-            c.id ===
-            conversacionActualId
-        );
-
-      if (
-        !puedeTransferirConversacion(
-          conversation
-        )
-      ) {
-
-        alert(
-          "Solo los seniors y la supervisora pueden transferir conversaciones."
-        );
-
-        return;
-      }
-
-      const modal =
+      const team =
         document.getElementById(
-          "transferModal"
+          "agentTeamFilter"
         );
 
-      const teamSelect =
-        document.getElementById(
-          "transferTeam"
-        );
 
-      const agentSelect =
-        document.getElementById(
-          "transferAgent"
-        );
+      const texto =
+        search.value
+          .trim()
+          .toLowerCase();
 
-      if (!modal ||
-          !teamSelect ||
-          !agentSelect) {
-        return;
-      }
 
-      teamSelect.innerHTML =
-        `<option value="">Seleccionar equipo</option>` +
-        Object.keys(equipos)
-          .map(
-            equipo =>
-              `<option value="${esc(equipo)}">${esc(equipo)}</option>`
-          )
-          .join("");
+      const equipoFiltro =
+        team.value;
 
-      agentSelect.innerHTML =
-        `<option value="">Seleccionar gestor</option>`;
 
-      modal.style.display =
-        "flex";
-    };
+      const agentes =
+        obtenerAgentesVisibles()
+          .filter(
+            nombre => {
 
-  const transferTeam =
-    document.getElementById(
-      "transferTeam"
-    );
+              const equipo =
+                obtenerEquipoDePersona(
+                  nombre
+                );
 
-  if (transferTeam) {
 
-    transferTeam.addEventListener(
-      "change",
-      () => {
-
-        const agentSelect =
-          document.getElementById(
-            "transferAgent"
+              return (
+                (
+                  !texto ||
+                  nombre
+                    .toLowerCase()
+                    .includes(texto)
+                ) &&
+                (
+                  !equipoFiltro ||
+                  equipo ===
+                  equipoFiltro
+                )
+              );
+            }
           );
 
-        if (!agentSelect) return;
 
-        const equipo =
-          transferTeam.value;
+      if (!agentes.length) {
 
-        if (!equipo) {
+        grid.innerHTML = `
+          <div class="empty-state">
+            No hay gestores para mostrar.
+          </div>
+        `;
 
-          agentSelect.innerHTML =
-            `<option value="">Seleccionar gestor</option>`;
+        return;
+      }
+
+
+      grid.innerHTML =
+        agentes
+          .map(
+            nombre => {
+
+              const equipo =
+                obtenerEquipoDePersona(
+                  nombre
+                );
+
+
+              const cantidad =
+                contarCuentasDeAgente(
+                  nombre
+                );
+
+
+              return `
+                <div class="agent-card">
+
+                  <strong>
+                    👤 ${esc(nombre)}
+                  </strong>
+
+                  <small>
+                    Equipo:
+                    ${esc(equipo)}
+                  </small>
+
+                  <div>
+                    ${cantidad}
+                    cuentas activas
+                  </div>
+
+                  <button
+                    class="btn btn-primary"
+                    onclick="verCuentasDelAgente('${esc(nombre)}')"
+                  >
+                    Ver cuentas
+                  </button>
+
+                </div>
+              `;
+            }
+          )
+          .join("");
+    }
+
+
+    window.verCuentasDelAgente =
+      function(nombre) {
+
+        if (
+          !obtenerAgentesVisibles()
+            .includes(nombre)
+        ) {
+
+          alert(
+            "No tenés permisos para ver este gestor."
+          );
 
           return;
         }
 
-        const gestores =
-          equipos[equipo]?.gestores ||
-          [];
 
-        agentSelect.innerHTML =
-          `<option value="">Seleccionar gestor</option>` +
-          gestores
-            .map(nombre => {
+        vistaConversacionesModo =
+          "agente";
 
-              const email =
-                Object.entries(
-                  emailsPorNombre
-                )
-                  .find(
-                    ([, n]) =>
-                      n === nombre
-                  )?.[0];
 
-              if (!email) {
-                return "";
-              }
+        gestorConsultado =
+          nombre;
 
-              return `
-                <option value="${esc(nombre)}">
-                  ${esc(nombre)}
-                </option>
-              `;
-            })
-            .join("");
-      }
-    );
-  }
 
-  window.cerrarTransferencia =
-    function () {
-
-      const modal =
-        document.getElementById(
-          "transferModal"
+        mostrarVista(
+          "conversations"
         );
+      };
 
-      if (modal)
-        modal.style.display =
-          "none";
-    };
 
-  window.confirmarTransferencia =
-    async function () {
+    window.volverAListaPrincipal =
+      function() {
 
-      if (!conversacionActualId)
-        return;
+        vistaConversacionesModo =
+          "principal";
 
-      const conversation =
-        conversacionesArray.find(
-          c =>
-            c.id ===
-            conversacionActualId
-        );
 
-      if (
-        !puedeTransferirConversacion(
-          conversation
-        )
-      ) {
+        gestorConsultado =
+          "";
 
-        alert(
-          "No tenés permisos para transferir."
-        );
 
-        return;
-      }
+        document
+          .getElementById(
+            "conversationSearch"
+          )
+          .value = "";
 
-      const agentSelect =
-        document.getElementById(
-          "transferAgent"
-        );
-
-      const teamSelect =
-        document.getElementById(
-          "transferTeam"
-        );
-
-      const nuevoGestor =
-        agentSelect?.value || "";
-
-      const nuevoEquipo =
-        teamSelect?.value || "";
-
-      if (
-        !nuevoGestor ||
-        !nuevoEquipo
-      ) {
-
-        alert(
-          "Seleccioná equipo y gestor."
-        );
-
-        return;
-      }
-
-      const email =
-        Object.entries(
-          emailsPorNombre
-        )
-          .find(
-            ([, nombre]) =>
-              nombre === nuevoGestor
-          )?.[0];
-
-      if (!email) {
-
-        alert(
-          "Ese gestor todavía no tiene un correo configurado para recibir transferencias."
-        );
-
-        return;
-      }
-
-      try {
-
-        await update(
-          ref(
-            db,
-            `conversaciones/${conversacionActualId}`
-          ),
-          {
-            asesorAsignado:
-              nuevoGestor,
-            asesorEmail:
-              email,
-            equipo:
-              nuevoEquipo,
-            fechaTransferencia:
-              Date.now(),
-            transferidoPor:
-              nombreUsuarioActual
-          }
-        );
-
-        cerrarTransferencia();
-
-        alert(
-          "Conversación transferida correctamente."
-        );
-
-      } catch (error) {
-
-        console.error(error);
-
-        alert(
-          "No se pudo transferir: " +
-          error.message
-        );
-      }
-    };
-
-  /* =========================
-     HISTORIAL
-  ========================= */
-
-  function obtenerConversacionesFinalizadas() {
-
-    return conversacionesArray
-      .filter(
-        c =>
-          c.estado ===
-          "finalizada"
-      )
-      .sort(
-        (a, b) =>
-          (b.fechaFinalizacion || 0) -
-          (a.fechaFinalizacion || 0)
-      );
-  }
-
-  function renderizarHistorial() {
-
-    const tbody =
-      document.getElementById(
-        "historyItems"
-      );
-
-    if (!tbody) return;
-
-    const search =
-      document.getElementById(
-        "historySearch"
-      );
-
-    const texto =
-      (
-        search?.value || ""
-      )
-        .trim()
-        .toLowerCase();
-
-    const textoDni =
-      normalizarDni(texto);
-
-    let lista =
-      obtenerConversacionesFinalizadas();
-
-    if (texto) {
-
-      lista =
-        lista.filter(c => {
-
-          const nombre =
-            obtenerNombreCliente(c)
-              .toLowerCase();
-
-          const cliente =
-            obtenerCliente(c)
-              .toLowerCase();
-
-          const dni =
-            obtenerDniConversacion(c);
-
-          return (
-            nombre.includes(texto) ||
-            cliente.includes(texto) ||
-            (
-              textoDni &&
-              dni.includes(textoDni)
-            )
-          );
-        });
-    }
-
-    const counter =
-      document.getElementById(
-        "historyCounter"
-      );
-
-    if (counter) {
-      counter.textContent =
-        `${lista.length} conversaciones`;
-    }
-
-    if (!lista.length) {
-
-      tbody.innerHTML = `
-        <tr>
-          <td colspan="6">
-            No hay conversaciones finalizadas.
-          </td>
-        </tr>
-      `;
-
-      return;
-    }
-
-    tbody.innerHTML =
-      lista
-        .map(c => {
-
-          const fecha =
-            c.fechaFinalizacion
-              ? new Date(
-                  c.fechaFinalizacion
-                ).toLocaleString(
-                  "es-AR"
-                )
-              : "-";
-
-          return `
-            <tr>
-
-              <td>
-                ${esc(
-                  obtenerCliente(c)
-                )}
-              </td>
-
-              <td>
-                ${esc(
-                  obtenerDniConversacion(c) ||
-                  "-"
-                )}
-              </td>
-
-              <td>
-                ${esc(
-                  c.asesorAsignado ||
-                  "-"
-                )}
-              </td>
-
-              <td>
-                ${esc(
-                  obtenerEquipoConversacion(c) ||
-                  "-"
-                )}
-              </td>
-
-              <td>
-                ${esc(fecha)}
-              </td>
-
-              <td>
-                <button
-                  class="btn btn-secondary"
-                  onclick="verGestionHistorial('${esc(c.id)}')"
-                >
-                  Ver gestión
-                </button>
-              </td>
-
-            </tr>
-          `;
-        })
-        .join("");
-  }
-
-  window.verGestionHistorial =
-    function (id) {
-
-      const conversation =
-        conversacionesArray.find(
-          c => c.id === id
-        );
-
-      if (
-        !conversation ||
-        !puedeVerHistorial(
-          conversation
-        )
-      ) {
-        alert(
-          "No se puede abrir esta gestión."
-        );
-        return;
-      }
-
-      mostrarVista(
-        "conversations"
-      );
-
-      mostrarConversacion(
-        id,
-        "historial"
-      );
-    };
-
-  window.aplicarBusquedaHistorial =
-    function () {
-      renderizarHistorial();
-    };
-
-  /* =========================
-     NAVEGACIÓN
-  ========================= */
-
-  window.mostrarVista =
-    function (vista) {
-
-      vistaActual = vista;
-
-      document
-        .querySelectorAll(
-          ".view"
-        )
-        .forEach(el => {
-          el.style.display =
-            "none";
-        });
-
-      const target =
-        document.getElementById(
-          vista + "View"
-        );
-
-      if (target) {
-        target.style.display =
-          "block";
-      }
-
-      if (vista === "conversations") {
-
-        if (
-          !vistaConversacionesModo
-        ) {
-          vistaConversacionesModo =
-            "principal";
-        }
 
         renderizarVistaConversaciones();
+      };
 
-      } else if (
-        vista === "agents"
-      ) {
 
-        renderizarAgentes();
+    /* =========================
+       SIN GESTOR
+    ========================= */
 
-      } else if (
-        vista === "history"
-      ) {
+    function renderizarSinGestor() {
 
-        renderizarHistorial();
+      const container =
+        document.getElementById(
+          "unassignedItems"
+        );
 
-      } else if (
-        vista === "unassigned"
-      ) {
 
-        renderizarSinGestor();
+      if (!container) {
+        return;
       }
-    };
 
-  /* =========================
-     BÚSQUEDA AGENTES
-  ========================= */
 
-  const agentSearch =
-    document.getElementById(
-      "agentSearch"
-    );
+      const lista =
+        conversacionesArray.filter(
+          c =>
+            c.estado !==
+              "finalizada" &&
+            !c.asesorAsignado &&
+            !c.asesorEmail
+        );
 
-  if (agentSearch) {
-    agentSearch.addEventListener(
-      "input",
-      renderizarAgentes
-    );
-  }
 
-  const agentTeamFilter =
-    document.getElementById(
-      "agentTeamFilter"
-    );
+      if (!lista.length) {
 
-  if (agentTeamFilter) {
+        container.innerHTML = `
+          <div class="empty-state">
+            No hay conversaciones sin gestor.
+          </div>
+        `;
 
-    agentTeamFilter.innerHTML =
-      `<option value="">Todos los equipos</option>` +
+        return;
+      }
+
+
+      container.innerHTML =
+        lista
+          .map(
+            c => {
+
+              const puede =
+                puedeTomarConversacion(
+                  c
+                );
+
+
+              return `
+                <div
+                  class="conversation-item"
+                >
+
+                  <strong>
+                    ${esc(
+                      obtenerCliente(c)
+                    )}
+                  </strong>
+
+                  ${
+                    puede
+                      ? `
+                        <button
+                          class="btn btn-primary"
+                          style="margin-top:10px"
+                          onclick="tomarConversacion('${esc(c.id)}')"
+                        >
+                          Tomar
+                        </button>
+                      `
+                      : `
+                        <small>
+                          Sin gestor
+                        </small>
+                      `
+                  }
+
+                </div>
+              `;
+            }
+          )
+          .join("");
+    }
+
+
+    /* =========================
+       TOMAR
+    ========================= */
+
+    window.tomarConversacion =
+      async function(id) {
+
+        const conversation =
+          conversacionesArray.find(
+            c => c.id === id
+          );
+
+
+        if (!conversation) {
+          return;
+        }
+
+
+        if (
+          !puedeTomarConversacion(
+            conversation
+          )
+        ) {
+
+          alert(
+            "No tenés permisos para tomar esta conversación."
+          );
+
+          return;
+        }
+
+
+        try {
+
+          await update(
+            ref(
+              db,
+              `conversaciones/${id}`
+            ),
+            {
+              asesorAsignado:
+                nombreUsuarioActual,
+
+              asesorEmail:
+                usuarioActual.email,
+
+              equipo:
+                obtenerEquipoDePersona(
+                  nombreUsuarioActual
+                ),
+
+              fechaAsignacion:
+                Date.now()
+            }
+          );
+
+        } catch (error) {
+
+          console.error(error);
+
+          alert(
+            "No se pudo tomar: " +
+            error.message
+          );
+        }
+      };
+
+
+    /* =========================
+       TRANSFERENCIA
+    ========================= */
+
+    window.abrirTransferencia =
+      function() {
+
+        if (!conversacionActualId) {
+          return;
+        }
+
+
+        const conversation =
+          conversacionesArray.find(
+            c =>
+              c.id ===
+              conversacionActualId
+          );
+
+
+        if (
+          !puedeTransferirConversacion(
+            conversation
+          )
+        ) {
+
+          alert(
+            "Solo seniors y supervisora pueden transferir."
+          );
+
+          return;
+        }
+
+
+        const modal =
+          document.getElementById(
+            "transferModal"
+          );
+
+
+        const team =
+          document.getElementById(
+            "transferTeam"
+          );
+
+
+        const agent =
+          document.getElementById(
+            "transferAgent"
+          );
+
+
+        team.innerHTML =
+          `
+            <option value="">
+              Seleccionar equipo
+            </option>
+          ` +
+          Object.keys(equipos)
+            .map(
+              nombre =>
+                `
+                  <option value="${esc(nombre)}">
+                    ${esc(nombre)}
+                  </option>
+                `
+            )
+            .join("");
+
+
+        agent.innerHTML =
+          `
+            <option value="">
+              Seleccionar gestor
+            </option>
+          `;
+
+
+        modal.style.display =
+          "flex";
+      };
+
+
+    document
+      .getElementById(
+        "transferTeam"
+      )
+      .addEventListener(
+        "change",
+        function() {
+
+          const agent =
+            document.getElementById(
+              "transferAgent"
+            );
+
+
+          const equipo =
+            this.value;
+
+
+          if (!equipo) {
+
+            agent.innerHTML =
+              `
+                <option value="">
+                  Seleccionar gestor
+                </option>
+              `;
+
+            return;
+          }
+
+
+          const gestores =
+            equipos[equipo]
+              ?.gestores || [];
+
+
+          agent.innerHTML =
+            `
+              <option value="">
+                Seleccionar gestor
+              </option>
+            ` +
+            gestores
+              .map(
+                nombre => {
+
+                  const email =
+                    Object.entries(
+                      emailsPorNombre
+                    )
+                      .find(
+                        ([, n]) =>
+                          n === nombre
+                      )?.[0];
+
+
+                  if (!email) {
+                    return "";
+                  }
+
+
+                  return `
+                    <option
+                      value="${esc(nombre)}"
+                    >
+                      ${esc(nombre)}
+                    </option>
+                  `;
+                }
+              )
+              .join("");
+        }
+      );
+
+
+    window.cerrarTransferencia =
+      function() {
+
+        document
+          .getElementById(
+            "transferModal"
+          )
+          .style.display =
+          "none";
+      };
+
+
+    window.confirmarTransferencia =
+      async function() {
+
+        if (!conversacionActualId) {
+          return;
+        }
+
+
+        const conversation =
+          conversacionesArray.find(
+            c =>
+              c.id ===
+              conversacionActualId
+          );
+
+
+        if (
+          !puedeTransferirConversacion(
+            conversation
+          )
+        ) {
+
+          alert(
+            "No tenés permisos para transferir."
+          );
+
+          return;
+        }
+
+
+        const team =
+          document.getElementById(
+            "transferTeam"
+          ).value;
+
+
+        const agent =
+          document.getElementById(
+            "transferAgent"
+          ).value;
+
+
+        if (!team || !agent) {
+
+          alert(
+            "Seleccioná equipo y gestor."
+          );
+
+          return;
+        }
+
+
+        const email =
+          Object.entries(
+            emailsPorNombre
+          )
+            .find(
+              ([, nombre]) =>
+                nombre === agent
+            )?.[0];
+
+
+        if (!email) {
+
+          alert(
+            "Ese gestor todavía no tiene un correo configurado."
+          );
+
+          return;
+        }
+
+
+        try {
+
+          await update(
+            ref(
+              db,
+              `conversaciones/${conversacionActualId}`
+            ),
+            {
+              asesorAsignado:
+                agent,
+
+              asesorEmail:
+                email,
+
+              equipo:
+                team,
+
+              fechaTransferencia:
+                Date.now(),
+
+              transferidoPor:
+                nombreUsuarioActual
+            }
+          );
+
+
+          cerrarTransferencia();
+
+          alert(
+            "Conversación transferida correctamente."
+          );
+
+
+        } catch (error) {
+
+          console.error(error);
+
+          alert(
+            "No se pudo transferir: " +
+            error.message
+          );
+        }
+      };
+
+
+    /* =========================
+       HISTORIAL
+    ========================= */
+
+    function obtenerConversacionesFinalizadas() {
+
+      return conversacionesArray
+        .filter(
+          c =>
+            c.estado ===
+            "finalizada"
+        )
+        .sort(
+          (a, b) =>
+            (
+              b.fechaFinalizacion ||
+              0
+            ) -
+            (
+              a.fechaFinalizacion ||
+              0
+            )
+        );
+    }
+
+
+    function renderizarHistorial() {
+
+      const tbody =
+        document.getElementById(
+          "historyItems"
+        );
+
+
+      if (!tbody) {
+        return;
+      }
+
+
+      const search =
+        document.getElementById(
+          "historySearch"
+        );
+
+
+      const texto =
+        search.value
+          .trim()
+          .toLowerCase();
+
+
+      const dniBusqueda =
+        normalizarDni(texto);
+
+
+      let lista =
+        obtenerConversacionesFinalizadas();
+
+
+      if (texto) {
+
+        lista =
+          lista.filter(
+            c => {
+
+              const nombre =
+                obtenerNombreCliente(c)
+                  .toLowerCase();
+
+
+              const cliente =
+                obtenerCliente(c)
+                  .toLowerCase();
+
+
+              const dni =
+                obtenerDniConversacion(c);
+
+
+              return (
+                nombre.includes(texto) ||
+                cliente.includes(texto) ||
+                (
+                  dniBusqueda &&
+                  dni.includes(
+                    dniBusqueda
+                  )
+                )
+              );
+            }
+          );
+      }
+
+
+      document
+        .getElementById(
+          "historyCounter"
+        )
+        .textContent =
+        `${lista.length} conversaciones`;
+
+
+      if (!lista.length) {
+
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6">
+              No hay conversaciones finalizadas.
+            </td>
+          </tr>
+        `;
+
+        return;
+      }
+
+
+      tbody.innerHTML =
+        lista
+          .map(
+            c => {
+
+              const fecha =
+                c.fechaFinalizacion
+                  ? new Date(
+                      c.fechaFinalizacion
+                    ).toLocaleString(
+                      "es-AR"
+                    )
+                  : "-";
+
+
+              return `
+                <tr>
+
+                  <td>
+                    ${esc(
+                      obtenerCliente(c)
+                    )}
+                  </td>
+
+                  <td>
+                    ${esc(
+                      obtenerDniConversacion(c) ||
+                      "-"
+                    )}
+                  </td>
+
+                  <td>
+                    ${esc(
+                      c.asesorAsignado ||
+                      "-"
+                    )}
+                  </td>
+
+                  <td>
+                    ${esc(
+                      obtenerEquipoConversacion(c) ||
+                      "-"
+                    )}
+                  </td>
+
+                  <td>
+                    ${esc(fecha)}
+                  </td>
+
+                  <td>
+                    <button
+                      class="btn btn-secondary"
+                      onclick="verGestionHistorial('${esc(c.id)}')"
+                    >
+                      Ver gestión
+                    </button>
+                  </td>
+
+                </tr>
+              `;
+            }
+          )
+          .join("");
+    }
+
+
+    window.verGestionHistorial =
+      function(id) {
+
+        const conversation =
+          conversacionesArray.find(
+            c => c.id === id
+          );
+
+
+        if (
+          !conversation ||
+          conversation.estado !==
+          "finalizada"
+        ) {
+
+          alert(
+            "Esta conversación no está finalizada."
+          );
+
+          return;
+        }
+
+
+        mostrarVista(
+          "conversations"
+        );
+
+
+        mostrarConversacion(
+          id,
+          "historial"
+        );
+      };
+
+
+    /* =========================
+       NAVEGACIÓN
+    ========================= */
+
+    window.mostrarVista =
+      function(vista) {
+
+        document
+          .querySelectorAll(
+            ".view"
+          )
+          .forEach(
+            el => {
+              el.style.display =
+                "none";
+            }
+          );
+
+
+        const target =
+          document.getElementById(
+            vista + "View"
+          );
+
+
+        if (target) {
+
+          target.style.display =
+            vista === "conversations"
+              ? "block"
+              : "block";
+        }
+
+
+        document
+          .querySelectorAll(
+            ".nav button"
+          )
+          .forEach(
+            btn =>
+              btn.classList.remove(
+                "active"
+              )
+          );
+
+
+        if (
+          vista ===
+          "conversations"
+        ) {
+
+          document
+            .getElementById(
+              "navConversations"
+            )
+            .classList.add(
+              "active"
+            );
+
+
+          renderizarVistaConversaciones();
+
+        } else if (
+          vista ===
+          "unassigned"
+        ) {
+
+          document
+            .getElementById(
+              "navUnassigned"
+            )
+            .classList.add(
+              "active"
+            );
+
+
+          renderizarSinGestor();
+
+        } else if (
+          vista ===
+          "agents"
+        ) {
+
+          document
+            .getElementById(
+              "navAgents"
+            )
+            .classList.add(
+              "active"
+            );
+
+
+          renderizarAgentes();
+
+        } else if (
+          vista ===
+          "history"
+        ) {
+
+          document
+            .getElementById(
+              "navHistory"
+            )
+            .classList.add(
+              "active"
+            );
+
+
+          renderizarHistorial();
+        }
+      };
+
+
+    /* =========================
+       BÚSQUEDAS
+    ========================= */
+
+    document
+      .getElementById(
+        "conversationSearch"
+      )
+      .addEventListener(
+        "input",
+        function() {
+
+          if (
+            esSupervisor() &&
+            vistaConversacionesModo ===
+            "principal"
+          ) {
+
+            renderizarGestoresPrincipal();
+
+          } else {
+
+            renderizarVistaConversaciones();
+          }
+        }
+      );
+
+
+    document
+      .getElementById(
+        "agentSearch"
+      )
+      .addEventListener(
+        "input",
+        renderizarAgentes
+      );
+
+
+    document
+      .getElementById(
+        "historySearch"
+      )
+      .addEventListener(
+        "input",
+        renderizarHistorial
+      );
+
+
+    /* =========================
+       FILTRO EQUIPOS
+    ========================= */
+
+    const teamFilter =
+      document.getElementById(
+        "agentTeamFilter"
+      );
+
+
+    teamFilter.innerHTML =
+      `
+        <option value="">
+          Todos los equipos
+        </option>
+      ` +
       Object.keys(equipos)
         .map(
           equipo =>
-            `<option value="${esc(equipo)}">${esc(equipo)}</option>`
+            `
+              <option value="${esc(equipo)}">
+                ${esc(equipo)}
+              </option>
+            `
         )
         .join("");
 
-    agentTeamFilter.addEventListener(
+
+    teamFilter.addEventListener(
       "change",
       renderizarAgentes
     );
-  }
 
-  /* =========================
-     BÚSQUEDA PRINCIPAL
-  ========================= */
+  </script>
 
-  const conversationSearch =
-    document.getElementById(
-      "conversationSearch"
-    );
-
-  if (conversationSearch) {
-
-    conversationSearch.addEventListener(
-      "input",
-      () => {
-
-        if (
-          esSupervisor() &&
-          vistaConversacionesModo ===
-            "principal"
-        ) {
-          renderizarGestoresPrincipal();
-        } else {
-          renderizarVistaConversaciones();
-        }
-      }
-    );
-  }
-
-  /* =========================
-     BÚSQUEDA HISTORIAL
-  ========================= */
-
-  const historySearch =
-    document.getElementById(
-      "historySearch"
-    );
-
-  if (historySearch) {
-
-    historySearch.addEventListener(
-      "input",
-      renderizarHistorial
-    );
-  }
-
-  /* =========================
-     ESTADO INICIAL
-  ========================= */
-
-  vistaConversacionesModo =
-    "principal";
-
-});
-</script>
+</body>
+</html>
