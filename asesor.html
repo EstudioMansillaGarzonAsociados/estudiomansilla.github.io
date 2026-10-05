@@ -24,9 +24,7 @@
       font: inherit;
     }
 
-    /* =========================
-       LOGIN
-       ========================= */
+    /* LOGIN */
 
     #loginScreen {
       min-height: 100vh;
@@ -88,9 +86,7 @@
       line-height: 1.4;
     }
 
-    /* =========================
-       APP
-       ========================= */
+    /* APP */
 
     #app {
       display: none;
@@ -134,9 +130,7 @@
       height: calc(100vh - 65px);
     }
 
-    /* =========================
-       SIDEBAR
-       ========================= */
+    /* SIDEBAR */
 
     .sidebar {
       width: 390px;
@@ -257,9 +251,7 @@
       margin-top: 4px;
     }
 
-    /* =========================
-       CHAT
-       ========================= */
+    /* CHAT */
 
     .chat {
       flex: 1;
@@ -432,9 +424,7 @@
       cursor: not-allowed;
     }
 
-    /* =========================
-       MODALES
-       ========================= */
+    /* MODALES */
 
     #finalizeModal,
     #transferModal {
@@ -503,9 +493,7 @@
 
 <body>
 
-  <!-- =========================
-       LOGIN
-       ========================= -->
+  <!-- LOGIN -->
 
   <div id="loginScreen">
 
@@ -540,9 +528,7 @@
   </div>
 
 
-  <!-- =========================
-       APP
-       ========================= -->
+  <!-- APP -->
 
   <div id="app">
 
@@ -698,9 +684,7 @@
   </div>
 
 
-  <!-- =========================
-       MODAL FINALIZAR
-       ========================= -->
+  <!-- MODAL FINALIZAR -->
 
   <div id="finalizeModal">
 
@@ -775,9 +759,7 @@
   </div>
 
 
-  <!-- =========================
-       MODAL TRANSFERIR
-       ========================= -->
+  <!-- MODAL TRANSFERIR -->
 
   <div id="transferModal">
 
@@ -814,9 +796,7 @@
   </div>
 
 
-  <!-- =========================
-       FIREBASE
-       ========================= -->
+  <!-- FIREBASE -->
 
   <script type="module">
 
@@ -843,7 +823,7 @@
 
 
     /* =========================
-       CONFIGURACIÓN FIREBASE
+       FIREBASE
        ========================= */
 
     const firebaseConfig = {
@@ -1321,7 +1301,7 @@
 
 
     /* =========================
-       CAMBIO DE VISTA
+       VISTAS
        ========================= */
 
     activeTab.addEventListener(
@@ -1573,59 +1553,79 @@
        PERMISOS
        ========================= */
 
+    /*
+      REGLA PRINCIPAL:
+
+      SUPERVISOR:
+      - Ve todo.
+      - Abre todo.
+      - Responde todo.
+      - Gestiona todo.
+
+      SENIOR:
+      - Ve todos los equipos.
+      - Abre todo.
+      - Responde todo.
+      - Gestiona todo.
+
+      ASESOR:
+      - Solo ve su propio equipo.
+      - Puede abrir cualquier conversación
+        de su equipo.
+      - Puede responder aunque esté asignada
+        a otro compañero del mismo equipo.
+      - NO puede ver conversaciones de otros equipos.
+    */
+
     function puedeVerConversacion(conversation) {
 
       if (!conversation) return false;
 
-      if (
-        conversation.estado ===
-        "finalizada"
-      ) {
+      if (esAdministrador()) {
 
         return true;
 
       }
 
-      const equipo =
+      if (rolUsuarioActual !== "asesor") {
+
+        return false;
+
+      }
+
+      const equipoConversacion =
         obtenerEquipoConversacion(
           conversation
         );
 
-      if (esSupervisor()) {
+      const equiposUsuario =
+        obtenerEquiposDelUsuario(
+          nombreUsuarioActual
+        );
 
-        return true;
+      /*
+        Si ya tiene equipo, el asesor solamente
+        puede verla si pertenece a ese equipo.
+      */
 
-      }
+      if (equipoConversacion) {
 
-      if (esSenior()) {
-
-        const equiposUsuario =
-          obtenerEquiposDelUsuario(
-            nombreUsuarioActual
-          );
-
-        if (equipo === "Cuoteros") {
-
-          return true;
-
-        }
-
-        return equiposUsuario.includes(equipo);
+        return equiposUsuario.includes(
+          equipoConversacion
+        );
 
       }
 
-      if (rolUsuarioActual === "asesor") {
+      /*
+        Si está sin equipo y sin asignación,
+        queda como pendiente general para poder
+        tomarla y asignarla al equipo correspondiente.
+      */
 
-        if (conversation.asesorAsignado) {
-
-          return (
-            conversation.asesorAsignado ===
-              nombreUsuarioActual ||
-            conversation.asesorEmail ===
-              usuarioActual?.email
-          );
-
-        }
+      if (
+        !conversation.asesorAsignado &&
+        !conversation.equipo
+      ) {
 
         return true;
 
@@ -1646,25 +1646,41 @@
 
       }
 
-      if (
-        conversation.estado ===
-        "finalizada"
-      ) {
+      if (rolUsuarioActual !== "asesor") {
 
-        return true;
+        return false;
 
       }
 
-      if (rolUsuarioActual === "asesor") {
+      const equipoConversacion =
+        obtenerEquipoConversacion(
+          conversation
+        );
 
-        return (
-          conversation.asesorAsignado ===
-            nombreUsuarioActual ||
-          conversation.asesorEmail ===
-            usuarioActual?.email
+      const equiposUsuario =
+        obtenerEquiposDelUsuario(
+          nombreUsuarioActual
+        );
+
+      /*
+        Un asesor puede leer todos los mensajes
+        de las conversaciones de su propio equipo,
+        sin importar quién esté asignado.
+      */
+
+      if (equipoConversacion) {
+
+        return equiposUsuario.includes(
+          equipoConversacion
         );
 
       }
+
+      /*
+        Una conversación totalmente nueva,
+        sin equipo y sin asignar, muestra el
+        contenido solamente después de tomarla.
+      */
 
       return false;
 
@@ -1690,31 +1706,96 @@
 
       }
 
-      if (
-        conversation.asesorAsignado ===
-        nombreUsuarioActual
-      ) {
+      if (rolUsuarioActual !== "asesor") {
 
-        return true;
+        return false;
 
       }
 
-      if (
-        conversation.asesorEmail ===
-        usuarioActual?.email
-      ) {
+      const equipoConversacion =
+        obtenerEquipoConversacion(
+          conversation
+        );
 
-        return true;
+      const equiposUsuario =
+        obtenerEquiposDelUsuario(
+          nombreUsuarioActual
+        );
+
+      /*
+        El gestor puede gestionar cualquier
+        conversación de su propio equipo.
+      */
+
+      if (equipoConversacion) {
+
+        return equiposUsuario.includes(
+          equipoConversacion
+        );
 
       }
 
-      if (!conversation.asesorAsignado) {
-
-        return true;
-
-      }
+      /*
+        Si está totalmente nueva y sin equipo,
+        primero debe tomarla.
+      */
 
       return false;
+
+    }
+
+
+    function puedeTomarConversacion(conversation) {
+
+      if (!conversation) return false;
+
+      if (
+        conversation.estado ===
+        "finalizada"
+      ) {
+
+        return false;
+
+      }
+
+      if (conversation.asesorAsignado) {
+
+        return false;
+
+      }
+
+      if (esAdministrador()) {
+
+        return true;
+
+      }
+
+      if (rolUsuarioActual !== "asesor") {
+
+        return false;
+
+      }
+
+      /*
+        Una conversación sin equipo puede ser
+        tomada por cualquier gestor y queda
+        asignada automáticamente a su equipo.
+      */
+
+      if (!conversation.equipo) {
+
+        return true;
+
+      }
+
+      const equiposUsuario =
+        obtenerEquiposDelUsuario(
+          nombreUsuarioActual
+        );
+
+      return equiposUsuario.includes(
+        conversation.equipo
+      );
 
     }
 
@@ -1734,6 +1815,7 @@
 
       let lista =
         Object.values(conversaciones);
+
 
       if (vistaActual === "activos") {
 
@@ -1763,9 +1845,17 @@
           lista.filter(
             (conversation) => {
 
-              return (
-                conversation.estado ===
+              if (
+                conversation.estado !==
                 "finalizada"
+              ) {
+
+                return false;
+
+              }
+
+              return puedeVerConversacion(
+                conversation
               );
 
             }
@@ -1854,6 +1944,7 @@
             ) ||
             "Sin equipo";
 
+
           if (equipo !== equipoActual) {
 
             equipoActual = equipo;
@@ -1910,6 +2001,7 @@
 
           let estadoTexto = "";
 
+
           if (
             conversation.estado ===
             "finalizada"
@@ -1956,6 +2048,7 @@
 
           let asignacion = "";
 
+
           if (
             conversation.asesorAsignado
           ) {
@@ -1971,6 +2064,7 @@
 
           let preview =
             "Sin mensajes";
+
 
           if (
             puedeLeerMensajes(
@@ -2344,20 +2438,25 @@
       const sinAsignar =
         !conversation.asesorAsignado;
 
-      const soyAsignado =
-        conversation.asesorAsignado ===
-          nombreUsuarioActual ||
-        conversation.asesorEmail ===
-          usuarioActual?.email;
+
+      const puedoGestionar =
+        puedeGestionarConversacion(
+          conversation
+        );
+
+
+      const puedoTomar =
+        puedeTomarConversacion(
+          conversation
+        );
 
 
       /* TOMAR */
 
-      takeConversationBtn.style.display =
-        "inline-block";
-
-
       if (finalizada) {
+
+        takeConversationBtn.style.display =
+          "inline-block";
 
         takeConversationBtn.disabled =
           true;
@@ -2365,7 +2464,10 @@
         takeConversationBtn.textContent =
           "Conversación finalizada";
 
-      } else if (sinAsignar) {
+      } else if (sinAsignar && puedoTomar) {
+
+        takeConversationBtn.style.display =
+          "inline-block";
 
         takeConversationBtn.disabled =
           false;
@@ -2373,21 +2475,28 @@
         takeConversationBtn.textContent =
           "Tomar conversación";
 
-      } else if (soyAsignado) {
+      } else if (sinAsignar) {
+
+        takeConversationBtn.style.display =
+          "inline-block";
 
         takeConversationBtn.disabled =
           true;
 
         takeConversationBtn.textContent =
-          "Asignada a vos";
+          "No disponible";
 
       } else {
 
+        takeConversationBtn.style.display =
+          "inline-block";
+
         takeConversationBtn.disabled =
           true;
 
         takeConversationBtn.textContent =
-          "Asignada a otro gestor";
+          "Asignada a " +
+          conversation.asesorAsignado;
 
       }
 
@@ -2399,21 +2508,24 @@
 
       transferBtn.disabled =
         finalizada ||
-        !puedeGestionarConversacion(
-          conversation
-        );
+        !puedoGestionar;
 
 
       /* FINALIZAR */
 
       finalizeBtn.disabled =
         finalizada ||
-        !puedeGestionarConversacion(
-          conversation
-        );
+        !puedoGestionar;
 
 
-      /* RESPONDER */
+      /*
+        RESPONDER
+
+        IMPORTANTE:
+        Un asesor puede responder si la conversación
+        pertenece a su equipo, aunque esté asignada
+        a otro compañero.
+      */
 
       const puedeResponder =
         !finalizada &&
@@ -2443,7 +2555,7 @@
       } else if (!puedeResponder) {
 
         messageInput.placeholder =
-          "Esta conversación está asignada a otro gestor.";
+          "No tenés acceso a esta conversación.";
 
       } else {
 
@@ -2507,9 +2619,7 @@
       if (!conversation) return;
 
 
-      if (
-        unsubscribeMensajes
-      ) {
+      if (unsubscribeMensajes) {
 
         unsubscribeMensajes();
 
@@ -2537,19 +2647,7 @@
 
               <div>
                 Esta conversación todavía
-                no está asignada a vos.
-              </div>
-
-              <div style="
-                margin-top:10px;
-                color:#777;
-                font-size:13px;
-              ">
-
-                Tomá la conversación para
-                poder ver el historial y
-                responder al cliente.
-
+                no pertenece a tu equipo.
               </div>
 
             </div>
@@ -2565,6 +2663,7 @@
 
       messages.innerHTML =
         "";
+
 
       const mensajesRef =
         ref(
@@ -2583,6 +2682,7 @@
                 conversationId
               ];
 
+
             if (
               !actual ||
               !puedeLeerMensajes(actual)
@@ -2595,12 +2695,12 @@
                   <div class="hidden-messages-box">
 
                     <strong>
-                      🔒 Mensajes ocultos
+                      🔒 Sin acceso
                     </strong>
 
                     <div>
                       Esta conversación
-                      ya no está asignada a vos.
+                      no pertenece a tu equipo.
                     </div>
 
                   </div>
@@ -2774,21 +2874,13 @@
 
 
         if (
-          conversation.estado ===
-          "finalizada"
-        ) {
-
-          return;
-
-        }
-
-
-        if (
-          conversation.asesorAsignado
+          !puedeTomarConversacion(
+            conversation
+          )
         ) {
 
           alert(
-            "Esta conversación ya fue tomada por otro gestor."
+            "No podés tomar esta conversación."
           );
 
           return;
@@ -2806,6 +2898,17 @@
           obtenerEquipoDePersona(
             nombre
           );
+
+
+        if (!equipo) {
+
+          alert(
+            "No se encontró un equipo para este usuario."
+          );
+
+          return;
+
+        }
 
 
         await update(
@@ -2827,16 +2930,12 @@
               user.email,
 
             equipo:
-              equipo ||
-              conversation.equipo ||
-              "",
+              equipo,
 
             senior:
-              equipo
-                ? obtenerSeniorDelEquipo(
-                    equipo
-                  )
-                : "",
+              obtenerSeniorDelEquipo(
+                equipo
+              ),
 
             fechaAsignacion:
               Date.now()
@@ -2980,6 +3079,18 @@
       );
 
 
+      /*
+        IMPORTANTE:
+
+        NO cambiamos asesorAsignado acá.
+
+        Si Paula está respondiendo una conversación
+        que pertenece a Giuliana, sigue asignada
+        a Giuliana.
+
+        Paula solamente intervino en la conversación.
+      */
+
       await update(
 
         ref(
@@ -2992,14 +3103,14 @@
           estado:
             "en_atencion",
 
-          asesorAsignado:
+          ultimaRespuesta:
+            Date.now(),
+
+          ultimaRespuestaPor:
             nombre,
 
-          asesorEmail:
-            user.email,
-
-          ultimaRespuesta:
-            Date.now()
+          ultimaRespuestaPorEmail:
+            user.email
 
         }
 
@@ -3145,6 +3256,38 @@
           );
 
 
+        /*
+          Un asesor común solamente puede
+          transferir dentro de su propio equipo.
+
+          Senior y supervisor pueden transferir
+          a cualquier equipo.
+        */
+
+        if (!esAdministrador()) {
+
+          const misEquipos =
+            obtenerEquiposDelUsuario(
+              nombreUsuarioActual
+            );
+
+          if (
+            !misEquipos.includes(
+              nuevoEquipo
+            )
+          ) {
+
+            alert(
+              "Solo podés transferir a un gestor de tu propio equipo."
+            );
+
+            return;
+
+          }
+
+        }
+
+
         await update(
 
           ref(
@@ -3164,16 +3307,12 @@
               emailNuevoAsesor,
 
             equipo:
-              nuevoEquipo ||
-              conversation.equipo ||
-              "",
+              nuevoEquipo,
 
             senior:
-              nuevoEquipo
-                ? obtenerSeniorDelEquipo(
-                    nuevoEquipo
-                  )
-                : "",
+              obtenerSeniorDelEquipo(
+                nuevoEquipo
+              ),
 
             fechaTransferencia:
               Date.now(),
@@ -3249,11 +3388,62 @@
       `;
 
 
+      const equipoActual =
+        conversacionSeleccionada &&
+        conversaciones[
+          conversacionSeleccionada
+        ]
+          ? obtenerEquipoConversacion(
+              conversaciones[
+                conversacionSeleccionada
+              ]
+            )
+          : "";
+
+
       Object.keys(perfiles)
         .filter(
           (nombre) =>
             perfiles[nombre] ===
             "asesor"
+        )
+        .filter(
+          (nombre) => {
+
+            /*
+              Para asesores:
+              solamente gestores de su equipo.
+
+              Para seniors/supervisor:
+              todos los gestores.
+            */
+
+            if (esAdministrador()) {
+
+              return true;
+
+            }
+
+            const equipo =
+              obtenerEquipoDePersona(
+                nombre
+              );
+
+            const misEquipos =
+              obtenerEquiposDelUsuario(
+                nombreUsuarioActual
+              );
+
+            return (
+              misEquipos.includes(equipo) &&
+              equipo === equipoActual
+            );
+
+          }
+        )
+        .filter(
+          (nombre) =>
+            obtenerEmailPorNombre(nombre)
         )
         .sort()
         .forEach(
