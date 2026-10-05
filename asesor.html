@@ -689,9 +689,27 @@ function obtenerTodosLosGestores(){
   return lista;
 }
 
-function esSupervisor(){ return perfilActual==="supervisor"; }
-function esSenior(){ return perfilActual==="senior"; }
-function esAsesor(){ return perfilActual==="asesor"; }
+function esSupervisor(){
+  const email=normalizarTexto(usuarioActual?.email);
+  return perfilActual==="supervisor" ||
+         email==="alejo.mansilla@mansillayasoc.com.ar" ||
+         email==="r.arrambide@mansillayasoc.com.ar" ||
+         email==="gonzalo@mansillayasoc.com.ar" ||
+         email==="jmansilla@mansillayasoc.com.ar" ||
+         email==="mavillegas@mansillayasoc.com.ar";
+}
+function esSenior(){
+  const email=normalizarTexto(usuarioActual?.email);
+  return perfilActual==="senior" ||
+         [
+           "rocio.lopez@mansillayasoc.com.ar",
+           "antonela.lopez@mansillayasoc.com.ar",
+           "pilar.solano@mansillayasoc.com.ar",
+           "daniela.cortez@mansillayasoc.com.ar",
+           "moriana.rey@mansillayasoc.com.ar"
+         ].includes(email);
+}
+function esAsesor(){ return !esSupervisor() && !esSenior() && perfilActual==="asesor"; }
 
 function estaActiva(c){
   return normalizarTexto(c?.estado) !== "finalizada" &&
@@ -703,7 +721,7 @@ function estaActiva(c){
 function estaSinAsignar(c){
   const gestor=normalizarTexto(obtenerGestorDeConversacion(c));
   const email=normalizarTexto(obtenerEmailGestor(c));
-  const vacios=["","null","undefined","sin asignar","no asignado","none"];
+  const vacios=["","null","undefined","sin asignar","no asignado","noasignado","sin_asignar","unassigned","none","n/a"];
   return vacios.includes(gestor) && vacios.includes(email);
 }
 
@@ -964,6 +982,14 @@ function renderizarHistorial(){
 }
 
 function mostrarVista(vista){
+  // La Agenda de gestores es exclusiva de seniors y supervisores.
+  if(vista==="agenda" && !esSenior() && !esSupervisor()){
+    vista="principal";
+  }
+  // Sin asignar también es exclusiva de seniors y supervisores.
+  if(vista==="sinAsignar" && !esSenior() && !esSupervisor()){
+    vista="principal";
+  }
   vistaActual=vista;
   gestorSeleccionado=null;
   document.querySelectorAll(".nav button").forEach(b=>b.classList.remove("active"));
@@ -1025,6 +1051,7 @@ function actualizarContadores(){
   $("badgeHistorial").textContent=finalizadas.length;
 
   $("navSinAsignar").classList.toggle("hidden",!esSenior()&&!esSupervisor());
+  $("navAgenda").classList.toggle("hidden",!esSenior()&&!esSupervisor());
 }
 
 function renderChatVacio(){
@@ -1853,6 +1880,9 @@ onAuthStateChanged(auth,async user=>{
     perfilActual==="senior"?"Senior":"Gestor";
 
   greeting();
+
+  $("navSinAsignar").classList.toggle("hidden",!esSenior()&&!esSupervisor());
+  $("navAgenda").classList.toggle("hidden",!esSenior()&&!esSupervisor());
 
   try{
     const snap=await get(ref(db,`presencia/${user.uid}`));
