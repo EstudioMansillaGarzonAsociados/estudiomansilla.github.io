@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Centro de Atención — Estudio Mansilla Garzon y Asociados — v2026.10.05-FINAL-AUTOIA-IA</title>
+<title>Centro de Atención — Estudio Mansilla Garzon y Asociados — v2026.10.05-SOS-IA</title>
 
 <style>
 :root{
@@ -84,7 +84,7 @@ button{cursor:pointer}
 
 /* MAIN */
 .main{flex:1;display:flex;min-width:0}
-.list-panel{width:300px;background:#fff;border-right:1px solid var(--gris2);display:flex;flex-direction:column;min-width:0}
+.list-panel{width:270px;background:#fff;border-right:1px solid var(--gris2);display:flex;flex-direction:column;min-width:0}
 .list-header{padding:17px;border-bottom:1px solid var(--gris2)}
 .greeting{font-size:17px;font-weight:800}
 .motivational{margin-top:7px;background:#eef8f2;border-left:4px solid #176b4d;border-radius:8px;padding:8px 10px;color:#176b4d;font-size:12px;font-weight:700;line-height:1.35}
@@ -109,7 +109,7 @@ button{cursor:pointer}
 .back{border:0;background:#eef5f0;color:var(--verde);border-radius:8px;padding:8px 10px;margin-bottom:10px;font-weight:700}
 
 /* CHAT */
-.chat-panel{flex:1;display:flex;flex-direction:column;min-width:0;background:#f7f8fa;min-width:0}
+.chat-panel{flex:1;display:flex;min-width:0;flex-direction:column;min-width:0;background:#f7f8fa;min-width:0}
 .chat-header{
   background:white;border-bottom:1px solid var(--gris2);padding:14px 18px;
   display:flex;justify-content:space-between;gap:15px;align-items:center
@@ -122,9 +122,9 @@ button{cursor:pointer}
 .btn.red{background:#b42318;border-color:#b42318;color:white}
 .btn.blue{background:var(--azul);border-color:var(--azul);color:white}
 .chat-body{flex:1;display:flex;min-height:0}
-.messages{flex:1;overflow:auto;padding:20px}
+.messages{flex:1;overflow:auto;padding:24px 28px}
 .msg{
-  max-width:75%;padding:10px 12px;border-radius:13px;margin-bottom:9px;line-height:1.4;
+  max-width:82%;padding:10px 12px;border-radius:13px;margin-bottom:9px;line-height:1.4;
   box-shadow:0 1px 2px rgba(0,0,0,.04);word-wrap:break-word
 }
 .msg.client{background:white;border:1px solid #e4e8ed;margin-right:auto}
@@ -138,7 +138,7 @@ button{cursor:pointer}
 .msg-author{font-weight:800}
 .typing{font-size:12px;color:var(--verde);padding:0 20px 7px;font-weight:700;min-height:20px}
 .composer{background:white;border-top:1px solid var(--gris2);padding:10px;display:flex;gap:7px}
-.composer textarea{flex:1;resize:none;height:45px;border:1px solid #d7dde3;border-radius:10px;padding:10px}
+.composer textarea{flex:1;resize:none;height:58px;border:1px solid #d7dde3;border-radius:10px;padding:10px}
 .composer button{border:0;border-radius:9px;padding:0 13px;background:var(--verde);color:white;font-weight:700}
 .internal-composer{background:#fffaf0;border-top:1px solid #eadcae;padding:9px;display:flex;gap:7px}
 .internal-composer textarea{flex:1;resize:none;height:42px;border:1px solid #dfc66d;border-radius:9px;padding:9px}
@@ -379,7 +379,7 @@ button{cursor:pointer}
     </div>
 
     <div class="field">
-      <label>Gestor</label>
+      <label>Asignar a</label>
       <select id="assignGestor"></select>
     </div>
 
@@ -1063,8 +1063,8 @@ function renderizarPrincipal(){
   }
 
   lista=lista.filter(c=>{
-    if(esSenior()) return conversacionEsMia(c) || puedeVerPorEquipo(c) || estaSinAsignar(c);
-    if(esAsesor()) return conversacionEsMia(c) || estaSinAsignar(c);
+    if(esSenior()) return !estaSinAsignar(c) && (conversacionEsMia(c) || puedeVerPorEquipo(c));
+    if(esAsesor()) return !estaSinAsignar(c) && conversacionEsMia(c);
     return false;
   });
   lista=aplicarFiltroLista(lista);
@@ -1769,43 +1769,84 @@ async function finalizarConversacion(){
   conversacionSeleccionada=null;
 }
 
+function personasAsignablesDelEquipo(equipo){
+  const datos=equipos[equipo]||{};
+  const seniors=datos.seniors||[];
+  const gestores=datos.gestores||[];
+  const out=[];
+  [...seniors,...gestores].forEach(nombre=>{
+    if(nombre && !out.some(x=>personasCoinciden(x,nombre))) out.push(nombre);
+  });
+  return out;
+}
+
 function abrirModalAsignacion(id){
   const c=conversaciones[id];
-  if(!c || (!esSenior()&&!esSupervisor()) || !puedeGestionarConversacion(c)) return;
+  if(!c || !puedeGestionarConversacion(c)) return;
+  // Un asesor puede tomar para sí un chat sin asignar. Seniors y supervisores pueden transferirlo a cualquier senior o gestor.
+  if(esAsesor() && !estaSinAsignar(c) && !conversacionEsMia(c)) return;
   asignacionConversacion=id;
   $("assignmentModal").classList.remove("hidden");
 
-  // Tanto supervisores como seniors pueden asignar/transferir a cualquier equipo.
-  const equiposPermitidos=Object.keys(equipos);
+  let equiposPermitidos=Object.keys(equipos);
+  if(esAsesor()){
+    equiposPermitidos=obtenerEquipoDePersona(nombreActual);
+    if(!equiposPermitidos.length) equiposPermitidos=Object.keys(equipos);
+  }
   $("assignTeam").innerHTML=equiposPermitidos.map(e=>`<option value="${escapeHtml(e)}">${escapeHtml(e)}</option>`).join("");
 
-  const actual=obtenerEquipoDeConversacion(conversaciones[id]);
+  const actual=obtenerEquipoDeConversacion(c);
   if(actual && equiposPermitidos.includes(actual)) $("assignTeam").value=actual;
   cargarGestoresModal();
+
+  // Si es un asesor y el chat está sin asignar, dejar seleccionado al propio asesor.
+  if(esAsesor() && estaSinAsignar(c)){
+    const lista=personasAsignablesDelEquipo($("assignTeam").value);
+    const propio=lista.find(x=>personasCoinciden(x,nombreActual));
+    if(propio) $("assignGestor").value=propio;
+  }
 }
 
 function cargarGestoresModal(){
   const equipo=$("assignTeam").value;
-  const lista=equipos[equipo]?.gestores||[];
-  $("assignGestor").innerHTML=`<option value="">Sin asignar</option>`+
+  let lista=personasAsignablesDelEquipo(equipo);
+
+  // Un asesor solamente puede autoasignarse; no puede tomar la conversación para otra persona.
+  if(esAsesor()){
+    lista=lista.filter(x=>personasCoinciden(x,nombreActual));
+  }
+
+  $("assignGestor").innerHTML=`${esAsesor()?"":"<option value=\"\">Sin asignar</option>"}`+
     lista.map(g=>`<option value="${escapeHtml(g)}">${escapeHtml(g)}</option>`).join("");
 
   const c=conversaciones[asignacionConversacion];
   const actual=obtenerGestorDeConversacion(c);
-  if(actual && lista.some(g=>normalizarTexto(g)===normalizarTexto(actual))) $("assignGestor").value=actual;
+  if(actual && lista.some(g=>personasCoinciden(g,actual))) $("assignGestor").value=actual;
 }
 
 async function guardarAsignacion(){
   if(!asignacionConversacion) return;
+  const c=conversaciones[asignacionConversacion];
+  if(!c || !puedeGestionarConversacion(c)) return;
+
   const equipo=$("assignTeam").value;
   const gestor=$("assignGestor").value;
 
+  // Un asesor solo puede autoasignarse una conversación sin asignar.
+  if(esAsesor() && (!estaSinAsignar(c) || !personasCoinciden(gestor,nombreActual))){
+    alert("Como asesor/a, solo podés autoasignarte una conversación sin asignar.");
+    return;
+  }
+
   if(!gestor){
+    if(!esSenior() && !esSupervisor()) return;
     await update(ref(db,`conversaciones/${asignacionConversacion}`),{
       equipo:null,nombreEquipo:null,team:null,equipoAsignado:null,
       gestor:null,gestorAsignado:null,asignadoA:null,asesor:null,
       usuarioAsignado:null,nombreGestor:null,
-      gestorEmail:null,asignadoEmail:null,emailGestor:null,asesorEmail:null
+      gestorEmail:null,asignadoEmail:null,emailGestor:null,asesorEmail:null,
+      iaDerivada:true,
+      iaEstado:"derivada"
     });
   }else{
     const email=emailDeNombre(gestor);
@@ -1823,11 +1864,18 @@ async function guardarAsignacion(){
       gestorEmail:email,
       asignadoEmail:email,
       emailGestor:email,
-      asesorEmail:email
+      asesorEmail:email,
+      iaActiva:false,
+      iaEstado:"tomada",
+      iaDerivada:false,
+      asignadaFecha:Date.now(),
+      asignadaPor:nombreActual,
+      asignadaPorEmail:usuarioActual?.email||""
     });
   }
 
   cerrarModalAsignacion();
+  setTimeout(()=>refrescarVistaActual(),100);
 }
 
 function emailDeNombre(nombre){
@@ -1956,7 +2004,6 @@ function clasificarConsultaIA(texto){
   if(n.includes("como contacto") || n.includes("cómo contacto") || n.includes("telefono") || n.includes("teléfono") || n.includes("whatsapp") || n.includes("contacto")) return "contacto";
   if(n.includes("document") || n.includes("papel") || n.includes("enviar") || n.includes("mandar archivo") || n.includes("adjuntar")) return "documentacion";
   if(n.includes("donde pago") || n.includes("dónde pago") || n.includes("medios de pago") || n.includes("medio de pago") || n.includes("como pago") || n.includes("cómo pago")) return "medios_pago";
-  if(n.includes("gracias") || n.includes("muchas gracias") || n === "ok" || n === "okay" || n === "perfecto") return "agradecimiento";
   return "derivar";
 }
 
@@ -1969,8 +2016,7 @@ function respuestaAutomaticaIA(tipo){
     horarios:base+"Nuestro equipo de atención revisará tu consulta. Si necesitás información específica de tu gestión, te voy a derivar con un asesor.",
     contacto:base+"Estás conversando por este canal de atención. Si necesitás una gestión específica sobre tu caso, te voy a derivar con un asesor.",
     documentacion:base+"Podés enviar la documentación por este mismo canal. Si necesitamos verificarla o incorporarla a tu expediente, te voy a derivar con un asesor.",
-    medios_pago:base+"Los medios de pago pueden depender de la situación de tu cuenta. Para indicarte una opción correcta y evitar información incorrecta, te voy a derivar con un asesor.",
-    agradecimiento:base+"¡De nada! Si necesitás realizar otra consulta sobre tu gestión, escribinos por este mismo canal."
+    medios_pago:base+"Los medios de pago pueden depender de la situación de tu cuenta. Para indicarte una opción correcta y evitar información incorrecta, te voy a derivar con un asesor."
   };
   return respuestas[tipo]||null;
 }
@@ -2018,8 +2064,7 @@ async function procesarIAAutomatica(id,c){
     iaUltimoMensajeProcesado:ultimo._id,
     iaUltimaRespuesta:ahora,
     iaDerivada:deriva,
-    iaEstado:deriva?"derivada":"atendiendo",
-    ultimaRespuestaTipo:deriva?"derivacion":"ia_automatica"
+    iaEstado:deriva?"derivada":"atendiendo"
   });
 }
 
