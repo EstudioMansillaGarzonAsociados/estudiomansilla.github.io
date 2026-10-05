@@ -153,19 +153,19 @@ button{cursor:pointer}
 .assignment select{width:100%;padding:9px;border:1px solid #d7dde3;border-radius:8px;margin-bottom:7px}
 
 /* CALENDARS */
-.calendar-wrap{padding:10px;overflow:auto;flex:1}
-.calendar-toolbar{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:8px;flex-wrap:wrap}.calendar-toolbar h2{font-size:16px}.calendar-toolbar .small{font-size:10px}
+.calendar-wrap{padding:16px;overflow:auto;flex:1}
+.calendar-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;flex-wrap:wrap}
 .calendar-toolbar h2{margin:0}
 .calendar-controls{display:flex;gap:7px;align-items:center}
-.calendar-controls button,.calendar-controls select{border:1px solid #d5dbe1;background:white;border-radius:7px;padding:5px 7px;font-size:11px}
-.calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(82px,1fr));gap:3px;min-width:620px}
-.day-name{font-size:10px;font-weight:800;color:#68727e;padding:4px;text-align:center}
+.calendar-controls button,.calendar-controls select{border:1px solid #d5dbe1;background:white;border-radius:8px;padding:8px}
+.calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(110px,1fr));gap:5px;min-width:770px}
+.day-name{font-size:11px;font-weight:800;color:#68727e;padding:8px}
 .day{
-  min-height:82px;background:white;border:1px solid #e1e6eb;border-radius:7px;padding:5px;
+  min-height:125px;background:white;border:1px solid #e1e6eb;border-radius:9px;padding:7px;
 }
 .day.other{opacity:.45}
-.day-number{font-weight:800;font-size:11px}
-.event{font-size:9px;margin-top:3px;border-radius:5px;padding:3px;background:#eaf5ee;border-left:3px solid var(--verde);cursor:pointer}
+.day-number{font-weight:800;font-size:12px}
+.event{font-size:10px;margin-top:5px;border-radius:6px;padding:5px;background:#eaf5ee;border-left:3px solid var(--verde);cursor:pointer}
 .event.client{background:#fff3d8;border-left-color:#c58b16}
 .event.red{background:#fdeaea;border-left-color:#b63838}
 .event.blue{background:#eaf0fc;border-left-color:#2457a6}
@@ -199,11 +199,13 @@ button{cursor:pointer}
   .chat-panel{height:600px}
 }
 
-/* Correcciones de interfaz */
-.chat-panel{min-width:0;flex:1 1 auto;width:auto;}
-.chat-messages{max-width:none;width:100%;}
-.chat-header,.chat-input-area{width:100%;}
-@media (min-width:1100px){.chat-panel{min-width:560px;}}
+/* Ajustes de permisos y calendario compacto */
+.calendar-wrap{padding:8px !important}
+.calendar-grid{gap:3px !important}
+.calendar-grid .day{min-height:68px !important;padding:4px !important;font-size:10px !important}
+.calendar-grid .day-name{padding:4px 2px !important;font-size:10px !important}
+.calendar-grid .day-number{font-size:11px !important}
+.calendar-grid .event{padding:2px 3px !important;margin-top:2px !important;font-size:9px !important;line-height:1.15 !important}
 </style>
 </head>
 
@@ -505,7 +507,7 @@ const equipos = {
   },
   "Cuoteros": {
     seniors: ["Rocio","Daniela","Antonela","Pilar","Moriana"],
-    gestores: ["Alejo Povina","Gregorio"]
+    gestores: ["Alejo","Gregorio"]
   }
 };
 
@@ -631,18 +633,12 @@ function nombreCorto(n){
 }
 
 function obtenerDatosCliente(c){
-  const d = c?.datosCliente || c?.cliente || c?.datos || c?.clienteData || {};
-  const dni = d.dni || d.DNI || d.documento || d.document || d.documentNumber || d.numeroDni || d.numeroDocumento ||
-              d.nroDni || d.nroDocumento || d.numero_documento || d.document_id ||
-              c.dni || c.DNI || c.documento || c.document || c.documentNumber || c.numeroDni || c.numeroDocumento ||
-              c.nroDni || c.nroDocumento || c.numero_documento || c.document_id || "";
-  const nombre = d.nombre || d.name || d.nombreCompleto || c.nombre || c.nombreCliente || c.clienteNombre || c.cliente || "";
-  const telefono = d.telefono || d.celular || d.phone || c.telefono || c.celular || c.phone || c.numeroTelefono || "";
+  const d = c?.datosCliente || c?.cliente || c?.datos || {};
   return {
-    nombre,
-    dni: String(dni || "").trim(),
-    telefono,
-    fecha: d.fecha || c.fecha || d.fechaNacimiento || c.fechaNacimiento || "",
+    nombre: d.nombre || c.nombre || c.nombreCliente || c.clienteNombre || "",
+    dni: d.dni || c.dni || c.documento || c.document || "",
+    telefono: d.telefono || c.telefono || c.celular || c.phone || "",
+    fecha: d.fecha || c.fecha || "",
     motivo: d.motivo || c.motivo || c.asunto || c.motivoConsulta || ""
   };
 }
@@ -689,27 +685,27 @@ function obtenerTodosLosGestores(){
   return lista;
 }
 
-function esSupervisor(){
-  const email=normalizarTexto(usuarioActual?.email);
-  return perfilActual==="supervisor" ||
-         email==="alejo.mansilla@mansillayasoc.com.ar" ||
-         email==="r.arrambide@mansillayasoc.com.ar" ||
-         email==="gonzalo@mansillayasoc.com.ar" ||
-         email==="jmansilla@mansillayasoc.com.ar" ||
-         email==="mavillegas@mansillayasoc.com.ar";
+const ROLES_FIJOS_POR_EMAIL = {
+  "rocio.lopez@mansillayasoc.com.ar": "senior",
+  "antonela.lopez@mansillayasoc.com.ar": "senior",
+  "pilar.solano@mansillayasoc.com.ar": "senior",
+  "daniela.cortez@mansillayasoc.com.ar": "senior",
+  "moriana.rey@mansillayasoc.com.ar": "senior",
+  "paula.lopez@mansillayasoc.com.ar": "asesor",
+  "alejo.mansilla@mansillayasoc.com.ar": "supervisor",
+  "r.arrambide@mansillayasoc.com.ar": "supervisor",
+  "gonzalo@mansillayasoc.com.ar": "supervisor",
+  "jmansilla@mansillayasoc.com.ar": "supervisor"
+};
+
+function rolFijoPorCorreo(){
+  return ROLES_FIJOS_POR_EMAIL[normalizarTexto(usuarioActual?.email)] || "";
 }
-function esSenior(){
-  const email=normalizarTexto(usuarioActual?.email);
-  return perfilActual==="senior" ||
-         [
-           "rocio.lopez@mansillayasoc.com.ar",
-           "antonela.lopez@mansillayasoc.com.ar",
-           "pilar.solano@mansillayasoc.com.ar",
-           "daniela.cortez@mansillayasoc.com.ar",
-           "moriana.rey@mansillayasoc.com.ar"
-         ].includes(email);
-}
-function esAsesor(){ return !esSupervisor() && !esSenior() && perfilActual==="asesor"; }
+
+function esSupervisor(){ return (rolFijoPorCorreo() || perfilActual)==="supervisor"; }
+function esSenior(){ return (rolFijoPorCorreo() || perfilActual)==="senior"; }
+function esAsesor(){ return (rolFijoPorCorreo() || perfilActual)==="asesor"; }
+function puedeVerAgendaGestores(){ return esSenior() || esSupervisor(); }
 
 function estaActiva(c){
   return normalizarTexto(c?.estado) !== "finalizada" &&
@@ -719,15 +715,11 @@ function estaActiva(c){
 }
 
 function estaSinAsignar(c){
-  const gestor=normalizarTexto(obtenerGestorDeConversacion(c));
-  const email=normalizarTexto(obtenerEmailGestor(c));
-  const vacios=["","null","undefined","sin asignar","no asignado","noasignado","sin_asignar","unassigned","none","n/a"];
-  return vacios.includes(gestor) && vacios.includes(email);
+  return !obtenerGestorDeConversacion(c) && !obtenerEmailGestor(c);
 }
 
 function puedeVerPorEquipo(c){
   if(esSupervisor()) return true;
-  if(esSenior() && estaSinAsignar(c)) return true;
 
   let equipo=obtenerEquipoDeConversacion(c);
 
@@ -765,8 +757,12 @@ function conversacionEsMia(c){
 
 function puedeGestionarConversacion(c){
   if(esSupervisor()) return true;
-  if(esSenior() && estaSinAsignar(c)) return true;
-  if(esSenior()) return puedeVerPorEquipo(c);
+  if(esSenior()){
+    // Un senior puede gestionar todas las conversaciones de su equipo
+    // y también TODAS las que estén sin asignar.
+    if(estaSinAsignar(c)) return true;
+    return puedeVerPorEquipo(c);
+  }
   if(esAsesor()) return puedeVerPorEquipo(c);
   return false;
 }
@@ -812,7 +808,7 @@ function crearCardCliente(c,finalizada=false){
       <div class="card-title ${ultima?.noLeido ? "unread":""}">${escapeHtml(mostrarNombreCliente(c))}</div>
       ${equipo?`<span class="team-tag">${escapeHtml(equipo)}</span>`:""}
     </div>
-    <div class="card-sub" style="font-weight:800;font-size:13px;color:#1f2937;">🪪 DNI: ${escapeHtml(d.dni || "Sin DNI informado")}</div>
+    ${d.dni?`<div class="card-sub">DNI: ${escapeHtml(d.dni)}</div>`:""}
     ${d.telefono?`<div class="card-sub">📱 ${escapeHtml(d.telefono)}</div>`:""}
     ${gestor?`<div class="card-sub">👤 ${escapeHtml(gestor)}</div>`:""}
     ${finalizada?`<div class="card-sub">📚 Finalizada ${formatFecha(c.fechaFinalizacion)}</div>`:""}
@@ -938,24 +934,14 @@ function abrirChatsDeGestor(nombre){
 function renderizarSinAsignar(){
   const items=$("items");
   items.innerHTML="";
-  // Seniors y supervisores pueden ver TODAS las conversaciones sin asignar,
-  // aunque la conversación todavía no tenga equipo cargado.
+  // Seniors y supervisores ven TODAS las conversaciones sin asignar.
   let lista=conversacionesActivas().filter(estaSinAsignar);
   if(!esSenior() && !esSupervisor()){
-    items.innerHTML=`<div class="empty">No tenés permiso para ver conversaciones sin asignar.</div>`;
+    items.innerHTML=`<div class="empty">No tenés permisos para ver conversaciones sin asignar.</div>`;
     return;
   }
 
-  // En Sin asignar el filtro de búsqueda solo busca por datos del cliente;
-  // nunca vuelve a aplicar el filtro de equipo.
-  const q=normalizarTexto($("listSearch")?.value);
-  if(q){
-    lista=lista.filter(c=>{
-      const d=obtenerDatosCliente(c);
-      const texto=[d.nombre,d.dni,d.telefono,c.nombre,c.nombreCliente].map(normalizarTexto).join(" ");
-      return texto.includes(q);
-    });
-  }
+  lista=aplicarFiltroLista(lista);
   lista.sort((a,b)=>(b.fechaCreacion||0)-(a.fechaCreacion||0));
   $("sectionTitle").textContent="Conversaciones sin asignar";
 
@@ -982,14 +968,17 @@ function renderizarHistorial(){
 }
 
 function mostrarVista(vista){
-  // La Agenda de gestores es exclusiva de seniors y supervisores.
-  if(vista==="agenda" && !esSenior() && !esSupervisor()){
-    vista="principal";
+  // Seguridad de interfaz: un asesor nunca puede abrir la Agenda de gestores.
+  if(vista==="agenda" && !puedeVerAgendaGestores()){
+    vistaActual="principal";
+    return mostrarVista("principal");
   }
-  // Sin asignar también es exclusiva de seniors y supervisores.
+  // Solo senior/supervisor pueden ver Sin asignar.
   if(vista==="sinAsignar" && !esSenior() && !esSupervisor()){
-    vista="principal";
+    vistaActual="principal";
+    return mostrarVista("principal");
   }
+
   vistaActual=vista;
   gestorSeleccionado=null;
   document.querySelectorAll(".nav button").forEach(b=>b.classList.remove("active"));
@@ -1051,7 +1040,8 @@ function actualizarContadores(){
   $("badgeHistorial").textContent=finalizadas.length;
 
   $("navSinAsignar").classList.toggle("hidden",!esSenior()&&!esSupervisor());
-  $("navAgenda").classList.toggle("hidden",!esSenior()&&!esSupervisor());
+  $("navAgenda").classList.toggle("hidden",!puedeVerAgendaGestores());
+  $("navVencimientos").classList.toggle("hidden",false);
 }
 
 function renderChatVacio(){
@@ -1304,11 +1294,13 @@ async function finalizarConversacion(){
 }
 
 function abrirModalAsignacion(id){
-  if(!esSenior()&&!esSupervisor()) return;
+  const c=conversaciones[id];
+  if(!c || (!esSenior()&&!esSupervisor()) || !puedeGestionarConversacion(c)) return;
   asignacionConversacion=id;
   $("assignmentModal").classList.remove("hidden");
 
-  const equiposPermitidos=esSupervisor()?Object.keys(equipos):obtenerEquipoDePersona(nombreActual);
+  // Tanto supervisores como seniors pueden asignar/transferir a cualquier equipo.
+  const equiposPermitidos=Object.keys(equipos);
   $("assignTeam").innerHTML=equiposPermitidos.map(e=>`<option value="${escapeHtml(e)}">${escapeHtml(e)}</option>`).join("");
 
   const actual=obtenerEquipoDeConversacion(conversaciones[id]);
@@ -1504,7 +1496,6 @@ function renderizarAgenda(){
           ${puedeAdministrarAgenda()?`<button class="btn green" onclick="abrirModalEvento()">+ Evento</button>`:""}
         </div>
       </div>
-      <div class="small" style="margin-bottom:7px">🕐 Cada actividad muestra el horario de inicio y fin del gestor.</div>
       <div id="agendaCalendar"></div>
     </div>
   `;
@@ -1543,7 +1534,7 @@ function dibujarCalendarioAgenda(){
       ${Object.values(eventosAgenda).filter(e=>e?.fecha===iso && gestorPermitidoCalendario(e.gestor))
         .sort((a,b)=>(a.horaInicio||"").localeCompare(b.horaInicio||""))
         .map(e=>`<div class="event" onclick="editarEvento('${escapeHtml(e.id)}')">
-          <b>${escapeHtml(e.horaInicio||"")}–${escapeHtml(e.horaFin||"")}</b> ${escapeHtml(e.gestor||"")}<br>
+          <b>${escapeHtml(e.horaInicio||"")}</b> ${escapeHtml(e.gestor||"")}<br>
           ${escapeHtml(e.tipo||"Actividad")}
         </div>`).join("")}
     </div>`;
@@ -1774,11 +1765,8 @@ function escucharVencimientos(){
 
 async function resolverUsuarioPorEmail(user){
   const email=normalizarTexto(user.email);
-  // La identidad conocida por correo tiene prioridad absoluta.
-  // Así evitamos que /usuarios tenga un nombre o perfil viejo y quite permisos.
-  const nombreConfiguradoPorEmail=emailsPorNombre[email] || "";
-  let nombre=nombreConfiguradoPorEmail || user.displayName || "";
-  let perfil=nombreConfiguradoPorEmail ? (perfiles[nombreConfiguradoPorEmail] || "") : "";
+  let nombre=emailsPorNombre[email]||user.displayName||"";
+  let perfil=ROLES_FIJOS_POR_EMAIL[email]||"";
 
   try{
     const snap=await get(ref(db,"usuarios"));
@@ -1787,10 +1775,8 @@ async function resolverUsuarioPorEmail(user){
     for(const [key,u] of Object.entries(usuariosDB)){
       const ue=normalizarTexto(u?.email||key);
       if(ue===email){
-        // Si el correo está configurado localmente, NO dejamos que /usuarios
-        // sobrescriba el nombre o perfil definido para esa cuenta.
-        if(!nombreConfiguradoPorEmail) nombre=u.nombre||u.displayName||nombre;
-        if(!nombreConfiguradoPorEmail) perfil=u.perfil||u.rol||perfil;
+        nombre=u.nombre||u.displayName||nombre;
+        perfil=u.perfil||u.rol||perfil;
         break;
       }
     }
@@ -1806,12 +1792,11 @@ async function resolverUsuarioPorEmail(user){
     nombre="Alejo Mansilla"; perfil="supervisor";
   }
 
-  // Para todas las cuentas conocidas, el perfil local es la fuente de verdad.
-  const nombreFinalConfigurado = emailsPorNombre[email] || nombre;
-  if(emailsPorNombre[email]) nombre = emailsPorNombre[email];
-  const perfilConfigurado = perfiles[nombreFinalConfigurado];
-  if(perfilConfigurado) perfil = perfilConfigurado;
-  if(!perfil) perfil = "";
+  // La identidad y el rol de las cuentas conocidas prevalecen sobre cualquier dato
+  // incompleto o antiguo guardado en /usuarios.
+  if(ROLES_FIJOS_POR_EMAIL[email]) perfil=ROLES_FIJOS_POR_EMAIL[email];
+  if(emailsPorNombre[email]) nombre=emailsPorNombre[email];
+  if(!perfil) perfil=perfiles[nombre]||"";
 
   return {nombre,perfil};
 }
@@ -1880,9 +1865,6 @@ onAuthStateChanged(auth,async user=>{
     perfilActual==="senior"?"Senior":"Gestor";
 
   greeting();
-
-  $("navSinAsignar").classList.toggle("hidden",!esSenior()&&!esSupervisor());
-  $("navAgenda").classList.toggle("hidden",!esSenior()&&!esSupervisor());
 
   try{
     const snap=await get(ref(db,`presencia/${user.uid}`));
