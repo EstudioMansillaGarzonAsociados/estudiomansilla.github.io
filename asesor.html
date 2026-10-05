@@ -3311,19 +3311,71 @@ function textoEstadoPresencia(estado) {
 function abrirChatsDeGestor(nombre) {
 
   const items =
-    document.getElementById(
-      "items"
-    );
+    document.getElementById("items");
 
+  const titulo =
+    document.getElementById("listTitle");
 
-  document
-    .getElementById("listTitle")
-    .textContent =
-      `💬 ${nombre}`;
-
+  titulo.textContent =
+    `💬 ${nombre}`;
 
   items.innerHTML = "";
 
+
+  /* BOTÓN PARA VOLVER A LA LISTA DE AGENTES */
+
+  const volver =
+    document.createElement("button");
+
+  volver.type = "button";
+
+  volver.style.width = "100%";
+  volver.style.border = "0";
+  volver.style.borderRadius = "12px";
+  volver.style.padding = "11px 13px";
+  volver.style.marginBottom = "10px";
+  volver.style.background = "#f0f2f1";
+  volver.style.color = "#35413c";
+  volver.style.fontWeight = "800";
+  volver.style.fontSize = "12px";
+  volver.style.cursor = "pointer";
+  volver.textContent =
+    "← Volver a agentes";
+
+
+  volver.onclick = function() {
+
+    /* Volvemos a la vista de agentes */
+
+    modoActual = "agentes";
+
+    document
+      .querySelectorAll(".nav-btn")
+      .forEach(
+        btn =>
+          btn.classList.remove("active")
+      );
+
+    document
+      .getElementById("btnAgentes")
+      .classList.add("active");
+
+    titulo.textContent =
+      "👥 Agentes";
+
+    document
+      .getElementById("searchInput")
+      .value = "";
+
+    renderizarAgentes();
+
+  };
+
+
+  items.appendChild(volver);
+
+
+  /* BUSCAR LOS CHATS DEL GESTOR */
 
   let lista =
     conversacionesActivas()
@@ -3335,6 +3387,8 @@ function abrirChatsDeGestor(nombre) {
           normalizarTexto(nombre)
       );
 
+
+  /* EL SENIOR SOLO PUEDE VER SU EQUIPO */
 
   if (
     !esSupervisor() &&
@@ -3350,12 +3404,48 @@ function abrirChatsDeGestor(nombre) {
   }
 
 
+  /* SIN CHATS */
+
   if (!lista.length) {
 
-    items.innerHTML =
-      `<div class="empty">
+    const vacio =
+      document.createElement("div");
+
+    vacio.className =
+      "empty";
+
+    vacio.innerHTML =
+      `
         ✨ Este gestor no tiene chats activos.
-      </div>`;
+      `;
+
+    items.appendChild(vacio);
+
+    return;
+
+  }
+
+
+  /* MOSTRAR CLIENTES */
+
+  lista =
+    aplicarFiltroLista(lista);
+
+
+  if (!lista.length) {
+
+    const vacio =
+      document.createElement("div");
+
+    vacio.className =
+      "empty";
+
+    vacio.innerHTML =
+      `
+        🔎 No encontramos gestiones con esa búsqueda.
+      `;
+
+    items.appendChild(vacio);
 
     return;
 
