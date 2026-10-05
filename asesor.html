@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Centro de Atención — Estudio Mansilla Garzon y Asociados — v2026.10.05-SOS-IA</title>
+<title>Centro de Atención — Estudio Mansilla Garzon y Asociados — v2026.10.05-FINAL-AUTOIA-IA</title>
 
 <style>
 :root{
@@ -998,6 +998,8 @@ function crearCardCliente(c,finalizada=false){
     ${gestor?`<div class="card-sub">👤 ${escapeHtml(gestor)}</div>`:""}
     ${finalizada?`<div class="card-sub">📚 Finalizada ${formatFecha(c.fechaFinalizacion)}</div>`:""}
     ${interno?`<div class="card-sub">🔒 ${interno} indicación/es interna/s</div>`:""}
+    ${ultimoMensajeEsDelCliente(c)?`<div class="card-sub" style="color:#b42318;font-weight:800">🔔 Nuevo mensaje del cliente · ${formatFecha(ultima?.fecha)}</div>`:""}
+    ${contarMensajesNoLeidosCliente(c)>0?`<div class="card-sub" style="color:#176b4d;font-weight:800">● ${contarMensajesNoLeidosCliente(c)} mensaje/s sin leer</div>`:""}
     ${(c.acuerdo||c.acuerdos||c.compromiso)?`<div class="card-sub" style="color:#176b3a;font-weight:700">🤝 Acuerdo: ${escapeHtml(String(c.acuerdo||c.acuerdos||c.compromiso).slice(0,110))}${String(c.acuerdo||c.acuerdos||c.compromiso).length>110?"…":""}</div>`:""}
   `;
   div.onclick=()=>abrirConversacion(c._id,finalizada);
@@ -1037,6 +1039,17 @@ function contarMensajesInternos(c){
   return Object.values(m).filter(x=>x?.tipo==="interno").length;
 }
 
+function ultimoMensajeEsDelCliente(c){
+  const u=obtenerUltimoMensaje(c);
+  return !!u && mensajeEsDelCliente(u);
+}
+function fechaUltimoMensaje(c){
+  return Number(obtenerUltimoMensaje(c)?.fecha||c?.fechaCreacion||0);
+}
+function contarMensajesNoLeidosCliente(c){
+  return Object.values(c?.mensajes||{}).filter(m=>mensajeEsDelCliente(m)&&m?.noLeido===true).length;
+}
+
 function renderizarPrincipal(){
   const items=$("items");
   items.innerHTML="";
@@ -1055,7 +1068,7 @@ function renderizarPrincipal(){
     return false;
   });
   lista=aplicarFiltroLista(lista);
-  lista.sort((a,b)=>(b.fechaCreacion||0)-(a.fechaCreacion||0));
+  lista.sort((a,b)=>fechaUltimoMensaje(b)-fechaUltimoMensaje(a));
 
   $("sectionTitle").textContent="Mis conversaciones activas";
 
@@ -1113,7 +1126,7 @@ function abrirChatsDeGestor(nombre){
   });
 
   lista=aplicarFiltroLista(lista);
-  lista.sort((a,b)=>(b.fechaCreacion||0)-(a.fechaCreacion||0));
+  lista.sort((a,b)=>fechaUltimoMensaje(b)-fechaUltimoMensaje(a));
 
   if(!lista.length){
     items.insertAdjacentHTML("beforeend",`<div class="empty">Este gestor no tiene conversaciones activas.</div>`);
@@ -1134,7 +1147,7 @@ function renderizarSinAsignar(){
   }
 
   lista=aplicarFiltroLista(lista);
-  lista.sort((a,b)=>(b.fechaCreacion||0)-(a.fechaCreacion||0));
+  lista.sort((a,b)=>fechaUltimoMensaje(b)-fechaUltimoMensaje(a));
   $("sectionTitle").textContent="Conversaciones sin asignar";
 
   if(!lista.length){
@@ -1298,6 +1311,19 @@ function renderChatVacio(){
   $("typingIndicator").textContent="";
 }
 
+async function marcarMensajesClienteComoLeidos(id){
+  if(!id || !conversaciones[id]) return;
+  const mensajes=conversaciones[id]?.mensajes||{};
+  const cambios={};
+  Object.entries(mensajes).forEach(([mid,m])=>{
+    if(m && mensajeEsDelCliente(m) && m.noLeido===true){
+      cambios[`conversaciones/${id}/mensajes/${mid}/noLeido`]=false;
+    }
+  });
+  if(!Object.keys(cambios).length) return;
+  try{ await update(ref(db),cambios); }catch(e){ console.warn("No se pudieron marcar los mensajes como leídos",e); }
+}
+
 async function abrirConversacion(id,finalizada=false){
   conversacionSeleccionada=id;
   const c=conversaciones[id];
@@ -1330,6 +1356,9 @@ async function abrirConversacion(id,finalizada=false){
 
   renderizarMensajes(c);
   renderizarFicha(c,finalizada);
+
+  // Al abrir el chat, los mensajes nuevos del cliente quedan leídos.
+  if(!finalizada && gestionar) await marcarMensajesClienteComoLeidos(id);
 
   escucharTyping(id);
 }
@@ -1927,6 +1956,7 @@ function clasificarConsultaIA(texto){
   if(n.includes("como contacto") || n.includes("cómo contacto") || n.includes("telefono") || n.includes("teléfono") || n.includes("whatsapp") || n.includes("contacto")) return "contacto";
   if(n.includes("document") || n.includes("papel") || n.includes("enviar") || n.includes("mandar archivo") || n.includes("adjuntar")) return "documentacion";
   if(n.includes("donde pago") || n.includes("dónde pago") || n.includes("medios de pago") || n.includes("medio de pago") || n.includes("como pago") || n.includes("cómo pago")) return "medios_pago";
+  if(n.includes("gracias") || n.includes("muchas gracias") || n === "ok" || n === "okay" || n === "perfecto") return "agradecimiento";
   return "derivar";
 }
 
@@ -1939,7 +1969,8 @@ function respuestaAutomaticaIA(tipo){
     horarios:base+"Nuestro equipo de atención revisará tu consulta. Si necesitás información específica de tu gestión, te voy a derivar con un asesor.",
     contacto:base+"Estás conversando por este canal de atención. Si necesitás una gestión específica sobre tu caso, te voy a derivar con un asesor.",
     documentacion:base+"Podés enviar la documentación por este mismo canal. Si necesitamos verificarla o incorporarla a tu expediente, te voy a derivar con un asesor.",
-    medios_pago:base+"Los medios de pago pueden depender de la situación de tu cuenta. Para indicarte una opción correcta y evitar información incorrecta, te voy a derivar con un asesor."
+    medios_pago:base+"Los medios de pago pueden depender de la situación de tu cuenta. Para indicarte una opción correcta y evitar información incorrecta, te voy a derivar con un asesor.",
+    agradecimiento:base+"¡De nada! Si necesitás realizar otra consulta sobre tu gestión, escribinos por este mismo canal."
   };
   return respuestas[tipo]||null;
 }
@@ -1987,7 +2018,8 @@ async function procesarIAAutomatica(id,c){
     iaUltimoMensajeProcesado:ultimo._id,
     iaUltimaRespuesta:ahora,
     iaDerivada:deriva,
-    iaEstado:deriva?"derivada":"atendiendo"
+    iaEstado:deriva?"derivada":"atendiendo",
+    ultimaRespuestaTipo:deriva?"derivacion":"ia_automatica"
   });
 }
 
@@ -2000,21 +2032,28 @@ function procesarIAAutomaticaParaTodas(data){
   });
 }
 
+let ultimosMensajesSnapshot={};
+
 function escucharConversaciones(){
   onValue(ref(db,"conversaciones"),snap=>{
     const data=snap.val()||{};
     const nuevos=new Set(Object.keys(data));
 
-    if(!primerCargaConversaciones){
-      let nuevoChat=false;
-      for(const id of nuevos){
-        if(!ultimoSnapshotIds.has(id)){
-          const c=data[id];
-          if(c && estaActiva(c)) nuevoChat=true;
-        }
-      }
-      if(nuevoChat) sonidoNuevoChat();
+    let hayNovedad=false;
+    for(const id of nuevos){
+      const c=data[id];
+      if(!c || !estaActiva(c)) continue;
+      const ultimo=obtenerUltimoMensaje(c);
+      const firma=ultimo?`${ultimo._id||""}|${ultimo.fecha||0}|${ultimo.texto||""}`:"";
+      const anterior=ultimosMensajesSnapshot[id]||"";
+      if(!primerCargaConversaciones && firma && firma!==anterior && mensajeEsDelCliente(ultimo)) hayNovedad=true;
+      ultimosMensajesSnapshot[id]=firma;
+      if(!ultimoSnapshotIds.has(id)) hayNovedad=true;
     }
+    if(hayNovedad) sonidoNuevoChat();
+
+    // Elimina firmas de conversaciones que ya no existen.
+    Object.keys(ultimosMensajesSnapshot).forEach(id=>{ if(!nuevos.has(id)) delete ultimosMensajesSnapshot[id]; });
 
     conversaciones=data;
     // La IA funciona como primera línea para chats todavía sin asignar.
@@ -2487,6 +2526,7 @@ window.mostrarVista=mostrarVista;
 window.refrescarVistaActual=refrescarVistaActual;
 window.limpiarBusqueda=limpiarBusqueda;
 window.abrirConversacion=abrirConversacion;
+window.marcarMensajesClienteComoLeidos=marcarMensajesClienteComoLeidos;
 window.abrirChatsDeGestor=abrirChatsDeGestor;
 window.abrirIndicacionInterna=abrirIndicacionInterna;
 window.pedirAyudaSenior=pedirAyudaSenior;
