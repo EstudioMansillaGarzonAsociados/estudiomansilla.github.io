@@ -1,755 +1,1576 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>Centro de Atención | Estudio Mansilla Garzón Asociados</title>
+<head>
+
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>
+    Centro de Atención | Estudio Mansilla Garzon y Asociados
+  </title>
+
 
   <style>
+
     * {
       box-sizing: border-box;
     }
 
+
     body {
       margin: 0;
       font-family: Arial, Helvetica, sans-serif;
-      background: #f5f7fa;
+      background: #f5f7f9;
       color: #263238;
       height: 100vh;
       overflow: hidden;
     }
 
+
     button,
     input,
+    textarea,
     select {
       font-family: inherit;
     }
+
 
     button {
       cursor: pointer;
     }
 
-    /* =========================
+
+    /* ========================================
        LOGIN
-    ========================= */
+    ======================================== */
 
     #loginScreen {
+
       width: 100%;
       height: 100vh;
+
       display: flex;
       align-items: center;
       justify-content: center;
-      background: linear-gradient(135deg, #f4f6f8, #e9edf1);
+
+      background:
+        linear-gradient(
+          135deg,
+          #f5f7f9,
+          #e8edf0
+        );
+
     }
+
 
     .login-box {
-      width: 390px;
+
+      width: 410px;
       max-width: 92%;
+
       background: white;
+
       border-radius: 18px;
-      padding: 35px;
-      box-shadow: 0 15px 45px rgba(0,0,0,.12);
+
+      padding: 38px;
+
+      box-shadow:
+        0 18px 50px rgba(0,0,0,.12);
+
       text-align: center;
+
     }
+
 
     .login-brand {
-      font-size: 22px;
-      font-weight: 700;
+
+      font-size: 23px;
+      font-weight: 800;
+
       color: #263238;
-      margin-bottom: 8px;
+
+      line-height: 1.25;
+
     }
+
 
     .login-subtitle {
+
       color: #78909c;
-      margin-bottom: 30px;
+
       font-size: 14px;
+
+      margin-top: 8px;
+      margin-bottom: 30px;
+
     }
+
 
     .login-box input {
+
       width: 100%;
+
       padding: 13px 14px;
-      border: 1px solid #d9dee3;
+
+      border: 1px solid #d9e0e4;
+
       border-radius: 9px;
-      margin-bottom: 13px;
+
+      margin-bottom: 12px;
+
       outline: none;
+
       font-size: 14px;
+
     }
+
 
     .login-box input:focus {
+
       border-color: #78909c;
+
     }
+
 
     .login-button {
+
       width: 100%;
-      border: 0;
+
+      border: none;
+
       padding: 13px;
+
       border-radius: 9px;
+
       background: #263238;
+
       color: white;
+
       font-weight: 700;
+
       font-size: 15px;
+
     }
+
 
     .login-button:hover {
+
       background: #37474f;
+
     }
+
 
     #loginError {
-      color: #c62828;
-      font-size: 13px;
-      margin-top: 14px;
+
       min-height: 18px;
+
+      margin-top: 13px;
+
+      font-size: 13px;
+
+      color: #c62828;
+
     }
 
-    /* =========================
+
+    /* ========================================
        APP
-    ========================= */
+    ======================================== */
 
     #app {
+
       display: none;
+
       width: 100%;
       height: 100vh;
+
     }
+
 
     .layout {
+
       display: flex;
+
       width: 100%;
       height: 100%;
+
     }
 
-    /* =========================
+
+    /* ========================================
        SIDEBAR
-    ========================= */
+    ======================================== */
 
     .sidebar {
-      width: 255px;
-      background: #ffffff;
-      border-right: 1px solid #e1e5e8;
-      display: flex;
-      flex-direction: column;
+
+      width: 265px;
+
       flex-shrink: 0;
+
+      background: white;
+
+      border-right: 1px solid #e0e5e8;
+
+      display: flex;
+
+      flex-direction: column;
+
     }
+
 
     .brand {
-      padding: 22px 20px 18px;
+
+      padding: 20px;
+
       border-bottom: 1px solid #edf0f2;
+
     }
+
 
     .brand-name {
+
       font-size: 17px;
+
       font-weight: 800;
+
       line-height: 1.25;
-      color: #263238;
+
     }
+
 
     .brand-subtitle {
-      font-size: 12px;
+
       color: #90a4ae;
+
+      font-size: 12px;
+
       margin-top: 5px;
+
     }
+
 
     .user-welcome {
-      padding: 17px 20px;
+
+      padding: 16px 20px;
+
       background: #fafbfc;
+
       border-bottom: 1px solid #edf0f2;
+
     }
+
 
     .welcome-text {
+
       font-size: 16px;
+
       font-weight: 700;
-      color: #263238;
+
       line-height: 1.35;
+
     }
+
 
     .user-role {
-      margin-top: 5px;
-      font-size: 12px;
+
       color: #78909c;
+
+      font-size: 12px;
+
+      margin-top: 5px;
+
       text-transform: capitalize;
+
     }
+
 
     .menu {
-      padding: 15px 11px;
+
       flex: 1;
+
       overflow-y: auto;
+
+      padding: 14px 10px;
+
     }
+
 
     .menu button {
+
       width: 100%;
+
       border: 0;
+
       background: transparent;
-      padding: 12px 13px;
-      border-radius: 9px;
-      margin-bottom: 5px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+
       color: #546e7a;
+
+      border-radius: 9px;
+
+      padding: 12px 13px;
+
+      margin-bottom: 5px;
+
+      display: flex;
+
+      justify-content: space-between;
+
+      align-items: center;
+
       font-size: 14px;
+
       text-align: left;
+
     }
+
 
     .menu button:hover {
+
       background: #f2f5f7;
+
     }
+
 
     .menu button.active {
+
       background: #eceff1;
+
       color: #263238;
+
       font-weight: 700;
+
     }
+
 
     .menu-badge {
+
       min-width: 24px;
       height: 22px;
-      padding: 0 7px;
+
       display: inline-flex;
+
       align-items: center;
       justify-content: center;
+
+      padding: 0 7px;
+
       border-radius: 20px;
+
       background: #e7ebee;
+
       color: #455a64;
+
       font-size: 11px;
+
       font-weight: 700;
+
     }
+
 
     .sidebar-bottom {
-      padding: 15px;
+
+      padding: 13px;
+
       border-top: 1px solid #edf0f2;
+
     }
+
 
     .logout-button {
+
       width: 100%;
-      border: 1px solid #e0e5e8;
+
+      border: 1px solid #dfe4e7;
+
       background: white;
+
       color: #546e7a;
+
       padding: 10px;
+
       border-radius: 8px;
+
     }
 
-    .logout-button:hover {
-      background: #f6f7f8;
-    }
 
-    /* =========================
+    /* ========================================
        MAIN
-    ========================= */
+    ======================================== */
 
     .main {
+
       flex: 1;
-      display: flex;
-      flex-direction: column;
+
       min-width: 0;
+
+      display: flex;
+
+      flex-direction: column;
+
     }
+
 
     .topbar {
-      height: 75px;
+
+      min-height: 86px;
+
       background: white;
-      border-bottom: 1px solid #e1e5e8;
+
+      border-bottom: 1px solid #e0e5e8;
+
       display: flex;
+
       align-items: center;
+
       justify-content: space-between;
-      padding: 0 25px;
+
+      gap: 20px;
+
+      padding: 12px 22px;
+
       flex-shrink: 0;
+
     }
+
 
     .page-title {
+
       font-size: 20px;
+
       font-weight: 700;
-      color: #263238;
+
     }
+
 
     .page-subtitle {
+
       font-size: 12px;
+
       color: #90a4ae;
+
       margin-top: 4px;
+
     }
 
-    .current-user {
-      font-size: 13px;
-      color: #607d8b;
+
+    .topbar-right {
+
+      display: flex;
+
+      align-items: center;
+
+      gap: 18px;
+
     }
+
+
+    /* ========================================
+       RELOJ
+    ======================================== */
+
+    .clock-box {
+
+      text-align: right;
+
+      min-width: 115px;
+
+    }
+
+
+    .clock-time {
+
+      font-size: 20px;
+
+      font-weight: 800;
+
+      color: #263238;
+
+      letter-spacing: .5px;
+
+    }
+
+
+    .clock-date {
+
+      font-size: 11px;
+
+      color: #90a4ae;
+
+      margin-top: 2px;
+
+    }
+
+
+    .presence-box {
+
+      display: flex;
+
+      align-items: center;
+
+      gap: 7px;
+
+      flex-wrap: wrap;
+
+    }
+
+
+    .presence-status {
+
+      display: flex;
+
+      align-items: center;
+
+      gap: 6px;
+
+      border: 1px solid #dfe4e7;
+
+      border-radius: 20px;
+
+      padding: 7px 10px;
+
+      background: #fafbfc;
+
+      font-size: 12px;
+
+      font-weight: 700;
+
+    }
+
+
+    .presence-dot {
+
+      width: 9px;
+      height: 9px;
+
+      border-radius: 50%;
+
+      background: #90a4ae;
+
+    }
+
+
+    .presence-dot.activo {
+
+      background: #43a047;
+
+    }
+
+
+    .presence-dot.break {
+
+      background: #f9a825;
+
+    }
+
+
+    .presence-dot.descanso {
+
+      background: #42a5f5;
+
+    }
+
+
+    .presence-dot.fuera {
+
+      background: #78909c;
+
+    }
+
+
+    .presence-button {
+
+      border: 1px solid #dce2e5;
+
+      background: white;
+
+      color: #455a64;
+
+      border-radius: 7px;
+
+      padding: 7px 9px;
+
+      font-size: 11px;
+
+    }
+
+
+    .presence-button:hover {
+
+      background: #f4f6f7;
+
+    }
+
+
+    .presence-button.start {
+
+      background: #263238;
+
+      color: white;
+
+      border-color: #263238;
+
+    }
+
+
+    .presence-button.finish {
+
+      color: #b71c1c;
+
+    }
+
+
+    /* ========================================
+       CONTENT
+    ======================================== */
 
     .content {
+
       flex: 1;
-      display: flex;
+
       min-height: 0;
+
+      display: flex;
+
     }
 
-    /* =========================
-       LIST PANEL
-    ========================= */
 
     .list-panel {
-      width: 390px;
-      background: #fff;
-      border-right: 1px solid #e1e5e8;
-      display: flex;
-      flex-direction: column;
+
+      width: 405px;
+
       min-width: 320px;
+
+      background: white;
+
+      border-right: 1px solid #e0e5e8;
+
+      display: flex;
+
+      flex-direction: column;
+
     }
+
 
     .list-header {
-      padding: 17px;
+
+      padding: 16px;
+
       border-bottom: 1px solid #edf0f2;
+
     }
+
 
     .list-header-title {
+
       font-size: 15px;
+
       font-weight: 700;
-      margin-bottom: 12px;
+
+      margin-bottom: 11px;
+
     }
+
 
     .search-box {
+
       width: 100%;
-      border: 1px solid #dce1e5;
+
+      border: 1px solid #dce2e5;
+
       border-radius: 8px;
+
       padding: 10px 12px;
+
       outline: none;
+
       font-size: 13px;
+
     }
+
 
     .search-box:focus {
+
       border-color: #90a4ae;
+
     }
+
 
     .list {
+
       flex: 1;
+
       overflow-y: auto;
+
       padding: 10px;
+
     }
 
-    /* =========================
+
+    /* ========================================
        CARDS
-    ========================= */
+    ======================================== */
 
     .card {
-      border: 1px solid #e3e7ea;
-      border-radius: 11px;
-      margin-bottom: 9px;
-      padding: 13px;
-      background: white;
-      transition: .15s;
-      cursor: pointer;
 
       --team-bg: #ffffff;
       --team-border: #e3e7ea;
       --team-accent: #607d8b;
       --team-text: #37474f;
 
+      border: 1px solid var(--team-border);
+
       border-left: 5px solid var(--team-accent);
+
       background: var(--team-bg);
+
+      border-radius: 11px;
+
+      padding: 13px;
+
+      margin-bottom: 9px;
+
+      cursor: pointer;
+
+      transition: .15s;
+
     }
+
 
     .card:hover {
+
       transform: translateY(-1px);
-      box-shadow: 0 5px 15px rgba(0,0,0,.06);
+
+      box-shadow:
+        0 5px 15px rgba(0,0,0,.06);
+
     }
+
 
     .card-title {
-      font-size: 14px;
-      font-weight: 700;
+
       color: var(--team-text);
+
+      font-size: 14px;
+
+      font-weight: 700;
+
       margin-bottom: 8px;
+
     }
+
 
     .card-row {
+
       display: flex;
+
       gap: 5px;
+
       margin: 4px 0;
-      font-size: 12px;
+
       color: #546e7a;
+
+      font-size: 12px;
+
       line-height: 1.4;
+
     }
+
 
     .card-label {
-      font-weight: 700;
+
       color: #455a64;
+
+      font-weight: 700;
+
     }
+
 
     .team-pill {
+
       display: inline-block;
-      padding: 3px 7px;
-      border-radius: 20px;
-      font-size: 10px;
-      font-weight: 700;
+
       margin-top: 6px;
-      color: var(--team-text);
+
+      padding: 3px 7px;
+
+      border-radius: 20px;
+
       border: 1px solid var(--team-border);
+
       background: rgba(255,255,255,.55);
+
+      color: var(--team-text);
+
+      font-size: 10px;
+
+      font-weight: 700;
+
     }
 
+
     .status-pill {
+
       display: inline-block;
-      padding: 3px 7px;
-      border-radius: 20px;
-      font-size: 10px;
-      font-weight: 700;
+
       margin-top: 6px;
+
+      padding: 3px 7px;
+
+      border-radius: 20px;
+
       background: rgba(255,255,255,.7);
+
       color: #546e7a;
+
+      font-size: 10px;
+
+      font-weight: 700;
+
     }
+
 
     /* TEAM COLORS */
 
     .team-verde {
+
       --team-bg: #e8f5e9;
       --team-border: #b7dfbd;
       --team-accent: #4f8f5b;
       --team-text: #285c32;
+
     }
 
+
     .team-rojo {
+
       --team-bg: #fce8ec;
       --team-border: #efb8c3;
       --team-accent: #c45d70;
       --team-text: #7c2d3b;
+
     }
 
+
     .team-azul {
+
       --team-bg: #e7f2fb;
       --team-border: #b5d5ed;
       --team-accent: #4d89b5;
       --team-text: #285675;
+
     }
 
+
     .team-1142 {
+
       --team-bg: #f0eafa;
       --team-border: #d2c0eb;
       --team-accent: #8064ad;
       --team-text: #574080;
+
     }
 
+
     .team-cuoteros {
+
       --team-bg: #fff5d9;
       --team-border: #eed99b;
       --team-accent: #b28a2e;
       --team-text: #755b17;
+
     }
 
+
     .team-sin-asignar {
+
       --team-bg: #f1f3f5;
       --team-border: #d5d9de;
       --team-accent: #7b838c;
       --team-text: #4b5563;
+
     }
 
-    /* =========================
-       GESTOR CARDS
-    ========================= */
+
+    /* ========================================
+       GESTOR CARD
+    ======================================== */
 
     .gestor-card {
+
+      --team-bg: #fff;
+      --team-border: #e0e5e8;
+      --team-accent: #78909c;
+      --team-text: #37474f;
+
       border: 1px solid var(--team-border);
+
       border-left: 5px solid var(--team-accent);
+
       background: var(--team-bg);
+
       border-radius: 11px;
-      padding: 14px;
+
+      padding: 13px;
+
       margin-bottom: 9px;
+
       cursor: pointer;
+
     }
 
-    .gestor-card:hover {
-      box-shadow: 0 5px 15px rgba(0,0,0,.06);
+
+    .gestor-name-row {
+
+      display: flex;
+
+      justify-content: space-between;
+
+      align-items: center;
+
+      gap: 10px;
+
     }
+
 
     .gestor-name {
-      font-weight: 700;
+
       color: var(--team-text);
+
       font-size: 14px;
+
+      font-weight: 700;
+
     }
+
 
     .gestor-info {
-      font-size: 12px;
+
       color: #607d8b;
+
+      font-size: 12px;
+
       margin-top: 5px;
+
     }
 
-    /* =========================
+
+    .presence-mini {
+
+      display: inline-flex;
+
+      align-items: center;
+
+      gap: 5px;
+
+      padding: 4px 7px;
+
+      border-radius: 20px;
+
+      background: rgba(255,255,255,.7);
+
+      border: 1px solid rgba(0,0,0,.06);
+
+      font-size: 10px;
+
+      font-weight: 700;
+
+      white-space: nowrap;
+
+    }
+
+
+    /* ========================================
        CHAT
-    ========================= */
+    ======================================== */
 
     .chat-panel {
+
       flex: 1;
-      display: flex;
-      flex-direction: column;
+
       min-width: 0;
+
+      display: flex;
+
+      flex-direction: column;
+
       background: #f7f9fa;
+
     }
+
 
     .chat-empty {
+
       flex: 1;
+
       display: flex;
+
       align-items: center;
+
       justify-content: center;
-      color: #90a4ae;
+
       text-align: center;
+
+      color: #90a4ae;
+
       padding: 30px;
+
     }
+
 
     .chat-empty strong {
+
       display: block;
+
       color: #607d8b;
+
       margin-bottom: 7px;
-      font-size: 16px;
+
     }
+
 
     .chat-header {
+
       background: white;
-      border-bottom: 1px solid #e1e5e8;
+
+      border-bottom: 1px solid #e0e5e8;
+
       padding: 15px 20px;
+
     }
+
 
     .chat-client-name {
+
       font-size: 17px;
+
       font-weight: 700;
-      color: #263238;
+
     }
+
 
     .chat-client-details {
+
       display: flex;
+
       flex-wrap: wrap;
-      gap: 13px;
+
+      gap: 12px;
+
       margin-top: 7px;
-      font-size: 12px;
+
       color: #607d8b;
-    }
 
-    .chat-actions {
-      margin-top: 12px;
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .action-button {
-      border: 1px solid #d9dfe3;
-      background: white;
-      border-radius: 7px;
-      padding: 8px 11px;
       font-size: 12px;
-      color: #455a64;
+
     }
 
-    .action-button:hover {
-      background: #f5f7f8;
-    }
-
-    .action-button.primary {
-      background: #263238;
-      color: white;
-      border-color: #263238;
-    }
-
-    .action-button.danger {
-      color: #b71c1c;
-      border-color: #efc4c4;
-    }
-
-    .action-button.danger:hover {
-      background: #fff5f5;
-    }
-
-    .messages {
-      flex: 1;
-      overflow-y: auto;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .message {
-      max-width: 72%;
-      padding: 10px 12px;
-      border-radius: 10px;
-      font-size: 13px;
-      line-height: 1.45;
-      white-space: pre-wrap;
-    }
-
-    .message.client {
-      align-self: flex-start;
-      background: white;
-      border: 1px solid #e3e7ea;
-    }
-
-    .message.staff {
-      align-self: flex-end;
-      background: #e7ecef;
-      color: #263238;
-    }
-
-    .message-meta {
-      margin-top: 5px;
-      font-size: 10px;
-      color: #90a4ae;
-    }
-
-    .chat-input-area {
-      background: white;
-      border-top: 1px solid #e1e5e8;
-      padding: 12px;
-      display: flex;
-      gap: 8px;
-    }
-
-    .chat-input {
-      flex: 1;
-      border: 1px solid #dce1e5;
-      border-radius: 8px;
-      padding: 11px;
-      resize: none;
-      height: 45px;
-      outline: none;
-      font-size: 13px;
-    }
-
-    .send-button {
-      border: 0;
-      background: #263238;
-      color: white;
-      border-radius: 8px;
-      padding: 0 18px;
-      font-weight: 700;
-    }
-
-    /* =========================
-       MODAL
-    ========================= */
-
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(30, 40, 45, .45);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 100;
-      padding: 20px;
-    }
-
-    .modal {
-      width: 450px;
-      max-width: 100%;
-      background: white;
-      border-radius: 14px;
-      padding: 22px;
-      box-shadow: 0 20px 60px rgba(0,0,0,.2);
-    }
-
-    .modal h3 {
-      margin: 0 0 18px;
-      font-size: 17px;
-    }
-
-    .modal label {
-      display: block;
-      font-size: 12px;
-      font-weight: 700;
-      color: #546e7a;
-      margin-bottom: 6px;
-    }
-
-    .modal select {
-      width: 100%;
-      border: 1px solid #dce1e5;
-      border-radius: 8px;
-      padding: 10px;
-      margin-bottom: 15px;
-      outline: none;
-    }
-
-    .modal-buttons {
-      display: flex;
-      justify-content: flex-end;
-      gap: 8px;
-      margin-top: 10px;
-    }
-
-    /* =========================
-       INFO FICHA
-    ========================= */
 
     .client-info-box {
-      margin-top: 12px;
-      background: #f8fafb;
-      border: 1px solid #e5e9ec;
-      border-radius: 9px;
-      padding: 10px;
+
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 7px 15px;
-      font-size: 11px;
+
+      grid-template-columns:
+        repeat(3, minmax(0,1fr));
+
+      gap: 8px;
+
+      margin-top: 12px;
+
+      padding: 10px;
+
+      border: 1px solid #e5e9ec;
+
+      border-radius: 9px;
+
+      background: #f8fafb;
+
       color: #607d8b;
+
+      font-size: 11px;
+
     }
+
 
     .client-info-box strong {
+
       color: #455a64;
+
     }
+
+
+    .chat-actions {
+
+      display: flex;
+
+      flex-wrap: wrap;
+
+      gap: 8px;
+
+      margin-top: 11px;
+
+    }
+
+
+    .action-button {
+
+      border: 1px solid #d9dfe3;
+
+      background: white;
+
+      color: #455a64;
+
+      border-radius: 7px;
+
+      padding: 8px 11px;
+
+      font-size: 12px;
+
+    }
+
+
+    .action-button.primary {
+
+      background: #263238;
+
+      border-color: #263238;
+
+      color: white;
+
+    }
+
+
+    .action-button.danger {
+
+      color: #b71c1c;
+
+      border-color: #efc4c4;
+
+    }
+
+
+    .messages {
+
+      flex: 1;
+
+      overflow-y: auto;
+
+      padding: 20px;
+
+      display: flex;
+
+      flex-direction: column;
+
+      gap: 10px;
+
+    }
+
+
+    .message {
+
+      max-width: 72%;
+
+      padding: 10px 12px;
+
+      border-radius: 10px;
+
+      font-size: 13px;
+
+      line-height: 1.45;
+
+      white-space: pre-wrap;
+
+    }
+
+
+    .message.client {
+
+      align-self: flex-start;
+
+      background: white;
+
+      border: 1px solid #e1e6e9;
+
+    }
+
+
+    .message.staff {
+
+      align-self: flex-end;
+
+      background: #e7ecef;
+
+    }
+
+
+    .message-meta {
+
+      margin-top: 5px;
+
+      color: #90a4ae;
+
+      font-size: 10px;
+
+    }
+
+
+    .chat-input-area {
+
+      display: flex;
+
+      gap: 8px;
+
+      padding: 12px;
+
+      background: white;
+
+      border-top: 1px solid #e0e5e8;
+
+    }
+
+
+    .chat-input {
+
+      flex: 1;
+
+      height: 45px;
+
+      resize: none;
+
+      border: 1px solid #dce2e5;
+
+      border-radius: 8px;
+
+      padding: 11px;
+
+      outline: none;
+
+      font-size: 13px;
+
+    }
+
+
+    .send-button {
+
+      border: 0;
+
+      background: #263238;
+
+      color: white;
+
+      border-radius: 8px;
+
+      padding: 0 18px;
+
+      font-weight: 700;
+
+    }
+
 
     .readonly-banner {
+
+      display: none;
+
       padding: 9px 20px;
+
       background: #f1f3f5;
+
       border-bottom: 1px solid #dfe3e6;
+
       color: #607d8b;
+
       font-size: 12px;
+
     }
+
+
+    /* ========================================
+       MODAL
+    ======================================== */
+
+    .modal-overlay {
+
+      position: fixed;
+
+      inset: 0;
+
+      display: none;
+
+      align-items: center;
+
+      justify-content: center;
+
+      padding: 20px;
+
+      background: rgba(30,40,45,.45);
+
+      z-index: 100;
+
+    }
+
+
+    .modal {
+
+      width: 470px;
+
+      max-width: 100%;
+
+      background: white;
+
+      border-radius: 14px;
+
+      padding: 22px;
+
+      box-shadow:
+        0 20px 60px rgba(0,0,0,.2);
+
+    }
+
+
+    .modal h3 {
+
+      margin: 0 0 18px;
+
+      font-size: 17px;
+
+    }
+
+
+    .modal label {
+
+      display: block;
+
+      margin-bottom: 6px;
+
+      color: #546e7a;
+
+      font-size: 12px;
+
+      font-weight: 700;
+
+    }
+
+
+    .modal select {
+
+      width: 100%;
+
+      padding: 10px;
+
+      margin-bottom: 15px;
+
+      border: 1px solid #dce2e5;
+
+      border-radius: 8px;
+
+      outline: none;
+
+    }
+
+
+    .modal-buttons {
+
+      display: flex;
+
+      justify-content: flex-end;
+
+      gap: 8px;
+
+      margin-top: 8px;
+
+    }
+
+
+    /* ========================================
+       PRESENCIA MODAL
+    ======================================== */
+
+    .presence-menu {
+
+      display: none;
+
+      position: absolute;
+
+      top: 58px;
+
+      right: 0;
+
+      width: 190px;
+
+      padding: 7px;
+
+      background: white;
+
+      border: 1px solid #e0e5e8;
+
+      border-radius: 10px;
+
+      box-shadow:
+        0 10px 30px rgba(0,0,0,.12);
+
+      z-index: 80;
+
+    }
+
+
+    .presence-menu button {
+
+      width: 100%;
+
+      border: 0;
+
+      background: white;
+
+      padding: 9px;
+
+      text-align: left;
+
+      border-radius: 7px;
+
+      font-size: 12px;
+
+      color: #455a64;
+
+    }
+
+
+    .presence-menu button:hover {
+
+      background: #f4f6f7;
+
+    }
+
+
+    .presence-wrapper {
+
+      position: relative;
+
+    }
+
+
+    /* ========================================
+       EMPTY
+    ======================================== */
 
     .empty-list {
-      text-align: center;
-      color: #90a4ae;
-      font-size: 13px;
+
       padding: 35px 15px;
+
+      text-align: center;
+
+      color: #90a4ae;
+
+      font-size: 13px;
+
     }
 
-    @media (max-width: 900px) {
+
+    .section-title {
+
+      padding: 7px 4px 9px;
+
+      color: #78909c;
+
+      font-size: 11px;
+
+      font-weight: 800;
+
+      letter-spacing: .3px;
+
+    }
+
+
+    /* ========================================
+       RESPONSIVE
+    ======================================== */
+
+    @media (max-width: 1100px) {
+
       .sidebar {
-        width: 210px;
+        width: 225px;
       }
 
       .list-panel {
-        width: 330px;
+        width: 350px;
       }
+
+      .client-info-box {
+        grid-template-columns:
+          repeat(2, minmax(0,1fr));
+      }
+
     }
+
+
+    @media (max-width: 850px) {
+
+      .topbar {
+        align-items: flex-start;
+      }
+
+      .topbar-right {
+        flex-direction: column;
+        gap: 5px;
+      }
+
+      .presence-box {
+        display: none;
+      }
+
+    }
+
   </style>
+
 </head>
+
 
 <body>
 
-  <!-- =========================
+
+  <!-- ========================================
        LOGIN
-  ========================== -->
+  ======================================== -->
 
   <div id="loginScreen">
 
     <div class="login-box">
 
       <div class="login-brand">
-        EstudioMansillaGarzonAsociados
+        Estudio Mansilla Garzon y Asociados
       </div>
 
       <div class="login-subtitle">
         Centro de Atención
       </div>
 
+
       <input
-        type="email"
         id="email"
+        type="email"
         placeholder="Correo electrónico"
         autocomplete="username"
       >
 
+
       <input
-        type="password"
         id="password"
+        type="password"
         placeholder="Contraseña"
         autocomplete="current-password"
       >
 
-      <button class="login-button" id="loginButton">
+
+      <button
+        id="loginButton"
+        class="login-button"
+      >
         Ingresar
       </button>
+
 
       <div id="loginError"></div>
 
@@ -758,22 +1579,26 @@
   </div>
 
 
-  <!-- =========================
+  <!-- ========================================
        APP
-  ========================== -->
+  ======================================== -->
 
   <div id="app">
 
     <div class="layout">
 
-      <!-- SIDEBAR -->
+
+      <!-- ======================================
+           SIDEBAR
+      ======================================= -->
 
       <aside class="sidebar">
+
 
         <div class="brand">
 
           <div class="brand-name">
-            EstudioMansillaGarzonAsociados
+            Estudio Mansilla Garzon y Asociados
           </div>
 
           <div class="brand-subtitle">
@@ -786,15 +1611,15 @@
         <div class="user-welcome">
 
           <div
-            class="welcome-text"
             id="welcomeText"
+            class="welcome-text"
           >
             Bienvenido/a
           </div>
 
           <div
-            class="user-role"
             id="userRole"
+            class="user-role"
           ></div>
 
         </div>
@@ -802,52 +1627,73 @@
 
         <nav class="menu">
 
+
           <button
             id="btnPrincipal"
             class="active"
           >
-            <span>🏠 Principal</span>
+
+            <span>
+              🏠 Principal
+            </span>
+
             <span
-              class="menu-badge"
               id="badgePrincipal"
-            >0</span>
+              class="menu-badge"
+            >
+              0
+            </span>
+
           </button>
 
 
           <button id="btnAgentes">
 
-            <span>👥 Agentes</span>
+            <span>
+              👥 Agentes
+            </span>
 
             <span
-              class="menu-badge"
               id="badgeAgentes"
-            >0</span>
+              class="menu-badge"
+            >
+              0
+            </span>
 
           </button>
 
 
           <button id="btnSinAsignar">
 
-            <span>📥 Sin asignar</span>
+            <span>
+              📥 Sin asignar
+            </span>
 
             <span
-              class="menu-badge"
               id="badgeSinAsignar"
-            >0</span>
+              class="menu-badge"
+            >
+              0
+            </span>
 
           </button>
 
 
           <button id="btnHistorial">
 
-            <span>🗂️ Historial</span>
+            <span>
+              🗂️ Historial
+            </span>
 
             <span
-              class="menu-badge"
               id="badgeHistorial"
-            >0</span>
+              class="menu-badge"
+            >
+              0
+            </span>
 
           </button>
+
 
         </nav>
 
@@ -855,8 +1701,8 @@
         <div class="sidebar-bottom">
 
           <button
-            class="logout-button"
             id="logoutButton"
+            class="logout-button"
           >
             Cerrar sesión
           </button>
@@ -866,24 +1712,28 @@
       </aside>
 
 
-      <!-- MAIN -->
+      <!-- ======================================
+           MAIN
+      ======================================= -->
 
       <main class="main">
 
+
         <header class="topbar">
+
 
           <div>
 
             <div
-              class="page-title"
               id="pageTitle"
+              class="page-title"
             >
               Principal
             </div>
 
             <div
-              class="page-subtitle"
               id="pageSubtitle"
+              class="page-subtitle"
             >
               Tus conversaciones activas
             </div>
@@ -891,45 +1741,150 @@
           </div>
 
 
-          <div
-            class="current-user"
-            id="currentUser"
-          ></div>
+          <div class="topbar-right">
+
+
+            <!-- RELOJ -->
+
+            <div class="clock-box">
+
+              <div
+                id="clockTime"
+                class="clock-time"
+              >
+                00:00:00
+              </div>
+
+              <div
+                id="clockDate"
+                class="clock-date"
+              >
+              </div>
+
+            </div>
+
+
+            <!-- PRESENCIA -->
+
+            <div class="presence-wrapper">
+
+
+              <div class="presence-box">
+
+
+                <div class="presence-status">
+
+                  <span
+                    id="presenceDot"
+                    class="presence-dot fuera"
+                  ></span>
+
+                  <span id="presenceText">
+                    Fuera
+                  </span>
+
+                </div>
+
+
+                <button
+                  id="presenceMainButton"
+                  class="presence-button start"
+                >
+                  Iniciar jornada
+                </button>
+
+
+                <button
+                  id="presenceOptionsButton"
+                  class="presence-button"
+                  style="display:none;"
+                >
+                  Estado
+                </button>
+
+
+              </div>
+
+
+              <div
+                id="presenceMenu"
+                class="presence-menu"
+              >
+
+                <button
+                  id="setActivo"
+                >
+                  🟢 Activo
+                </button>
+
+                <button
+                  id="setBreak"
+                >
+                  🟡 Break
+                </button>
+
+                <button
+                  id="setDescanso"
+                >
+                  🔵 Descanso
+                </button>
+
+                <button
+                  id="finishDay"
+                >
+                  🔴 Finalizar jornada
+                </button>
+
+              </div>
+
+            </div>
+
+
+          </div>
+
 
         </header>
 
 
+        <!-- ====================================
+             CONTENT
+        ===================================== -->
+
         <div class="content">
+
 
           <!-- LISTA -->
 
           <section class="list-panel">
 
+
             <div class="list-header">
 
+
               <div
-                class="list-header-title"
                 id="listHeaderTitle"
+                class="list-header-title"
               >
-                Conversaciones
+                Mis clientes
               </div>
 
+
               <input
-                type="text"
                 id="searchInput"
                 class="search-box"
+                type="text"
                 placeholder="Buscar cliente, DNI o teléfono..."
               >
+
 
             </div>
 
 
             <div
-              class="list"
               id="listContainer"
-            >
+              class="list"
+            ></div>
 
-            </div>
 
           </section>
 
@@ -938,9 +1893,10 @@
 
           <section class="chat-panel">
 
+
             <div
-              class="chat-empty"
               id="chatEmpty"
+              class="chat-empty"
             >
 
               <div>
@@ -949,8 +1905,8 @@
                   Seleccioná una conversación
                 </strong>
 
-                Elegí un cliente de la lista para ver
-                la información y gestionar el chat.
+                Elegí un cliente de la lista para
+                ver su ficha y gestionar el chat.
 
               </div>
 
@@ -959,33 +1915,38 @@
 
             <div
               id="chatContainer"
-              style="display:none; height:100%; flex-direction:column;"
+              style="
+                display:none;
+                height:100%;
+                flex-direction:column;
+              "
             >
 
+
               <div
-                class="chat-header"
                 id="chatHeader"
+                class="chat-header"
               ></div>
 
 
               <div
-                class="readonly-banner"
                 id="readonlyBanner"
-                style="display:none;"
+                class="readonly-banner"
               >
-                Esta gestión está finalizada y es de solo lectura.
+                Esta gestión está finalizada y es
+                de solo lectura.
               </div>
 
 
               <div
-                class="messages"
                 id="messagesContainer"
+                class="messages"
               ></div>
 
 
               <div
-                class="chat-input-area"
                 id="chatInputArea"
+                class="chat-input-area"
               >
 
                 <textarea
@@ -994,20 +1955,25 @@
                   placeholder="Escribí un mensaje..."
                 ></textarea>
 
+
                 <button
-                  class="send-button"
                   id="sendButton"
+                  class="send-button"
                 >
                   Enviar
                 </button>
 
               </div>
 
+
             </div>
+
 
           </section>
 
+
         </div>
+
 
       </main>
 
@@ -1016,16 +1982,17 @@
   </div>
 
 
-  <!-- =========================
+  <!-- ========================================
        TRANSFER MODAL
-  ========================== -->
+  ======================================== -->
 
   <div
-    class="modal-overlay"
     id="transferModal"
+    class="modal-overlay"
   >
 
     <div class="modal">
+
 
       <h3>
         Asignar / transferir conversación
@@ -1036,6 +2003,7 @@
         Equipo
       </label>
 
+
       <select id="transferTeam"></select>
 
 
@@ -1043,41 +2011,48 @@
         Gestor
       </label>
 
+
       <select id="transferAgent"></select>
 
 
       <div class="modal-buttons">
 
+
         <button
-          class="action-button"
           id="cancelTransfer"
+          class="action-button"
         >
           Cancelar
         </button>
 
+
         <button
-          class="action-button primary"
           id="confirmTransfer"
+          class="action-button primary"
         >
           Guardar
         </button>
 
+
       </div>
+
 
     </div>
 
   </div>
 
 
-  <!-- =========================
+  <!-- ========================================
        FIREBASE
-  ========================== -->
+  ======================================== -->
 
   <script type="module">
 
+
     import {
       initializeApp
-    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    } from
+      "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
 
     import {
@@ -1085,7 +2060,8 @@
       signInWithEmailAndPassword,
       onAuthStateChanged,
       signOut
-    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    } from
+      "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 
     import {
@@ -1094,16 +2070,18 @@
       onValue,
       push,
       update
-    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+    } from
+      "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 
-    /* =========================
-       FIREBASE CONFIG
-    ========================== */
+    /* ========================================
+       FIREBASE
+    ======================================== */
 
     const firebaseConfig = {
 
-      apiKey: "AIzaSyBIwTvMk2FPGWMAjnqGdQg6up_D6ofUo_I",
+      apiKey:
+        "AIzaSyBIwTvMk2FPGWMAjnqGdQg6up_D6ofUo_I",
 
       authDomain:
         "estudiomansilla.firebaseapp.com",
@@ -1125,6 +2103,7 @@
 
       measurementId:
         "G-8710S26Z8L"
+
     };
 
 
@@ -1140,9 +2119,9 @@
       getDatabase(app);
 
 
-    /* =========================
+    /* ========================================
        PERFILES
-    ========================== */
+    ======================================== */
 
     const perfiles = {
 
@@ -1175,12 +2154,13 @@
       "Florencia": "asesor",
       "Valentina": "asesor",
       "Marcela": "asesor"
+
     };
 
 
-    /* =========================
+    /* ========================================
        EQUIPOS
-    ========================== */
+    ======================================== */
 
     const equipos = {
 
@@ -1272,9 +2252,9 @@
     };
 
 
-    /* =========================
+    /* ========================================
        EMAILS
-    ========================== */
+    ======================================== */
 
     const emailsPorNombre = {
 
@@ -1332,9 +2312,9 @@
     };
 
 
-    /* =========================
+    /* ========================================
        VARIABLES
-    ========================== */
+    ======================================== */
 
     let usuarioActual = null;
 
@@ -1344,16 +2324,20 @@
 
     let conversaciones = {};
 
+    let presencias = {};
+
     let modoActual = "principal";
 
     let conversacionSeleccionada = null;
 
     let gestorSeleccionado = null;
 
+    let relojInterval = null;
 
-    /* =========================
+
+    /* ========================================
        ELEMENTOS
-    ========================== */
+    ======================================== */
 
     const loginScreen =
       document.getElementById("loginScreen");
@@ -1378,9 +2362,6 @@
 
     const userRole =
       document.getElementById("userRole");
-
-    const currentUser =
-      document.getElementById("currentUser");
 
     const pageTitle =
       document.getElementById("pageTitle");
@@ -1430,15 +2411,58 @@
     const transferAgent =
       document.getElementById("transferAgent");
 
+    const clockTime =
+      document.getElementById("clockTime");
 
-    /* =========================
+    const clockDate =
+      document.getElementById("clockDate");
+
+    const presenceDot =
+      document.getElementById("presenceDot");
+
+    const presenceText =
+      document.getElementById("presenceText");
+
+    const presenceMainButton =
+      document.getElementById("presenceMainButton");
+
+    const presenceOptionsButton =
+      document.getElementById("presenceOptionsButton");
+
+    const presenceMenu =
+      document.getElementById("presenceMenu");
+
+
+    /* ========================================
+       ESCAPE
+    ======================================== */
+
+    function escapeHtml(valor) {
+
+      return String(valor ?? "")
+
+        .replace(/&/g, "&amp;")
+
+        .replace(/</g, "&lt;")
+
+        .replace(/>/g, "&gt;")
+
+        .replace(/"/g, "&quot;")
+
+        .replace(/'/g, "&#039;");
+
+    }
+
+
+    /* ========================================
        SALUDO
-    ========================== */
+    ======================================== */
 
     function obtenerSaludo() {
 
       const hora =
         new Date().getHours();
+
 
       if (hora >= 5 && hora < 12) {
 
@@ -1446,11 +2470,13 @@
 
       }
 
+
       if (hora >= 12 && hora < 19) {
 
         return "¡Buenas tardes";
 
       }
+
 
       return "¡Buenas noches";
 
@@ -1462,18 +2488,71 @@
       welcomeText.textContent =
         `${obtenerSaludo()}, ${nombreActual}! 👋`;
 
-      currentUser.textContent =
-        nombreActual;
-
       userRole.textContent =
         rolActual;
 
     }
 
 
-    /* =========================
+    /* ========================================
+       RELOJ
+    ======================================== */
+
+    function actualizarReloj() {
+
+      const ahora =
+        new Date();
+
+
+      clockTime.textContent =
+        ahora.toLocaleTimeString(
+          "es-AR",
+          {
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit"
+          }
+        );
+
+
+      clockDate.textContent =
+        ahora.toLocaleDateString(
+          "es-AR",
+          {
+            weekday: "long",
+            day: "2-digit",
+            month: "long",
+            year: "numeric"
+          }
+        );
+
+    }
+
+
+    function iniciarReloj() {
+
+      actualizarReloj();
+
+
+      if (relojInterval) {
+
+        clearInterval(relojInterval);
+
+      }
+
+
+      relojInterval =
+        setInterval(
+          actualizarReloj,
+          1000
+        );
+
+    }
+
+
+    /* ========================================
        ROLES
-    ========================== */
+    ======================================== */
 
     function esSupervisor() {
 
@@ -1496,21 +2575,29 @@
     }
 
 
-    /* =========================
-       EQUIPO DE UNA PERSONA
-    ========================== */
+    /* ========================================
+       EQUIPO
+    ======================================== */
 
     function obtenerEquipoDePersona(nombre) {
 
       if (!nombre) {
+
         return null;
+
       }
 
-      for (const equipo in equipos) {
+
+      for (
+        const equipo in equipos
+      ) {
 
         if (
+
           equipos[equipo].seniors.includes(nombre) ||
+
           equipos[equipo].gestores.includes(nombre)
+
         ) {
 
           return equipo;
@@ -1519,14 +2606,15 @@
 
       }
 
+
       return null;
 
     }
 
 
-    /* =========================
+    /* ========================================
        DATOS CLIENTE
-    ========================== */
+    ======================================== */
 
     function obtenerDatosCliente(c) {
 
@@ -1540,11 +2628,18 @@
       const datos =
         obtenerDatosCliente(c);
 
+
       const nombre =
-        String(datos.nombre || "").trim();
+        String(
+          datos.nombre || ""
+        ).trim();
+
 
       const dni =
-        String(datos.dni || "").trim();
+        String(
+          datos.dni || ""
+        ).trim();
+
 
       if (nombre) {
 
@@ -1552,26 +2647,31 @@
 
       }
 
+
       if (dni) {
 
         return `Cliente · DNI ${dni}`;
 
       }
 
+
       return "Cliente sin identificar";
 
     }
 
 
-    /* =========================
-       FECHAS
-    ========================== */
+    /* ========================================
+       TIMESTAMP
+    ======================================== */
 
     function obtenerTimestamp(valor) {
 
       if (!valor) {
-        return null;
+
+        return 0;
+
       }
+
 
       if (
         typeof valor === "number"
@@ -1580,6 +2680,7 @@
         return valor;
 
       }
+
 
       if (
         typeof valor === "object" &&
@@ -1590,12 +2691,14 @@
 
       }
 
-      const fecha =
+
+      const resultado =
         new Date(valor).getTime();
 
-      return Number.isNaN(fecha)
-        ? null
-        : fecha;
+
+      return Number.isNaN(resultado)
+        ? 0
+        : resultado;
 
     }
 
@@ -1605,25 +2708,199 @@
       const timestamp =
         obtenerTimestamp(valor);
 
+
       if (!timestamp) {
+
         return "Sin fecha";
+
       }
 
+
       return new Date(timestamp)
-        .toLocaleString("es-AR", {
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit"
-        });
+        .toLocaleString(
+          "es-AR",
+          {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit"
+          }
+        );
 
     }
 
 
-    /* =========================
-       EQUIPO DE CONVERSACION
-    ========================== */
+    /* ========================================
+       ESTADO CONVERSACION
+    ======================================== */
+
+    function esFinalizada(c) {
+
+      const estado =
+        String(
+          c?.estado || ""
+        ).toLowerCase();
+
+
+      return (
+
+        estado === "finalizada" ||
+
+        estado === "finalizado" ||
+
+        estado === "cerrada" ||
+
+        estado === "cerrado" ||
+
+        estado === "terminada" ||
+
+        estado === "terminado"
+
+      );
+
+    }
+
+
+    function conversacionesActivas() {
+
+      return Object.entries(
+        conversaciones || {}
+      )
+
+      .map(
+        ([id, c]) => ({
+          id,
+          ...c
+        })
+      )
+
+      .filter(
+        c => !esFinalizada(c)
+      );
+
+    }
+
+
+    function conversacionesFinalizadas() {
+
+      return Object.entries(
+        conversaciones || {}
+      )
+
+      .map(
+        ([id, c]) => ({
+          id,
+          ...c
+        })
+      )
+
+      .filter(
+        c => esFinalizada(c)
+      );
+
+    }
+
+
+    /* ========================================
+       GESTOR
+    ======================================== */
+
+    function obtenerNombreGestor(c) {
+
+      /*
+        IMPORTANTE:
+
+        Revisamos varios nombres posibles
+        porque Firebase puede tener chats
+        creados con estructuras anteriores.
+      */
+
+      const posibles = [
+
+        c?.gestor,
+
+        c?.gestorAsignado,
+
+        c?.asesorAsignado,
+
+        c?.asesor,
+
+        c?.usuarioAsignado,
+
+        c?.asignadoA
+
+      ];
+
+
+      for (
+        const valor of posibles
+      ) {
+
+        if (
+          valor !== undefined &&
+          valor !== null &&
+          String(valor).trim() !== ""
+        ) {
+
+          return String(valor).trim();
+
+        }
+
+      }
+
+
+      return null;
+
+    }
+
+
+    /* ========================================
+       EMAIL DEL ASESOR
+    ======================================== */
+
+    function obtenerEmailAsignado(c) {
+
+      const posibles = [
+
+        c?.asesorEmail,
+
+        c?.gestorEmail,
+
+        c?.usuarioEmail,
+
+        c?.asignadoEmail
+
+      ];
+
+
+      for (
+        const valor of posibles
+      ) {
+
+        if (
+          valor !== undefined &&
+          valor !== null &&
+          String(valor).trim() !== ""
+        ) {
+
+          return String(valor)
+            .trim()
+            .toLowerCase();
+
+        }
+
+      }
+
+
+      return null;
+
+    }
+
+
+    /* ========================================
+       EQUIPO CONVERSACION
+    ======================================== */
 
     function obtenerEquipoConversacion(c) {
 
@@ -1635,13 +2912,18 @@
 
         c?.equipoAsignado,
 
+        c?.teamAsignado,
+
         c?.datosCliente?.equipo,
 
         c?.datosCliente?.team
 
       ];
 
-      for (const valor of posibles) {
+
+      for (
+        const valor of posibles
+      ) {
 
         if (
           valor &&
@@ -1656,65 +2938,265 @@
 
 
       const gestor =
-        c?.gestor ||
-        c?.gestorAsignado ||
-        c?.asesorAsignado ||
-        c?.asesor;
+        obtenerNombreGestor(c);
+
 
       if (gestor) {
 
-        return obtenerEquipoDePersona(gestor);
+        const equipo =
+          obtenerEquipoDePersona(gestor);
+
+
+        if (equipo) {
+
+          return equipo;
+
+        }
 
       }
 
 
       const email =
-        c?.asesorEmail;
+        obtenerEmailAsignado(c);
+
 
       if (email) {
 
         const persona =
-          emailsPorNombre[
-            String(email).toLowerCase()
-          ];
+          emailsPorNombre[email];
+
 
         if (persona) {
 
-          return obtenerEquipoDePersona(persona);
+          return obtenerEquipoDePersona(
+            persona
+          );
 
         }
 
       }
+
 
       return null;
 
     }
 
 
-    function obtenerNombreGestor(c) {
+    /* ========================================
+       SIN ASIGNAR
+    ======================================== */
+
+    function estaSinAsignar(c) {
+
+      const gestor =
+        obtenerNombreGestor(c);
+
+
+      const email =
+        obtenerEmailAsignado(c);
+
+
+      /*
+        Un chat está sin asignar si NO
+        tiene gestor Y tampoco tiene
+        email de asesor asignado.
+      */
 
       return (
-        c?.gestor ||
-        c?.gestorAsignado ||
-        c?.asesorAsignado ||
-        c?.asesor ||
-        null
+        !gestor &&
+        !email
       );
 
     }
 
 
-    /* =========================
-       EQUIPO CSS
-    ========================== */
+    function conversacionesSinAsignar() {
 
-    function claseEquipo(equipo) {
+      return conversacionesActivas()
+        .filter(
+          c => estaSinAsignar(c)
+        );
+
+    }
+
+
+    /* ========================================
+       VISIBILIDAD POR EQUIPO
+    ======================================== */
+
+    function puedeVerPorEquipo(c) {
+
+      if (esSupervisor()) {
+
+        return true;
+
+      }
+
+
+      const equipo =
+        obtenerEquipoConversacion(c);
+
+
+      /*
+        Si no hay equipo:
+
+        - Un senior puede verlo para
+          poder rescatar/asignar el chat.
+        - Un asesor no lo puede ver.
+
+        Esto evita que un chat sin
+        información de equipo desaparezca.
+      */
 
       if (!equipo) {
 
-        return "team-sin-asignar";
+        if (esSenior()) {
+
+          return true;
+
+        }
+
+        return false;
 
       }
+
+
+      if (esSenior()) {
+
+        return equipos[equipo]
+          ?.seniors
+          ?.includes(nombreActual)
+          || false;
+
+      }
+
+
+      if (esAsesor()) {
+
+        return equipos[equipo]
+          ?.gestores
+          ?.includes(nombreActual)
+          || false;
+
+      }
+
+
+      return false;
+
+    }
+
+
+    /* ========================================
+       CHAT MIO
+    ======================================== */
+
+    function conversacionEsMia(c) {
+
+      if (esSupervisor()) {
+
+        return true;
+
+      }
+
+
+      const gestor =
+        obtenerNombreGestor(c);
+
+
+      if (
+        gestor &&
+        gestor === nombreActual
+      ) {
+
+        return true;
+
+      }
+
+
+      const email =
+        obtenerEmailAsignado(c);
+
+
+      if (email) {
+
+        const persona =
+          emailsPorNombre[email];
+
+
+        if (
+          persona &&
+          persona === nombreActual
+        ) {
+
+          return true;
+
+        }
+
+      }
+
+
+      return false;
+
+    }
+
+
+    /* ========================================
+       PUEDE GESTIONAR
+    ======================================== */
+
+    function puedeGestionarConversacion(
+      c,
+      modo
+    ) {
+
+      if (esSupervisor()) {
+
+        return true;
+
+      }
+
+
+      if (modo === "historial") {
+
+        return false;
+
+      }
+
+
+      if (
+        esSenior() &&
+        modo === "sinAsignar"
+      ) {
+
+        return puedeVerPorEquipo(c);
+
+      }
+
+
+      if (esSenior()) {
+
+        return puedeVerPorEquipo(c);
+
+      }
+
+
+      if (esAsesor()) {
+
+        return conversacionEsMia(c);
+
+      }
+
+
+      return false;
+
+    }
+
+
+    /* ========================================
+       COLOR EQUIPO
+    ======================================== */
+
+    function claseEquipo(equipo) {
 
       const mapa = {
 
@@ -1735,234 +3217,16 @@
 
       };
 
-      return mapa[equipo] ||
-        "team-sin-asignar";
+
+      return mapa[equipo]
+        || "team-sin-asignar";
 
     }
 
 
-    /* =========================
-       SIN ASIGNAR
-    ========================== */
-
-    function estaSinAsignar(c) {
-
-      const gestor =
-        obtenerNombreGestor(c);
-
-      const asesorEmail =
-        c?.asesorEmail;
-
-      return (
-        !gestor &&
-        !asesorEmail
-      );
-
-    }
-
-
-    /* =========================
-       EQUIPO VISIBLE
-    ========================== */
-
-    function puedeVerPorEquipo(c) {
-
-      if (esSupervisor()) {
-
-        return true;
-
-      }
-
-      const equipo =
-        obtenerEquipoConversacion(c);
-
-      if (!equipo) {
-
-        return false;
-
-      }
-
-      if (esSenior()) {
-
-        return equipos[equipo]
-          ?.seniors
-          ?.includes(nombreActual) || false;
-
-      }
-
-      if (esAsesor()) {
-
-        return equipos[equipo]
-          ?.gestores
-          ?.includes(nombreActual) || false;
-
-      }
-
-      return false;
-
-    }
-
-
-    /* =========================
-       CONVERSACION MIA
-    ========================== */
-
-    function conversacionEsMia(c) {
-
-      if (esSupervisor()) {
-
-        return true;
-
-      }
-
-      const gestor =
-        obtenerNombreGestor(c);
-
-      if (
-        gestor &&
-        gestor === nombreActual
-      ) {
-
-        return true;
-
-      }
-
-      const email =
-        String(
-          c?.asesorEmail || ""
-        ).toLowerCase();
-
-      const emailPersona =
-        emailsPorNombre[email];
-
-      if (
-        emailPersona &&
-        emailPersona === nombreActual
-      ) {
-
-        return true;
-
-      }
-
-      return false;
-
-    }
-
-
-    /* =========================
-       ACTIVAS / FINALIZADAS
-    ========================== */
-
-    function conversacionesActivas() {
-
-      return Object.entries(
-        conversaciones
-      )
-
-      .map(([id, c]) => ({
-        id,
-        ...c
-      }))
-
-      .filter(c => {
-
-        return (
-          c.estado !== "finalizada" &&
-          c.estado !== "finalizado" &&
-          c.estado !== "cerrada" &&
-          c.estado !== "cerrado"
-        );
-
-      });
-
-    }
-
-
-    function conversacionesFinalizadas() {
-
-      return Object.entries(
-        conversaciones
-      )
-
-      .map(([id, c]) => ({
-        id,
-        ...c
-      }))
-
-      .filter(c => {
-
-        return (
-          c.estado === "finalizada" ||
-          c.estado === "finalizado" ||
-          c.estado === "cerrada" ||
-          c.estado === "cerrado"
-        );
-
-      });
-
-    }
-
-
-    function conversacionesSinAsignar() {
-
-      return conversacionesActivas()
-        .filter(c =>
-          estaSinAsignar(c)
-        );
-
-    }
-
-
-    /* =========================
-       PUEDE GESTIONAR
-    ========================== */
-
-    function puedeGestionarConversacion(
-      c,
-      modo
-    ) {
-
-      if (esSupervisor()) {
-
-        return true;
-
-      }
-
-      if (modo === "historial") {
-
-        return false;
-
-      }
-
-      if (
-        (esSenior() || esSupervisor()) &&
-        modo === "sinAsignar"
-      ) {
-
-        return puedeVerPorEquipo(c);
-
-      }
-
-      if (esSenior()) {
-
-        return puedeVerPorEquipo(c);
-
-      }
-
-      if (esAsesor()) {
-
-        return conversacionEsMia(c);
-
-      }
-
-      return false;
-
-    }
-
-
-    /* =========================
-       FILTRAR BUSQUEDA
-    ========================== */
+    /* ========================================
+       BUSQUEDA
+    ======================================== */
 
     function aplicarBusqueda(lista) {
 
@@ -1971,164 +3235,234 @@
           .trim()
           .toLowerCase();
 
+
       if (!texto) {
 
         return lista;
 
       }
 
-      return lista.filter(c => {
 
-        const datos =
-          obtenerDatosCliente(c);
+      return lista.filter(
+        c => {
 
-        const nombre =
-          String(
-            datos.nombre || ""
-          ).toLowerCase();
+          const datos =
+            obtenerDatosCliente(c);
 
-        const dni =
-          String(
-            datos.dni || ""
-          ).toLowerCase();
 
-        const telefono =
-          String(
-            datos.telefono || ""
-          ).toLowerCase();
+          const nombre =
+            String(
+              datos.nombre || ""
+            ).toLowerCase();
 
-        const motivo =
-          String(
-            datos.motivo || ""
-          ).toLowerCase();
 
-        const gestor =
-          String(
-            obtenerNombreGestor(c) || ""
-          ).toLowerCase();
+          const dni =
+            String(
+              datos.dni || ""
+            ).toLowerCase();
 
-        const equipo =
-          String(
-            obtenerEquipoConversacion(c) || ""
-          ).toLowerCase();
 
-        return (
-          nombre.includes(texto) ||
-          dni.includes(texto) ||
-          telefono.includes(texto) ||
-          motivo.includes(texto) ||
-          gestor.includes(texto) ||
-          equipo.includes(texto)
-        );
+          const telefono =
+            String(
+              datos.telefono || ""
+            ).toLowerCase();
 
-      });
+
+          const motivo =
+            String(
+              datos.motivo || ""
+            ).toLowerCase();
+
+
+          const gestor =
+            String(
+              obtenerNombreGestor(c) || ""
+            ).toLowerCase();
+
+
+          const equipo =
+            String(
+              obtenerEquipoConversacion(c) || ""
+            ).toLowerCase();
+
+
+          return (
+
+            nombre.includes(texto) ||
+
+            dni.includes(texto) ||
+
+            telefono.includes(texto) ||
+
+            motivo.includes(texto) ||
+
+            gestor.includes(texto) ||
+
+            equipo.includes(texto)
+
+          );
+
+        }
+      );
 
     }
 
 
-    /* =========================
+    /* ========================================
        TARJETA CLIENTE
-    ========================== */
+    ======================================== */
 
-    function renderizarTarjetaCliente(c) {
+    function crearTarjetaCliente(c) {
 
       const datos =
         obtenerDatosCliente(c);
 
-      const equipo =
-        obtenerEquipoConversacion(c);
-
-      const gestor =
-        obtenerNombreGestor(c);
 
       const nombre =
         obtenerNombreVisibleCliente(c);
 
-      const div =
-        document.createElement("div");
 
-      div.className =
-        `card ${claseEquipo(equipo)}`;
+      const gestor =
+        obtenerNombreGestor(c);
 
-      const dni =
-        datos.dni
-          ? `<div class="card-row">
-               <span class="card-label">DNI:</span>
-               <span>${escapeHtml(datos.dni)}</span>
-             </div>`
-          : "";
 
-      const telefono =
-        datos.telefono
-          ? `<div class="card-row">
-               <span class="card-label">Teléfono:</span>
-               <span>${escapeHtml(datos.telefono)}</span>
-             </div>`
-          : "";
+      const equipo =
+        obtenerEquipoConversacion(c);
 
-      const motivo =
-        datos.motivo
-          ? `<div class="card-row">
-               <span class="card-label">Motivo:</span>
-               <span>${escapeHtml(datos.motivo)}</span>
-             </div>`
-          : "";
-
-      const fecha =
-        datos.fecha || c.fechaCreacion
-          ? `<div class="card-row">
-               <span class="card-label">Fecha:</span>
-               <span>${formatearFecha(
-                 datos.fecha || c.fechaCreacion
-               )}</span>
-             </div>`
-          : "";
-
-      const gestorHtml =
-        `<div class="card-row">
-           <span class="card-label">Gestor:</span>
-           <span>${escapeHtml(
-             gestor || "Sin asignar"
-           )}</span>
-         </div>`;
-
-      const equipoHtml =
-        `<span class="team-pill">
-          Equipo: ${escapeHtml(
-            equipo || "Sin asignar"
-          )}
-        </span>`;
 
       const estado =
-        c.estado ||
-        "activa";
+        c.estado || "activa";
 
-      div.innerHTML = `
+
+      const card =
+        document.createElement("div");
+
+
+      card.className =
+        `card ${claseEquipo(equipo)}`;
+
+
+      card.innerHTML = `
 
         <div class="card-title">
+
           ${escapeHtml(nombre)}
+
         </div>
 
-        ${dni}
 
-        ${telefono}
+        <div class="card-row">
 
-        ${gestorHtml}
+          <span class="card-label">
+            DNI:
+          </span>
 
-        ${motivo}
+          <span>
+            ${escapeHtml(
+              datos.dni || "No informado"
+            )}
+          </span>
 
-        ${fecha}
+        </div>
 
-        ${equipoHtml}
+
+        <div class="card-row">
+
+          <span class="card-label">
+            Teléfono:
+          </span>
+
+          <span>
+            ${escapeHtml(
+              datos.telefono || "No informado"
+            )}
+          </span>
+
+        </div>
+
+
+        <div class="card-row">
+
+          <span class="card-label">
+            Gestor:
+          </span>
+
+          <span>
+            ${escapeHtml(
+              gestor || "Sin asignar"
+            )}
+          </span>
+
+        </div>
+
+
+        <div class="card-row">
+
+          <span class="card-label">
+            Equipo:
+          </span>
+
+          <span>
+            ${escapeHtml(
+              equipo || "Sin asignar"
+            )}
+          </span>
+
+        </div>
+
+
+        <div class="card-row">
+
+          <span class="card-label">
+            Motivo:
+          </span>
+
+          <span>
+            ${escapeHtml(
+              datos.motivo || "No informado"
+            )}
+          </span>
+
+        </div>
+
+
+        <div class="card-row">
+
+          <span class="card-label">
+            Fecha:
+          </span>
+
+          <span>
+            ${formatearFecha(
+              datos.fecha ||
+              c.fechaCreacion
+            )}
+          </span>
+
+        </div>
+
+
+        <span class="team-pill">
+
+          Equipo:
+          ${escapeHtml(
+            equipo || "Sin asignar"
+          )}
+
+        </span>
+
 
         <span class="status-pill">
-          Estado: ${escapeHtml(estado)}
+
+          Estado:
+          ${escapeHtml(estado)}
+
         </span>
 
       `;
 
 
-      div.addEventListener(
+      card.addEventListener(
         "click",
         () => {
 
@@ -2141,53 +3475,99 @@
       );
 
 
-      return div;
+      return card;
 
     }
 
 
-    /* =========================
+    /* ========================================
        TARJETA GESTOR
-    ========================== */
+    ======================================== */
 
-    function renderizarTarjetaGestor(
-      nombreGestor,
+    function crearTarjetaGestor(
+      nombre,
       equipo,
       cantidad
     ) {
 
-      const div =
+      const card =
         document.createElement("div");
 
-      div.className =
+
+      card.className =
         `gestor-card ${claseEquipo(equipo)}`;
 
-      div.innerHTML = `
 
-        <div class="gestor-name">
-          ${escapeHtml(nombreGestor)}
+      const presencia =
+        presencias[nombre] || {};
+
+
+      const estado =
+        presencia.estado || "fuera";
+
+
+      const estadoTexto =
+        obtenerTextoPresencia(
+          estado
+        );
+
+
+      card.innerHTML = `
+
+        <div class="gestor-name-row">
+
+          <div class="gestor-name">
+
+            ${escapeHtml(nombre)}
+
+          </div>
+
+
+          <div class="presence-mini">
+
+            <span
+              class="presence-dot ${escapeHtml(estado)}"
+            ></span>
+
+            ${escapeHtml(
+              estadoTexto
+            )}
+
+          </div>
+
         </div>
 
-        <div class="gestor-info">
-          Equipo: ${escapeHtml(equipo)}
-        </div>
 
         <div class="gestor-info">
-          Clientes activos: ${cantidad}
+
+          Equipo:
+          ${escapeHtml(
+            equipo || "Sin asignar"
+          )}
+
+        </div>
+
+
+        <div class="gestor-info">
+
+          Clientes activos:
+          ${cantidad}
+
         </div>
 
       `;
 
 
-      div.addEventListener(
+      card.addEventListener(
         "click",
         () => {
 
           gestorSeleccionado =
-            nombreGestor;
+            nombre;
+
 
           renderizarClientesDeGestor(
-            nombreGestor,
+            nombre,
             equipo
           );
 
@@ -2195,30 +3575,63 @@
       );
 
 
-      return div;
+      return card;
 
     }
 
 
-    /* =========================
+    /* ========================================
+       TEXTO PRESENCIA
+    ======================================== */
+
+    function obtenerTextoPresencia(
+      estado
+    ) {
+
+      const mapa = {
+
+        activo: "Activo",
+
+        break: "Break",
+
+        descanso: "Descanso",
+
+        fuera: "Fuera"
+
+      };
+
+
+      return mapa[estado]
+        || "Fuera";
+
+    }
+
+
+    /* ========================================
        PRINCIPAL
-    ========================== */
+    ======================================== */
 
     function renderizarPrincipal() {
 
       pageTitle.textContent =
         "Principal";
 
+
+      searchInput.value =
+        searchInput.value || "";
+
+
       if (esSupervisor()) {
 
         pageSubtitle.textContent =
-          "Gestores y seguimiento de equipos";
+          "Gestores y seguimiento";
 
         listHeaderTitle.textContent =
           "Gestores";
 
         searchInput.placeholder =
           "Buscar gestor...";
+
 
         renderizarGestoresSupervisor();
 
@@ -2230,8 +3643,10 @@
       pageSubtitle.textContent =
         "Tus conversaciones activas";
 
+
       listHeaderTitle.textContent =
         "Mis clientes";
+
 
       searchInput.placeholder =
         "Buscar cliente, DNI o teléfono...";
@@ -2239,9 +3654,10 @@
 
       let lista =
         conversacionesActivas()
-          .filter(c =>
-            !estaSinAsignar(c) &&
-            conversacionEsMia(c)
+          .filter(
+            c =>
+              !estaSinAsignar(c) &&
+              conversacionEsMia(c)
           );
 
 
@@ -2256,35 +3672,17 @@
     }
 
 
-    /* =========================
-       GESTORES SUPERVISOR
-    ========================== */
+    /* ========================================
+       SUPERVISOR
+    ======================================== */
 
     function renderizarGestoresSupervisor() {
 
-      const activos =
-        conversacionesActivas();
-
-      const gestores =
-        new Set();
-
-      activos.forEach(c => {
-
-        const gestor =
-          obtenerNombreGestor(c);
-
-        if (gestor) {
-
-          gestores.add(gestor);
-
-        }
-
-      });
+      listContainer.innerHTML = "";
 
 
-      const listaGestores =
-        Array.from(gestores)
-          .sort();
+      let gestores =
+        obtenerGestoresVisibles();
 
 
       const texto =
@@ -2293,264 +3691,117 @@
           .toLowerCase();
 
 
-      listContainer.innerHTML = "";
+      gestores =
+        gestores.filter(
+          gestor => {
+
+            return (
+              !texto ||
+              gestor.nombre
+                .toLowerCase()
+                .includes(texto)
+            );
+
+          }
+        );
 
 
-      const filtrados =
-        listaGestores.filter(nombre => {
+      if (!gestores.length) {
 
-          return !texto ||
-            nombre
-              .toLowerCase()
-              .includes(texto);
+        listContainer.innerHTML = `
 
-        });
+          <div class="empty-list">
 
-
-      if (!filtrados.length) {
-
-        listContainer.innerHTML =
-          `<div class="empty-list">
             No hay gestores para mostrar.
-           </div>`;
+
+          </div>
+
+        `;
 
         return;
 
       }
 
 
-      filtrados.forEach(nombre => {
-
-        const equipo =
-          obtenerEquipoDePersona(nombre);
-
-        const cantidad =
-          activos.filter(c =>
-            obtenerNombreGestor(c) === nombre
-          ).length;
-
-        listContainer.appendChild(
-          renderizarTarjetaGestor(
-            nombre,
-            equipo || "Sin asignar",
-            cantidad
-          )
-        );
-
-      });
-
-    }
-
-
-    /* =========================
-       CLIENTES DE GESTOR
-    ========================== */
-
-    function renderizarClientesDeGestor(
-      nombreGestor,
-      equipo
-    ) {
-
-      pageTitle.textContent =
-        nombreGestor;
-
-      pageSubtitle.textContent =
-        `Clientes activos · ${equipo}`;
-
-      listHeaderTitle.textContent =
-        `Clientes de ${nombreGestor}`;
-
-      searchInput.placeholder =
-        "Buscar cliente, DNI o teléfono...";
-
-
-      let lista =
-        conversacionesActivas()
-          .filter(c =>
-            obtenerNombreGestor(c) === nombreGestor
-          );
-
-
-      lista =
-        aplicarBusqueda(lista);
-
-
-      renderizarListaClientes(
-        lista
-      );
-
-    }
-
-
-    /* =========================
-       AGENTES
-    ========================== */
-
-    function renderizarAgentes() {
-
-      pageTitle.textContent =
-        "Agentes";
-
-      pageSubtitle.textContent =
-        "Gestores y clientes activos";
-
-      listHeaderTitle.textContent =
-        "Clientes activos";
-
-      searchInput.placeholder =
-        "Buscar cliente, DNI o teléfono...";
-
-
-      const activos =
-        conversacionesActivas()
-          .filter(c => {
-
-            if (estaSinAsignar(c)) {
-
-              return false;
-
-            }
-
-            if (esSupervisor()) {
-
-              return true;
-
-            }
-
-            return puedeVerPorEquipo(c);
-
-          });
-
-
-      const gestores =
-        obtenerGestoresVisibles();
-
-
-      listContainer.innerHTML = "";
-
-
-      if (gestores.length) {
-
-        const titulo =
-          document.createElement("div");
-
-        titulo.style.cssText =
-          "font-size:12px;font-weight:700;color:#78909c;padding:5px 4px 9px;";
-
-        titulo.textContent =
-          `GESTORES (${gestores.length})`;
-
-        listContainer.appendChild(
-          titulo
-        );
-
-
-        gestores.forEach(gestor => {
+      gestores.forEach(
+        gestor => {
 
           const cantidad =
-            activos.filter(c =>
-              obtenerNombreGestor(c) === gestor.nombre
-            ).length;
+            conversacionesActivas()
+              .filter(
+                c =>
+                  obtenerNombreGestor(c)
+                  === gestor.nombre
+              )
+              .length;
+
 
           listContainer.appendChild(
-            renderizarTarjetaGestor(
+
+            crearTarjetaGestor(
+
               gestor.nombre,
+
               gestor.equipo,
+
               cantidad
+
             )
+
           );
 
-        });
-
-      }
-
-
-      const tituloClientes =
-        document.createElement("div");
-
-      tituloClientes.style.cssText =
-        "font-size:12px;font-weight:700;color:#78909c;padding:13px 4px 9px;";
-
-      tituloClientes.textContent =
-        `CLIENTES ACTIVOS (${activos.length})`;
-
-      listContainer.appendChild(
-        tituloClientes
+        }
       );
-
-
-      const filtrados =
-        aplicarBusqueda(activos);
-
-
-      if (!filtrados.length) {
-
-        const vacio =
-          document.createElement("div");
-
-        vacio.className =
-          "empty-list";
-
-        vacio.textContent =
-          "No hay clientes activos para mostrar.";
-
-        listContainer.appendChild(
-          vacio
-        );
-
-        return;
-
-      }
-
-
-      filtrados.forEach(c => {
-
-        listContainer.appendChild(
-          renderizarTarjetaCliente(c)
-        );
-
-      });
 
     }
 
+
+    /* ========================================
+       GESTORES VISIBLES
+    ======================================== */
 
     function obtenerGestoresVisibles() {
 
       const resultado = [];
 
 
-      for (const equipo in equipos) {
+      for (
+        const equipo in equipos
+      ) {
 
         const datos =
           equipos[equipo];
 
-        datos.gestores.forEach(nombre => {
 
-          if (esSupervisor()) {
+        datos.gestores.forEach(
+          nombre => {
 
-            resultado.push({
-              nombre,
-              equipo
-            });
+            if (esSupervisor()) {
 
-            return;
+              resultado.push({
+                nombre,
+                equipo
+              });
+
+              return;
+
+            }
+
+
+            if (
+              datos.seniors
+                .includes(nombreActual)
+            ) {
+
+              resultado.push({
+                nombre,
+                equipo
+              });
+
+            }
 
           }
-
-
-          if (
-            datos.seniors.includes(nombreActual) ||
-            datos.gestores.includes(nombreActual)
-          ) {
-
-            resultado.push({
-              nombre,
-              equipo
-            });
-
-          }
-
-        });
+        );
 
       }
 
@@ -2560,23 +3811,260 @@
     }
 
 
-    /* =========================
+    /* ========================================
+       AGENTES
+    ======================================== */
+
+    function renderizarAgentes() {
+
+      pageTitle.textContent =
+        "Agentes";
+
+
+      pageSubtitle.textContent =
+        "Gestores, estados y clientes";
+
+
+      listHeaderTitle.textContent =
+        "Agentes";
+
+
+      searchInput.placeholder =
+        "Buscar gestor o cliente...";
+
+
+      listContainer.innerHTML = "";
+
+
+      const activos =
+        conversacionesActivas();
+
+
+      const visibles =
+        activos.filter(
+          c => {
+
+            if (
+              estaSinAsignar(c)
+            ) {
+
+              return false;
+
+            }
+
+
+            if (esSupervisor()) {
+
+              return true;
+
+            }
+
+
+            return puedeVerPorEquipo(c);
+
+          }
+        );
+
+
+      let gestores =
+        obtenerGestoresVisibles();
+
+
+      const texto =
+        searchInput.value
+          .trim()
+          .toLowerCase();
+
+
+      if (texto) {
+
+        gestores =
+          gestores.filter(
+            g =>
+              g.nombre
+                .toLowerCase()
+                .includes(texto)
+          );
+
+      }
+
+
+      if (gestores.length) {
+
+        const titulo =
+          document.createElement("div");
+
+
+        titulo.className =
+          "section-title";
+
+
+        titulo.textContent =
+          `GESTORES (${gestores.length})`;
+
+
+        listContainer.appendChild(
+          titulo
+        );
+
+
+        gestores.forEach(
+          gestor => {
+
+            const cantidad =
+              visibles.filter(
+                c =>
+                  obtenerNombreGestor(c)
+                  === gestor.nombre
+              ).length;
+
+
+            listContainer.appendChild(
+
+              crearTarjetaGestor(
+
+                gestor.nombre,
+
+                gestor.equipo,
+
+                cantidad
+
+              )
+
+            );
+
+          }
+        );
+
+      }
+
+
+      const tituloClientes =
+        document.createElement("div");
+
+
+      tituloClientes.className =
+        "section-title";
+
+
+      tituloClientes.textContent =
+        `CLIENTES ACTIVOS (${visibles.length})`;
+
+
+      listContainer.appendChild(
+        tituloClientes
+      );
+
+
+      let clientes =
+        aplicarBusqueda(visibles);
+
+
+      if (!clientes.length) {
+
+        const vacio =
+          document.createElement("div");
+
+
+        vacio.className =
+          "empty-list";
+
+
+        vacio.textContent =
+          "No hay clientes activos para mostrar.";
+
+
+        listContainer.appendChild(
+          vacio
+        );
+
+
+        return;
+
+      }
+
+
+      clientes.forEach(
+        c => {
+
+          listContainer.appendChild(
+            crearTarjetaCliente(c)
+          );
+
+        }
+      );
+
+    }
+
+
+    /* ========================================
+       CLIENTES DE GESTOR
+    ======================================== */
+
+    function renderizarClientesDeGestor(
+      nombreGestor,
+      equipo
+    ) {
+
+      pageTitle.textContent =
+        nombreGestor;
+
+
+      pageSubtitle.textContent =
+        `Clientes activos · ${equipo}`;
+
+
+      listHeaderTitle.textContent =
+        `Clientes de ${nombreGestor}`;
+
+
+      searchInput.placeholder =
+        "Buscar cliente, DNI o teléfono...";
+
+
+      let lista =
+        conversacionesActivas()
+          .filter(
+            c =>
+              obtenerNombreGestor(c)
+              === nombreGestor
+          );
+
+
+      lista =
+        aplicarBusqueda(lista);
+
+
+      renderizarListaClientes(
+        lista
+      );
+
+    }
+
+
+    /* ========================================
        SIN ASIGNAR
-    ========================== */
+    ======================================== */
 
     function renderizarSinAsignar() {
 
       pageTitle.textContent =
         "Sin asignar";
 
+
       pageSubtitle.textContent =
-        "Clientes que todavía no tienen gestor";
+        "Clientes activos sin gestor";
+
 
       listHeaderTitle.textContent =
         "Clientes sin asignar";
 
+
       searchInput.placeholder =
         "Buscar cliente, DNI o teléfono...";
+
+
+      listContainer.innerHTML = "";
 
 
       if (
@@ -2584,74 +4072,128 @@
         !esSenior()
       ) {
 
-        listContainer.innerHTML =
-          `<div class="empty-list">
+        listContainer.innerHTML = `
+
+          <div class="empty-list">
+
             No tenés acceso a esta sección.
-           </div>`;
+
+          </div>
+
+        `;
 
         return;
 
       }
 
 
+      /*
+        MUY IMPORTANTE:
+
+        Acá NO filtramos por equipo
+        primero.
+
+        Primero recuperamos TODOS
+        los chats activos sin asignar.
+
+        Esto evita que desaparezcan
+        los chats que todavía no tienen
+        equipo o gestor.
+      */
+
       let lista =
-        conversacionesSinAsignar()
-          .filter(c => {
+        conversacionesSinAsignar();
 
-            if (esSupervisor()) {
 
-              return true;
+      if (!esSupervisor()) {
 
-            }
+        lista =
+          lista.filter(
+            c =>
+              puedeVerPorEquipo(c)
+          );
 
-            return puedeVerPorEquipo(c);
-
-          });
+      }
 
 
       lista =
         aplicarBusqueda(lista);
 
 
-      renderizarListaClientes(
-        lista
+      if (!lista.length) {
+
+        listContainer.innerHTML = `
+
+          <div class="empty-list">
+
+            No hay clientes sin asignar.
+
+          </div>
+
+        `;
+
+        return;
+
+      }
+
+
+      lista.forEach(
+        c => {
+
+          listContainer.appendChild(
+            crearTarjetaCliente(c)
+          );
+
+        }
       );
 
     }
 
 
-    /* =========================
+    /* ========================================
        HISTORIAL
-    ========================== */
+    ======================================== */
 
     function renderizarHistorial() {
 
       pageTitle.textContent =
         "Historial";
 
+
       pageSubtitle.textContent =
         "Gestiones finalizadas";
 
+
       listHeaderTitle.textContent =
         "Historial";
+
 
       searchInput.placeholder =
         "Buscar cliente, DNI o teléfono...";
 
 
+      /*
+        Todos los finalizados se leen
+        directamente de Firebase.
+
+        No se eliminan.
+        No se mueven.
+        No se modifican.
+      */
+
       let lista =
-        conversacionesFinalizadas()
-          .filter(c => {
+        conversacionesFinalizadas();
 
-            if (esSupervisor()) {
 
-              return true;
+      if (!esSupervisor()) {
 
-            }
+        lista =
+          lista.filter(
+            c =>
+              puedeVerPorEquipo(c)
+          );
 
-            return puedeVerPorEquipo(c);
-
-          });
+      }
 
 
       lista =
@@ -2665,9 +4207,9 @@
     }
 
 
-    /* =========================
-       LISTA CLIENTES
-    ========================== */
+    /* ========================================
+       LISTA
+    ======================================== */
 
     function renderizarListaClientes(
       lista
@@ -2678,30 +4220,37 @@
 
       if (!lista.length) {
 
-        listContainer.innerHTML =
-          `<div class="empty-list">
+        listContainer.innerHTML = `
+
+          <div class="empty-list">
+
             No hay conversaciones para mostrar.
-           </div>`;
+
+          </div>
+
+        `;
 
         return;
 
       }
 
 
-      lista.forEach(c => {
+      lista.forEach(
+        c => {
 
-        listContainer.appendChild(
-          renderizarTarjetaCliente(c)
-        );
+          listContainer.appendChild(
+            crearTarjetaCliente(c)
+          );
 
-      });
+        }
+      );
 
     }
 
 
-    /* =========================
-       MOSTRAR CONVERSACION
-    ========================== */
+    /* ========================================
+       CHAT
+    ======================================== */
 
     function mostrarConversacion(
       id,
@@ -2710,6 +4259,7 @@
 
       const c =
         conversaciones[id];
+
 
       if (!c) {
 
@@ -2725,6 +4275,7 @@
       chatEmpty.style.display =
         "none";
 
+
       chatContainer.style.display =
         "flex";
 
@@ -2732,18 +4283,21 @@
       const datos =
         obtenerDatosCliente(c);
 
+
       const nombre =
         obtenerNombreVisibleCliente(c);
+
 
       const gestor =
         obtenerNombreGestor(c);
 
+
       const equipo =
         obtenerEquipoConversacion(c);
 
+
       const finalizada =
-        conversacionesFinalizadas()
-          .some(x => x.id === id);
+        esFinalizada(c);
 
 
       const puedeGestionar =
@@ -2776,6 +4330,7 @@
         puedeGestionar
       ) {
 
+
         if (
           esSenior() ||
           esSupervisor()
@@ -2784,10 +4339,14 @@
           acciones += `
 
             <button
-              class="action-button primary"
               id="assignButton"
+              class="action-button primary"
             >
-              ${gestor ? "Reasignar" : "Asignar"}
+
+              ${gestor
+                ? "Reasignar"
+                : "Asignar"}
+
             </button>
 
           `;
@@ -2798,10 +4357,12 @@
         acciones += `
 
           <button
-            class="action-button danger"
             id="finishButton"
+            class="action-button danger"
           >
+
             Finalizar gestión
+
           </button>
 
         `;
@@ -2811,121 +4372,214 @@
 
       chatHeader.innerHTML = `
 
+
         <div class="chat-client-name">
+
           ${escapeHtml(nombre)}
+
         </div>
+
 
         <div class="chat-client-details">
 
-          ${
-            datos.dni
-              ? `<span><strong>DNI:</strong> ${escapeHtml(datos.dni)}</span>`
-              : ""
-          }
-
-          ${
-            datos.telefono
-              ? `<span><strong>Teléfono:</strong> ${escapeHtml(datos.telefono)}</span>`
-              : ""
-          }
 
           <span>
+
+            <strong>DNI:</strong>
+
+            ${escapeHtml(
+              datos.dni || "No informado"
+            )}
+
+          </span>
+
+
+          <span>
+
+            <strong>Teléfono:</strong>
+
+            ${escapeHtml(
+              datos.telefono ||
+              "No informado"
+            )}
+
+          </span>
+
+
+          <span>
+
             <strong>Gestor:</strong>
-            ${escapeHtml(gestor || "Sin asignar")}
+
+            ${escapeHtml(
+              gestor ||
+              "Sin asignar"
+            )}
+
           </span>
+
 
           <span>
+
             <strong>Equipo:</strong>
-            ${escapeHtml(equipo || "Sin asignar")}
+
+            ${escapeHtml(
+              equipo ||
+              "Sin asignar"
+            )}
+
           </span>
 
-          ${
-            datos.motivo
-              ? `<span><strong>Motivo:</strong> ${escapeHtml(datos.motivo)}</span>`
-              : ""
-          }
 
         </div>
 
 
         <div class="client-info-box">
 
-          <div>
-            <strong>Nombre:</strong><br>
-            ${escapeHtml(datos.nombre || "No informado")}
-          </div>
 
           <div>
-            <strong>DNI:</strong><br>
-            ${escapeHtml(datos.dni || "No informado")}
-          </div>
 
-          <div>
-            <strong>Teléfono:</strong><br>
-            ${escapeHtml(datos.telefono || "No informado")}
-          </div>
+            <strong>
+              Nombre
+            </strong>
 
-          <div>
-            <strong>Motivo:</strong><br>
-            ${escapeHtml(datos.motivo || "No informado")}
-          </div>
+            <br>
 
-          <div>
-            <strong>Fecha:</strong><br>
-            ${formatearFecha(
-              datos.fecha || c.fechaCreacion
+            ${escapeHtml(
+              datos.nombre ||
+              "No informado"
             )}
+
           </div>
 
+
           <div>
-            <strong>Estado:</strong><br>
-            ${escapeHtml(c.estado || "Activa")}
+
+            <strong>
+              DNI
+            </strong>
+
+            <br>
+
+            ${escapeHtml(
+              datos.dni ||
+              "No informado"
+            )}
+
           </div>
+
+
+          <div>
+
+            <strong>
+              Teléfono
+            </strong>
+
+            <br>
+
+            ${escapeHtml(
+              datos.telefono ||
+              "No informado"
+            )}
+
+          </div>
+
+
+          <div>
+
+            <strong>
+              Motivo
+            </strong>
+
+            <br>
+
+            ${escapeHtml(
+              datos.motivo ||
+              "No informado"
+            )}
+
+          </div>
+
+
+          <div>
+
+            <strong>
+              Fecha
+            </strong>
+
+            <br>
+
+            ${formatearFecha(
+              datos.fecha ||
+              c.fechaCreacion
+            )}
+
+          </div>
+
+
+          <div>
+
+            <strong>
+              Estado
+            </strong>
+
+            <br>
+
+            ${escapeHtml(
+              c.estado ||
+              "activa"
+            )}
+
+          </div>
+
 
         </div>
 
 
         ${
           acciones
-            ? `<div class="chat-actions">
+            ? `
+              <div class="chat-actions">
+
                 ${acciones}
-               </div>`
+
+              </div>
+            `
             : ""
         }
 
       `;
 
 
-      if (
-        !finalizada &&
-        puedeGestionar &&
-        (
-          esSenior() ||
-          esSupervisor()
-        )
-      ) {
+      const assignButton =
+        document.getElementById(
+          "assignButton"
+        );
 
-        document
-          .getElementById("assignButton")
-          ?.addEventListener(
-            "click",
-            () => abrirModalTransferencia(id)
-          );
+
+      if (assignButton) {
+
+        assignButton.addEventListener(
+          "click",
+          () =>
+            abrirModalTransferencia(id)
+        );
 
       }
 
 
-      if (
-        !finalizada &&
-        puedeGestionar
-      ) {
+      const finishButton =
+        document.getElementById(
+          "finishButton"
+        );
 
-        document
-          .getElementById("finishButton")
-          ?.addEventListener(
-            "click",
-            () => finalizarConversacion(id)
-          );
+
+      if (finishButton) {
+
+        finishButton.addEventListener(
+          "click",
+          () =>
+            finalizarConversacion(id)
+        );
 
       }
 
@@ -2935,9 +4589,9 @@
     }
 
 
-    /* =========================
+    /* ========================================
        MENSAJES
-    ========================== */
+    ======================================== */
 
     function renderizarMensajes(c) {
 
@@ -2950,76 +4604,97 @@
 
       const lista =
         Object.entries(mensajes)
-          .map(([id, mensaje]) => ({
-            id,
-            ...mensaje
-          }))
+
+          .map(
+            ([id, mensaje]) => ({
+              id,
+              ...mensaje
+            })
+          )
+
           .sort(
-            (a, b) =>
-              obtenerTimestamp(a.fecha) -
+            (a,b) =>
+              obtenerTimestamp(a.fecha)
+              -
               obtenerTimestamp(b.fecha)
           );
 
 
       if (!lista.length) {
 
-        messagesContainer.innerHTML =
-          `<div class="empty-list">
+        messagesContainer.innerHTML = `
+
+          <div class="empty-list">
+
             No hay mensajes todavía.
-           </div>`;
+
+          </div>
+
+        `;
 
         return;
 
       }
 
 
-      lista.forEach(mensaje => {
+      lista.forEach(
+        mensaje => {
 
-        const div =
-          document.createElement("div");
-
-
-        const esCliente =
-          mensaje.remitente === "cliente";
+          const div =
+            document.createElement("div");
 
 
-        div.className =
-          `message ${
-            esCliente
-              ? "client"
-              : "staff"
-          }`;
+          const esCliente =
+            mensaje.remitente === "cliente";
 
 
-        const remitente =
-          esCliente
-            ? "Cliente"
-            : (
-                mensaje.remitente ||
-                "Gestor"
-              );
+          div.className =
+            `message ${
+              esCliente
+                ? "client"
+                : "staff"
+            }`;
 
 
-        div.innerHTML = `
+          div.innerHTML = `
 
-          <div>
-            ${escapeHtml(
-              mensaje.texto || ""
-            )}
-          </div>
+            <div>
 
-          <div class="message-meta">
-            ${escapeHtml(remitente)}
-            ·
-            ${formatearFecha(mensaje.fecha)}
-          </div>
+              ${escapeHtml(
+                mensaje.texto || ""
+              )}
 
-        `;
+            </div>
 
 
-        messagesContainer.appendChild(div);
+            <div class="message-meta">
 
-      });
+              ${escapeHtml(
+                esCliente
+                  ? "Cliente"
+                  : (
+                    mensaje.remitente ||
+                    "Gestor"
+                  )
+              )}
+
+              ·
+
+              ${formatearFecha(
+                mensaje.fecha
+              )}
+
+            </div>
+
+          `;
+
+
+          messagesContainer.appendChild(
+            div
+          );
+
+        }
+      );
 
 
       messagesContainer.scrollTop =
@@ -3028,13 +4703,15 @@
     }
 
 
-    /* =========================
-       ENVIAR MENSAJE
-    ========================== */
+    /* ========================================
+       ENVIAR
+    ======================================== */
 
     async function enviarMensaje() {
 
-      if (!conversacionSeleccionada) {
+      if (
+        !conversacionSeleccionada
+      ) {
 
         return;
 
@@ -3066,6 +4743,15 @@
 
 
       if (
+        esFinalizada(c)
+      ) {
+
+        return;
+
+      }
+
+
+      if (
         !puedeGestionarConversacion(
           c,
           modoActual
@@ -3084,12 +4770,12 @@
         );
 
 
-      const nuevoMensaje =
+      const nuevo =
         push(mensajesRef);
 
 
       await update(
-        nuevoMensaje,
+        nuevo,
         {
 
           texto,
@@ -3134,14 +4820,17 @@
     );
 
 
-    /* =========================
+    /* ========================================
        FINALIZAR
-    ========================== */
+    ======================================== */
 
-    async function finalizarConversacion(id) {
+    async function finalizarConversacion(
+      id
+    ) {
 
       const c =
         conversaciones[id];
+
 
       if (!c) {
 
@@ -3175,6 +4864,15 @@
       }
 
 
+      /*
+        SOLO cambiamos el estado
+        y agregamos información
+        de finalización.
+
+        NO borramos datosCliente.
+        NO borramos mensajes.
+      */
+
       await update(
         ref(
           db,
@@ -3206,17 +4904,20 @@
     }
 
 
-    /* =========================
+    /* ========================================
        TRANSFERENCIA
-    ========================== */
+    ======================================== */
 
-    function abrirModalTransferencia(id) {
+    function abrirModalTransferencia(
+      id
+    ) {
 
       conversacionSeleccionada =
         id;
 
 
       cargarEquiposTransferencia();
+
 
       transferModal.style.display =
         "flex";
@@ -3230,22 +4931,29 @@
 
 
       Object.keys(equipos)
-        .forEach(equipo => {
+        .forEach(
+          equipo => {
 
-          const option =
-            document.createElement("option");
+            const option =
+              document.createElement(
+                "option"
+              );
 
-          option.value =
-            equipo;
 
-          option.textContent =
-            equipo;
+            option.value =
+              equipo;
 
-          transferTeam.appendChild(
-            option
-          );
 
-        });
+            option.textContent =
+              equipo;
+
+
+            transferTeam.appendChild(
+              option
+            );
+
+          }
+        );
 
 
       const actual =
@@ -3255,7 +4963,9 @@
 
 
       const equipoActual =
-        obtenerEquipoConversacion(actual);
+        obtenerEquipoConversacion(
+          actual
+        );
 
 
       if (equipoActual) {
@@ -3281,38 +4991,51 @@
 
 
       const gestores =
-        equipos[equipo]?.gestores || [];
+        equipos[equipo]
+          ?.gestores || [];
 
 
       const sinAsignar =
-        document.createElement("option");
+        document.createElement(
+          "option"
+        );
+
 
       sinAsignar.value = "";
 
+
       sinAsignar.textContent =
         "Sin asignar";
+
 
       transferAgent.appendChild(
         sinAsignar
       );
 
 
-      gestores.forEach(nombre => {
+      gestores.forEach(
+        nombre => {
 
-        const option =
-          document.createElement("option");
+          const option =
+            document.createElement(
+              "option"
+            );
 
-        option.value =
-          nombre;
 
-        option.textContent =
-          nombre;
+          option.value =
+            nombre;
 
-        transferAgent.appendChild(
-          option
-        );
 
-      });
+          option.textContent =
+            nombre;
+
+
+          transferAgent.appendChild(
+            option
+          );
+
+        }
+      );
 
 
       const actual =
@@ -3322,12 +5045,16 @@
 
 
       const gestorActual =
-        obtenerNombreGestor(actual);
+        obtenerNombreGestor(
+          actual
+        );
 
 
       if (
         gestorActual &&
-        gestores.includes(gestorActual)
+        gestores.includes(
+          gestorActual
+        )
       ) {
 
         transferAgent.value =
@@ -3345,7 +5072,9 @@
 
 
     document
-      .getElementById("cancelTransfer")
+      .getElementById(
+        "cancelTransfer"
+      )
       .addEventListener(
         "click",
         () => {
@@ -3358,7 +5087,9 @@
 
 
     document
-      .getElementById("confirmTransfer")
+      .getElementById(
+        "confirmTransfer"
+      )
       .addEventListener(
         "click",
         async () => {
@@ -3377,16 +5108,17 @@
           const equipo =
             transferTeam.value;
 
+
           const gestor =
             transferAgent.value;
 
 
           const datosUpdate = {
 
-            equipoAsignado:
+            equipo:
               equipo,
 
-            equipo:
+            equipoAsignado:
               equipo
 
           };
@@ -3405,13 +5137,24 @@
 
           } else {
 
+            /*
+              Dejamos explícitamente
+              el chat sin gestor.
+
+              No eliminamos datosCliente
+              ni mensajes.
+            */
+
             datosUpdate.gestor = null;
 
-            datosUpdate.gestorAsignado = null;
+            datosUpdate.gestorAsignado =
+              null;
 
-            datosUpdate.asesorAsignado = null;
+            datosUpdate.asesorAsignado =
+              null;
 
-            datosUpdate.asesorEmail = null;
+            datosUpdate.asesorEmail =
+              null;
 
           }
 
@@ -3428,6 +5171,7 @@
           transferModal.style.display =
             "none";
 
+
           mostrarConversacion(
             id,
             modoActual
@@ -3437,17 +5181,19 @@
       );
 
 
-    /* =========================
+    /* ========================================
        CERRAR CHAT
-    ========================== */
+    ======================================== */
 
     function cerrarChat() {
 
       conversacionSeleccionada =
         null;
 
+
       chatContainer.style.display =
         "none";
+
 
       chatEmpty.style.display =
         "flex";
@@ -3455,9 +5201,9 @@
     }
 
 
-    /* =========================
+    /* ========================================
        CONTADORES
-    ========================== */
+    ======================================== */
 
     function actualizarContadores() {
 
@@ -3474,41 +5220,46 @@
 
       if (esSupervisor()) {
 
-        const gestores =
-          obtenerGestoresVisibles();
-
         principal =
-          gestores.length;
+          obtenerGestoresVisibles()
+            .length;
 
       } else {
 
         principal =
-          activos.filter(c =>
-            !estaSinAsignar(c) &&
-            conversacionEsMia(c)
+          activos.filter(
+            c =>
+              !estaSinAsignar(c) &&
+              conversacionEsMia(c)
           ).length;
 
       }
 
 
       const agentes =
-        activos.filter(c => {
+        activos.filter(
+          c => {
 
-          if (estaSinAsignar(c)) {
+            if (
+              estaSinAsignar(c)
+            ) {
 
-            return false;
+              return false;
+
+            }
+
+
+            if (esSupervisor()) {
+
+              return true;
+
+            }
+
+
+            return puedeVerPorEquipo(c);
 
           }
-
-          if (esSupervisor()) {
-
-            return true;
-
-          }
-
-          return puedeVerPorEquipo(c);
-
-        }).length;
+        ).length;
 
 
       const sinAsignar =
@@ -3516,26 +5267,24 @@
           esSupervisor() ||
           esSenior()
         )
+
           ? conversacionesSinAsignar()
-              .filter(c =>
-                esSupervisor() ||
-                puedeVerPorEquipo(c)
-              ).length
+              .filter(
+                c =>
+                  esSupervisor() ||
+                  puedeVerPorEquipo(c)
+              )
+              .length
+
           : 0;
 
 
       const historial =
-        finalizados.filter(c => {
-
-          if (esSupervisor()) {
-
-            return true;
-
-          }
-
-          return puedeVerPorEquipo(c);
-
-        }).length;
+        finalizados.filter(
+          c =>
+            esSupervisor() ||
+            puedeVerPorEquipo(c)
+        ).length;
 
 
       document.getElementById(
@@ -3564,60 +5313,93 @@
     }
 
 
-    /* =========================
+    /* ========================================
        CAMBIAR VISTA
-    ========================== */
+    ======================================== */
 
-    function cambiarVista(modo) {
+    function cambiarVista(
+      modo
+    ) {
 
       modoActual =
         modo;
 
+
       gestorSeleccionado =
         null;
+
 
       cerrarChat();
 
 
       document
-        .querySelectorAll(".menu button")
-        .forEach(btn =>
-          btn.classList.remove("active")
+        .querySelectorAll(
+          ".menu button"
+        )
+        .forEach(
+          button =>
+            button.classList.remove(
+              "active"
+            )
         );
 
 
-      if (modo === "principal") {
+      if (
+        modo === "principal"
+      ) {
 
         document
-          .getElementById("btnPrincipal")
-          .classList.add("active");
+          .getElementById(
+            "btnPrincipal"
+          )
+          .classList.add(
+            "active"
+          );
 
       }
 
 
-      if (modo === "agentes") {
+      if (
+        modo === "agentes"
+      ) {
 
         document
-          .getElementById("btnAgentes")
-          .classList.add("active");
+          .getElementById(
+            "btnAgentes"
+          )
+          .classList.add(
+            "active"
+          );
 
       }
 
 
-      if (modo === "sinAsignar") {
+      if (
+        modo === "sinAsignar"
+      ) {
 
         document
-          .getElementById("btnSinAsignar")
-          .classList.add("active");
+          .getElementById(
+            "btnSinAsignar"
+          )
+          .classList.add(
+            "active"
+          );
 
       }
 
 
-      if (modo === "historial") {
+      if (
+        modo === "historial"
+      ) {
 
         document
-          .getElementById("btnHistorial")
-          .classList.add("active");
+          .getElementById(
+            "btnHistorial"
+          )
+          .classList.add(
+            "active"
+          );
 
       }
 
@@ -3632,7 +5414,9 @@
 
     function renderizarListaSegunModo() {
 
-      if (modoActual === "principal") {
+      if (
+        modoActual === "principal"
+      ) {
 
         renderizarPrincipal();
 
@@ -3641,7 +5425,9 @@
       }
 
 
-      if (modoActual === "agentes") {
+      if (
+        modoActual === "agentes"
+      ) {
 
         renderizarAgentes();
 
@@ -3650,7 +5436,9 @@
       }
 
 
-      if (modoActual === "sinAsignar") {
+      if (
+        modoActual === "sinAsignar"
+      ) {
 
         renderizarSinAsignar();
 
@@ -3659,7 +5447,9 @@
       }
 
 
-      if (modoActual === "historial") {
+      if (
+        modoActual === "historial"
+      ) {
 
         renderizarHistorial();
 
@@ -3670,34 +5460,52 @@
     }
 
 
+    /* ========================================
+       MENU
+    ======================================== */
+
     document
-      .getElementById("btnPrincipal")
+      .getElementById(
+        "btnPrincipal"
+      )
       .addEventListener(
         "click",
-        () => cambiarVista("principal")
+        () =>
+          cambiarVista(
+            "principal"
+          )
       );
 
 
     document
-      .getElementById("btnAgentes")
+      .getElementById(
+        "btnAgentes"
+      )
       .addEventListener(
         "click",
-        () => cambiarVista("agentes")
+        () =>
+          cambiarVista(
+            "agentes"
+          )
       );
 
 
     document
-      .getElementById("btnSinAsignar")
+      .getElementById(
+        "btnSinAsignar"
+      )
       .addEventListener(
         "click",
         () => {
 
           if (
-            esSupervisor() ||
-            esSenior()
+            esSenior() ||
+            esSupervisor()
           ) {
 
-            cambiarVista("sinAsignar");
+            cambiarVista(
+              "sinAsignar"
+            );
 
           }
 
@@ -3706,10 +5514,15 @@
 
 
     document
-      .getElementById("btnHistorial")
+      .getElementById(
+        "btnHistorial"
+      )
       .addEventListener(
         "click",
-        () => cambiarVista("historial")
+        () =>
+          cambiarVista(
+            "historial"
+          )
       );
 
 
@@ -3723,9 +5536,9 @@
     );
 
 
-    /* =========================
-       FIREBASE AUTH
-    ========================== */
+    /* ========================================
+       AUTH LOGIN
+    ======================================== */
 
     loginButton.addEventListener(
       "click",
@@ -3751,17 +5564,22 @@
 
     async function iniciarSesion() {
 
-      loginError.textContent = "";
+      loginError.textContent =
+        "";
 
 
       const email =
         emailInput.value.trim();
 
+
       const password =
         passwordInput.value;
 
 
-      if (!email || !password) {
+      if (
+        !email ||
+        !password
+      ) {
 
         loginError.textContent =
           "Completá correo y contraseña.";
@@ -3783,6 +5601,7 @@
 
         console.error(error);
 
+
         loginError.textContent =
           "No se pudo iniciar sesión. Revisá el correo y la contraseña.";
 
@@ -3791,9 +5610,9 @@
     }
 
 
-    /* =========================
+    /* ========================================
        AUTH STATE
-    ========================== */
+    ======================================== */
 
     onAuthStateChanged(
       auth,
@@ -3810,11 +5629,23 @@
           rolActual =
             null;
 
+
           loginScreen.style.display =
             "flex";
 
+
           appScreen.style.display =
             "none";
+
+
+          if (relojInterval) {
+
+            clearInterval(
+              relojInterval
+            );
+
+          }
+
 
           return;
 
@@ -3835,25 +5666,20 @@
           emailsPorNombre[email];
 
 
-        /*
-          Si el email todavía no está
-          cargado en el mapa, intentamos
-          obtener el nombre desde la parte
-          anterior al @.
-        */
-
         if (!nombreActual) {
 
           const parte =
             email.split("@")[0];
+
 
           nombreActual =
             parte
               .split(".")
               .map(
                 palabra =>
-                  palabra.charAt(0).toUpperCase() +
-                  palabra.slice(1)
+                  palavraInicial(
+                    palabra
+                  )
               )
               .join(" ");
 
@@ -3861,12 +5687,14 @@
 
 
         rolActual =
-          perfiles[nombreActual] ||
-          "asesor";
+          perfiles[
+            nombreActual
+          ] || "asesor";
 
 
         loginScreen.style.display =
           "none";
+
 
         appScreen.style.display =
           "block";
@@ -3874,17 +5702,35 @@
 
         mostrarBienvenida();
 
-        cambiarVista("principal");
+        iniciarReloj();
 
         escucharConversaciones();
+
+        escucharPresencias();
+
+        cargarMiPresencia();
 
       }
     );
 
 
-    /* =========================
+    function palavraInicial(
+      texto
+    ) {
+
+      return (
+        texto.charAt(0)
+          .toUpperCase()
+        +
+        texto.slice(1)
+      );
+
+    }
+
+
+    /* ========================================
        ESCUCHAR CONVERSACIONES
-    ========================== */
+    ======================================== */
 
     function escucharConversaciones() {
 
@@ -3899,11 +5745,22 @@
         conversacionesRef,
         snapshot => {
 
+          /*
+            IMPORTANTE:
+
+            Leemos TODO el nodo
+            conversaciones.
+
+            No eliminamos chats desde
+            el frontend.
+          */
+
           conversaciones =
             snapshot.val() || {};
 
 
           actualizarContadores();
+
 
           renderizarListaSegunModo();
 
@@ -3928,12 +5785,432 @@
     }
 
 
-    /* =========================
-       LOGOUT
-    ========================== */
+    /* ========================================
+       PRESENCIA
+    ======================================== */
+
+    function escucharPresencias() {
+
+      const presenciaRef =
+        ref(
+          db,
+          "presencia"
+        );
+
+
+      onValue(
+        presenciaRef,
+        snapshot => {
+
+          presencias =
+            snapshot.val() || {};
+
+
+          actualizarPresenciaPropia();
+
+
+          if (
+            modoActual === "agentes" ||
+            modoActual === "principal"
+          ) {
+
+            renderizarListaSegunModo();
+
+          }
+
+        }
+      );
+
+    }
+
+
+    /* ========================================
+       MI PRESENCIA
+    ======================================== */
+
+    function obtenerMiPresencia() {
+
+      return (
+        presencias[nombreActual]
+        || {
+          estado: "fuera"
+        }
+      );
+
+    }
+
+
+    function cargarMiPresencia() {
+
+      actualizarPresenciaPropia();
+
+    }
+
+
+    function actualizarPresenciaPropia() {
+
+      if (!nombreActual) {
+
+        return;
+
+      }
+
+
+      const datos =
+        obtenerMiPresencia();
+
+
+      const estado =
+        datos.estado || "fuera";
+
+
+      presenceDot.className =
+        `presence-dot ${estado}`;
+
+
+      presenceText.textContent =
+        obtenerTextoPresencia(
+          estado
+        );
+
+
+      if (
+        estado === "fuera"
+      ) {
+
+        presenceMainButton
+          .textContent =
+          "Iniciar jornada";
+
+
+        presenceMainButton
+          .classList.add(
+            "start"
+          );
+
+
+        presenceOptionsButton
+          .style.display =
+          "none";
+
+
+      } else {
+
+        presenceMainButton
+          .textContent =
+          "Cambiar estado";
+
+
+        presenceMainButton
+          .classList.remove(
+            "start"
+          );
+
+
+        presenceOptionsButton
+          .style.display =
+          "inline-block";
+
+      }
+
+    }
+
+
+    /* ========================================
+       MENU PRESENCIA
+    ======================================== */
+
+    presenceMainButton.addEventListener(
+      "click",
+      async () => {
+
+        const datos =
+          obtenerMiPresencia();
+
+
+        if (
+          !datos.estado ||
+          datos.estado === "fuera"
+        ) {
+
+          await iniciarJornada();
+
+          return;
+
+        }
+
+
+        abrirMenuPresencia();
+
+      }
+    );
+
+
+    presenceOptionsButton.addEventListener(
+      "click",
+      abrirMenuPresencia
+    );
+
+
+    function abrirMenuPresencia() {
+
+      presenceMenu.style.display =
+        presenceMenu.style.display === "block"
+          ? "none"
+          : "block";
+
+    }
+
+
+    document.addEventListener(
+      "click",
+      event => {
+
+        const wrapper =
+          document.querySelector(
+            ".presence-wrapper"
+          );
+
+
+        if (
+          wrapper &&
+          !wrapper.contains(
+            event.target
+          )
+        ) {
+
+          presenceMenu.style.display =
+            "none";
+
+        }
+
+      }
+    );
+
+
+    /* ========================================
+       INICIAR JORNADA
+    ======================================== */
+
+    async function iniciarJornada() {
+
+      const ahora =
+        Date.now();
+
+
+      await update(
+        ref(
+          db,
+          `presencia/${nombreActual}`
+        ),
+        {
+
+          nombre:
+            nombreActual,
+
+          email:
+            usuarioActual?.email || "",
+
+          rol:
+            rolActual,
+
+          estado:
+            "activo",
+
+          ingreso:
+            ahora,
+
+          ultimoCambio:
+            ahora,
+
+          inicioEstado:
+            ahora,
+
+          egreso:
+            null
+
+        }
+      );
+
+
+      presenceMenu.style.display =
+        "none";
+
+    }
+
+
+    /* ========================================
+       CAMBIAR ESTADO
+    ======================================== */
+
+    async function cambiarEstadoPresencia(
+      nuevoEstado
+    ) {
+
+      const actual =
+        obtenerMiPresencia();
+
+
+      if (
+        !actual ||
+        actual.estado === "fuera"
+      ) {
+
+        return;
+
+      }
+
+
+      const ahora =
+        Date.now();
+
+
+      await update(
+        ref(
+          db,
+          `presencia/${nombreActual}`
+        ),
+        {
+
+          estado:
+            nuevoEstado,
+
+          ultimoCambio:
+            ahora,
+
+          inicioEstado:
+            ahora
+
+        }
+      );
+
+
+      presenceMenu.style.display =
+        "none";
+
+    }
+
 
     document
-      .getElementById("logoutButton")
+      .getElementById(
+        "setActivo"
+      )
+      .addEventListener(
+        "click",
+        () =>
+          cambiarEstadoPresencia(
+            "activo"
+          )
+      );
+
+
+    document
+      .getElementById(
+        "setBreak"
+      )
+      .addEventListener(
+        "click",
+        () =>
+          cambiarEstadoPresencia(
+            "break"
+          )
+      );
+
+
+    document
+      .getElementById(
+        "setDescanso"
+      )
+      .addEventListener(
+        "click",
+        () =>
+          cambiarEstadoPresencia(
+            "descanso"
+          )
+      );
+
+
+    /* ========================================
+       FINALIZAR JORNADA
+    ======================================== */
+
+    document
+      .getElementById(
+        "finishDay"
+      )
+      .addEventListener(
+        "click",
+        finalizarJornada
+      );
+
+
+    async function finalizarJornada() {
+
+      const actual =
+        obtenerMiPresencia();
+
+
+      if (
+        !actual ||
+        actual.estado === "fuera"
+      ) {
+
+        return;
+
+      }
+
+
+      const confirmar =
+        confirm(
+          "¿Querés finalizar tu jornada y marcar el egreso?"
+        );
+
+
+      if (!confirmar) {
+
+        return;
+
+      }
+
+
+      const ahora =
+        Date.now();
+
+
+      await update(
+        ref(
+          db,
+          `presencia/${nombreActual}`
+        ),
+        {
+
+          estado:
+            "fuera",
+
+          ultimoCambio:
+            ahora,
+
+          egreso:
+            ahora
+
+        }
+      );
+
+
+      presenceMenu.style.display =
+        "none";
+
+    }
+
+
+    /* ========================================
+       LOGOUT
+    ======================================== */
+
+    document
+      .getElementById(
+        "logoutButton"
+      )
       .addEventListener(
         "click",
         async () => {
@@ -3944,37 +6221,8 @@
       );
 
 
-    /* =========================
-       ESCAPE HTML
-    ========================== */
-
-    function escapeHtml(valor) {
-
-      return String(valor ?? "")
-        .replace(
-          /&/g,
-          "&amp;"
-        )
-        .replace(
-          /</g,
-          "&lt;"
-        )
-        .replace(
-          />/g,
-          "&gt;"
-        )
-        .replace(
-          /"/g,
-          "&quot;"
-        )
-        .replace(
-          /'/g,
-          "&#039;"
-        );
-
-    }
-
   </script>
 
 </body>
+
 </html>
