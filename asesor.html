@@ -6,9 +6,7 @@
   <title>Centro de Atención - Asesores</title>
 
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
@@ -17,10 +15,7 @@
       color: #222;
     }
 
-    button,
-    input,
-    textarea,
-    select {
+    button, input, textarea, select {
       font: inherit;
     }
 
@@ -74,10 +69,6 @@
       cursor: pointer;
     }
 
-    .login-box button:hover {
-      background: #444;
-    }
-
     #loginError {
       margin-top: 15px;
       color: #c62828;
@@ -129,14 +120,34 @@
       height: calc(100vh - 65px);
     }
 
-    /* LISTA */
+    /* SIDEBAR */
 
     .sidebar {
-      width: 370px;
+      width: 390px;
       background: white;
       border-right: 1px solid #ddd;
       display: flex;
       flex-direction: column;
+    }
+
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 13px 8px;
+      border: 0;
+      background: white;
+      cursor: pointer;
+      font-weight: bold;
+      color: #666;
+    }
+
+    .tab-btn.active {
+      color: #222;
+      border-bottom: 3px solid #222;
     }
 
     .search-box {
@@ -191,6 +202,16 @@
 
     .waiting {
       color: #c62828;
+      font-weight: bold;
+    }
+
+    .available {
+      color: #1565c0;
+      font-weight: bold;
+    }
+
+    .assigned {
+      color: #6a1b9a;
       font-weight: bold;
     }
 
@@ -257,12 +278,17 @@
       color: white;
     }
 
-    .action-btn.secondary {
-      background: #777;
+    .action-btn:disabled {
+      background: #aaa;
+      cursor: not-allowed;
     }
 
     .action-btn.green {
       background: #2e7d32;
+    }
+
+    .action-btn.blue {
+      background: #1565c0;
     }
 
     .action-btn.red {
@@ -342,9 +368,10 @@
       cursor: not-allowed;
     }
 
-    /* MODAL */
+    /* MODALES */
 
-    #finalizeModal {
+    #finalizeModal,
+    #transferModal {
       display: none;
       position: fixed;
       inset: 0;
@@ -447,7 +474,9 @@
 
       <div class="user-info">
         <span id="loggedUser"></span>
-        <button class="logout-btn" id="logoutBtn">Cerrar sesión</button>
+        <button class="logout-btn" id="logoutBtn">
+          Cerrar sesión
+        </button>
       </div>
     </div>
 
@@ -455,12 +484,32 @@
 
       <aside class="sidebar">
 
+        <div class="tabs">
+
+          <button
+            class="tab-btn active"
+            id="activeTab"
+          >
+            Activos
+          </button>
+
+          <button
+            class="tab-btn"
+            id="historyTab"
+          >
+            Historial
+          </button>
+
+        </div>
+
         <div class="search-box">
+
           <input
             type="text"
             id="searchInput"
             placeholder="Buscar por DNI, nombre, teléfono o motivo..."
           >
+
         </div>
 
         <div id="conversationList"></div>
@@ -471,10 +520,17 @@
       <section class="chat">
 
         <div id="emptyChat">
+
           <div>
+
             <h3>Seleccioná una conversación</h3>
-            <p>Las conversaciones aparecerán en este panel.</p>
+
+            <p>
+              Las conversaciones aparecerán en este panel.
+            </p>
+
           </div>
+
         </div>
 
 
@@ -485,10 +541,15 @@
             <h3 id="clientName">Cliente</h3>
 
             <div class="client-data">
+
               <span id="clientDni"></span>
+
               <span id="clientPhone"></span>
+
               <span id="clientMotive"></span>
+
               <span id="conversationStatus"></span>
+
             </div>
 
             <div id="assignmentInfo"></div>
@@ -500,6 +561,13 @@
                 id="takeConversationBtn"
               >
                 Tomar conversación
+              </button>
+
+              <button
+                class="action-btn blue"
+                id="transferBtn"
+              >
+                Transferir
               </button>
 
               <button
@@ -550,7 +618,9 @@
 
       <h3>Finalizar conversación</h3>
 
-      <p>Seleccioná el motivo de finalización:</p>
+      <p>
+        Seleccioná el motivo de finalización:
+      </p>
 
       <select id="finalizationReason">
 
@@ -615,6 +685,43 @@
   </div>
 
 
+  <!-- MODAL TRANSFERIR -->
+
+  <div id="transferModal">
+
+    <div class="modal">
+
+      <h3>Transferir conversación</h3>
+
+      <p>
+        Seleccioná el asesor al que querés transferir esta conversación:
+      </p>
+
+      <select id="transferAdvisor"></select>
+
+      <div class="modal-buttons">
+
+        <button
+          class="cancel-btn"
+          id="cancelTransfer"
+        >
+          Cancelar
+        </button>
+
+        <button
+          class="confirm-btn"
+          id="confirmTransfer"
+        >
+          Transferir
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
   <!-- FIREBASE -->
 
   <script type="module">
@@ -626,7 +733,6 @@
       getDatabase,
       ref,
       onValue,
-      onChildAdded,
       push,
       set,
       update
@@ -674,11 +780,14 @@
     };
 
 
-    const app = initializeApp(firebaseConfig);
+    const app =
+      initializeApp(firebaseConfig);
 
-    const db = getDatabase(app);
+    const db =
+      getDatabase(app);
 
-    const auth = getAuth(app);
+    const auth =
+      getAuth(app);
 
 
     /* =========================
@@ -723,11 +832,21 @@
     };
 
 
+    /* =========================
+       ESTADO
+       ========================= */
+
     let conversaciones = {};
 
     let conversacionSeleccionada = null;
 
-    let mensajesListener = null;
+    let vistaActual = "activos";
+
+    let usuarioActual = null;
+
+    let nombreUsuarioActual = "";
+
+    let rolUsuarioActual = "asesor";
 
 
     /* =========================
@@ -782,6 +901,9 @@
     const takeConversationBtn =
       document.getElementById("takeConversationBtn");
 
+    const transferBtn =
+      document.getElementById("transferBtn");
+
     const finalizeBtn =
       document.getElementById("finalizeBtn");
 
@@ -797,115 +919,203 @@
     const finalizationReason =
       document.getElementById("finalizationReason");
 
+    const transferModal =
+      document.getElementById("transferModal");
+
+    const transferAdvisor =
+      document.getElementById("transferAdvisor");
+
+    const cancelTransfer =
+      document.getElementById("cancelTransfer");
+
+    const confirmTransfer =
+      document.getElementById("confirmTransfer");
+
+    const activeTab =
+      document.getElementById("activeTab");
+
+    const historyTab =
+      document.getElementById("historyTab");
+
 
     /* =========================
        LOGIN
        ========================= */
 
-    loginBtn.addEventListener("click", async () => {
+    loginBtn.addEventListener(
+      "click",
+      async () => {
 
-      const email =
-        emailInput.value.trim();
+        const email =
+          emailInput.value.trim();
 
-      const password =
-        passwordInput.value;
+        const password =
+          passwordInput.value;
 
-      loginError.textContent = "";
+        loginError.textContent = "";
 
-      if (!email || !password) {
+        if (!email || !password) {
 
-        loginError.textContent =
-          "Ingresá correo y contraseña.";
+          loginError.textContent =
+            "Ingresá correo y contraseña.";
 
-        return;
-      }
+          return;
+        }
 
-      loginBtn.disabled = true;
-
-      loginBtn.textContent =
-        "Ingresando...";
-
-      try {
-
-        await signInWithEmailAndPassword(
-          auth,
-          email,
-          password
-        );
-
-      } catch (error) {
-
-        console.error(error);
-
-        loginError.textContent =
-          "Error: " +
-          error.code +
-          " — " +
-          error.message;
-
-      } finally {
-
-        loginBtn.disabled = false;
+        loginBtn.disabled = true;
 
         loginBtn.textContent =
-          "Ingresar";
+          "Ingresando...";
+
+        try {
+
+          await signInWithEmailAndPassword(
+            auth,
+            email,
+            password
+          );
+
+        } catch (error) {
+
+          console.error(error);
+
+          loginError.textContent =
+            "Error: " +
+            error.code +
+            " — " +
+            error.message;
+
+        } finally {
+
+          loginBtn.disabled = false;
+
+          loginBtn.textContent =
+            "Ingresar";
+        }
+
       }
+    );
 
-    });
 
+    passwordInput.addEventListener(
+      "keydown",
+      (event) => {
 
-    passwordInput.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          loginBtn.click();
+        }
 
-      if (event.key === "Enter") {
-        loginBtn.click();
       }
-
-    });
+    );
 
 
     /* =========================
-       ESTADO DE LOGIN
+       ESTADO LOGIN
        ========================= */
 
-    onAuthStateChanged(auth, (user) => {
+    onAuthStateChanged(
+      auth,
+      (user) => {
 
-      if (user) {
+        if (user) {
 
-        loginScreen.style.display =
-          "none";
+          usuarioActual = user;
 
-        appScreen.style.display =
-          "block";
+          nombreUsuarioActual =
+            obtenerNombrePorEmail(
+              user.email
+            );
 
-        loggedUser.textContent =
-          user.email;
+          rolUsuarioActual =
+            perfiles[
+              nombreUsuarioActual
+            ] || "asesor";
 
-        cargarConversaciones();
+          loginScreen.style.display =
+            "none";
 
-      } else {
+          appScreen.style.display =
+            "block";
 
-        loginScreen.style.display =
-          "flex";
+          loggedUser.textContent =
+            nombreUsuarioActual +
+            " · " +
+            rolUsuarioActual;
 
-        appScreen.style.display =
-          "none";
+          cargarConversaciones();
 
-        loggedUser.textContent = "";
+          cargarOpcionesTransferencia();
+
+        } else {
+
+          usuarioActual = null;
+
+          loginScreen.style.display =
+            "flex";
+
+          appScreen.style.display =
+            "none";
+
+          loggedUser.textContent = "";
+
+        }
 
       }
-
-    });
+    );
 
 
     /* =========================
        CERRAR SESIÓN
        ========================= */
 
-    logoutBtn.addEventListener("click", async () => {
+    logoutBtn.addEventListener(
+      "click",
+      async () => {
 
-      await signOut(auth);
+        await signOut(auth);
 
-    });
+      }
+    );
+
+
+    /* =========================
+       CAMBIO DE VISTA
+       ========================= */
+
+    activeTab.addEventListener(
+      "click",
+      () => {
+
+        vistaActual = "activos";
+
+        activeTab.classList.add("active");
+
+        historyTab.classList.remove("active");
+
+        cerrarChatSeleccionado();
+
+        renderConversationList();
+
+      }
+    );
+
+
+    historyTab.addEventListener(
+      "click",
+      () => {
+
+        vistaActual = "historial";
+
+        historyTab.classList.add("active");
+
+        activeTab.classList.remove("active");
+
+        cerrarChatSeleccionado();
+
+        renderConversationList();
+
+      }
+    );
 
 
     /* =========================
@@ -915,41 +1125,186 @@
     function cargarConversaciones() {
 
       const conversacionesRef =
-        ref(db, "conversaciones");
+        ref(
+          db,
+          "conversaciones"
+        );
 
-      onValue(conversacionesRef, (snapshot) => {
+      onValue(
+        conversacionesRef,
+        (snapshot) => {
 
-        conversaciones = {};
+          conversaciones = {};
 
-        snapshot.forEach((child) => {
+          snapshot.forEach(
+            (child) => {
 
-          const data = child.val();
+              const data =
+                child.val();
 
-          if (!data) return;
+              if (!data)
+                return;
 
-          conversaciones[child.key] = {
-            id: child.key,
-            ...data
-          };
+              conversaciones[
+                child.key
+              ] = {
 
-        });
+                id: child.key,
 
-        renderConversationList();
+                ...data
 
-        if (conversacionSeleccionada) {
+              };
 
-          const actual =
-            conversaciones[
-              conversacionSeleccionada
-            ];
+            }
+          );
 
-          if (actual) {
-            mostrarConversacion(actual);
+          renderConversationList();
+
+          if (
+            conversacionSeleccionada
+          ) {
+
+            const actual =
+              conversaciones[
+                conversacionSeleccionada
+              ];
+
+            if (
+              actual &&
+              puedeVerConversacion(
+                actual
+              )
+            ) {
+
+              mostrarConversacion(
+                actual
+              );
+
+            } else {
+
+              cerrarChatSeleccionado();
+
+            }
+
           }
 
         }
+      );
 
-      });
+    }
+
+
+    /* =========================
+       PERMISOS VISUALES
+       ========================= */
+
+    function esAdministrador() {
+
+      return (
+        rolUsuarioActual ===
+          "supervisor" ||
+        rolUsuarioActual ===
+          "senior"
+      );
+
+    }
+
+
+    function puedeVerConversacion(
+      conversation
+    ) {
+
+      if (!conversation)
+        return false;
+
+
+      /* HISTORIAL:
+         todos los usuarios pueden
+         consultar conversaciones
+         finalizadas */
+
+      if (
+        conversation.estado ===
+        "finalizada"
+      ) {
+
+        return true;
+
+      }
+
+
+      /* CONVERSACIÓN SIN ASIGNAR:
+         todos pueden verla para
+         poder tomarla */
+
+      if (
+        !conversation.asesorAsignado
+      ) {
+
+        return true;
+
+      }
+
+
+      /* SUPERVISORES Y SENIORS:
+         pueden ver activos */
+
+      if (esAdministrador()) {
+
+        return true;
+
+      }
+
+
+      /* ASESOR:
+         solamente su propia conversación */
+
+      return (
+        conversation.asesorEmail ===
+        usuarioActual?.email
+      );
+
+    }
+
+
+    function puedeGestionarConversacion(
+      conversation
+    ) {
+
+      if (!conversation)
+        return false;
+
+
+      if (
+        conversation.estado ===
+        "finalizada"
+      ) {
+
+        return false;
+
+      }
+
+
+      if (
+        !conversation.asesorAsignado
+      ) {
+
+        return true;
+
+      }
+
+
+      if (esAdministrador()) {
+
+        return true;
+
+      }
+
+
+      return (
+        conversation.asesorEmail ===
+        usuarioActual?.email
+      );
 
     }
 
@@ -967,158 +1322,324 @@
 
       conversationList.innerHTML = "";
 
-      const lista =
-        Object.values(conversaciones)
-          .filter((conversation) => {
+
+      let lista =
+        Object.values(
+          conversaciones
+        );
+
+
+      /* =====================
+         FILTRO POR VISTA
+         ===================== */
+
+      if (
+        vistaActual ===
+        "activos"
+      ) {
+
+        lista =
+          lista.filter(
+            (conversation) => {
+
+              if (
+                conversation.estado ===
+                "finalizada"
+              ) {
+
+                return false;
+
+              }
+
+              return puedeVerConversacion(
+                conversation
+              );
+
+            }
+          );
+
+      } else {
+
+        lista =
+          lista.filter(
+            (conversation) => {
+
+              return (
+                conversation.estado ===
+                "finalizada"
+              );
+
+            }
+          );
+
+      }
+
+
+      /* =====================
+         BUSCADOR
+         ===================== */
+
+      lista =
+        lista.filter(
+          (conversation) => {
 
             const datos =
-              conversation.datosCliente || {};
+              conversation.datosCliente ||
+              {};
 
             const texto = [
 
               datos.nombre,
               datos.dni,
               datos.telefono,
-              datos.motivo
+              datos.motivo,
+              conversation.asesorAsignado,
+              conversation.finalizadoPor
 
             ]
               .filter(Boolean)
               .join(" ")
               .toLowerCase();
 
-            return texto.includes(search);
-
-          })
-          .sort((a, b) => {
-
-            return (
-              (b.fechaCreacion || 0) -
-              (a.fechaCreacion || 0)
+            return texto.includes(
+              search
             );
-
-          });
-
-
-      if (lista.length === 0) {
-
-        conversationList.innerHTML =
-          `<div style="padding:20px;color:#777">
-             No hay conversaciones.
-           </div>`;
-
-        return;
-      }
-
-
-      lista.forEach((conversation) => {
-
-        const datos =
-          conversation.datosCliente || {};
-
-        const mensajesObj =
-          conversation.mensajes || {};
-
-        const mensajesArray =
-          Object.values(mensajesObj);
-
-        const ultimo =
-          mensajesArray.length
-            ? mensajesArray[
-                mensajesArray.length - 1
-              ]
-            : null;
-
-        const div =
-          document.createElement("div");
-
-        div.className =
-          "conversation-item" +
-          (
-            conversation.id ===
-            conversacionSeleccionada
-              ? " active"
-              : ""
-          );
-
-        const estado =
-          conversation.estado ||
-          "pendiente";
-
-        let estadoTexto = "";
-
-        if (estado === "finalizada") {
-
-          estadoTexto =
-            `<span class="finished">
-              Finalizada
-            </span>`;
-
-        } else if (
-          ultimo &&
-          ultimo.remitente === "cliente"
-        ) {
-
-          estadoTexto =
-            `<span class="waiting">
-              Esperando respuesta
-            </span>`;
-
-        } else {
-
-          estadoTexto =
-            `<span>
-              ${escaparHTML(estado)}
-            </span>`;
-        }
-
-
-        div.innerHTML = `
-
-          <div class="conversation-name">
-            ${escaparHTML(
-              datos.nombre ||
-              "Sin nombre"
-            )}
-          </div>
-
-          <div class="conversation-preview">
-            ${escaparHTML(
-              ultimo?.texto ||
-              "Sin mensajes"
-            )}
-          </div>
-
-          <div class="conversation-meta">
-            ${estadoTexto}
-            · ${tiempoRelativo(
-              ultimo?.fecha ||
-              conversation.fechaCreacion
-            )}
-          </div>
-
-        `;
-
-
-        div.addEventListener(
-          "click",
-          () => {
-
-            conversacionSeleccionada =
-              conversation.id;
-
-            mostrarConversacion(
-              conversation
-            );
-
-            renderConversationList();
 
           }
         );
 
 
-        conversationList.appendChild(div);
+      /* =====================
+         ORDEN
+         ===================== */
 
-      });
+      lista.sort(
+        (a, b) => {
+
+          return (
+            obtenerUltimaFecha(b) -
+            obtenerUltimaFecha(a)
+          );
+
+        }
+      );
+
+
+      if (
+        lista.length === 0
+      ) {
+
+        conversationList.innerHTML = `
+
+          <div style="
+            padding:20px;
+            color:#777;
+            text-align:center;
+          ">
+
+            ${
+              vistaActual ===
+              "activos"
+
+                ? "No hay conversaciones activas."
+
+                : "No hay conversaciones finalizadas."
+            }
+
+          </div>
+
+        `;
+
+        return;
+
+      }
+
+
+      lista.forEach(
+        (conversation) => {
+
+          const datos =
+            conversation.datosCliente ||
+            {};
+
+          const mensajesObj =
+            conversation.mensajes ||
+            {};
+
+          const mensajesArray =
+            Object.values(
+              mensajesObj
+            );
+
+          const ultimo =
+            mensajesArray.length
+              ? mensajesArray[
+                  mensajesArray.length - 1
+                ]
+              : null;
+
+
+          const div =
+            document.createElement(
+              "div"
+            );
+
+          div.className =
+            "conversation-item" +
+            (
+              conversation.id ===
+              conversacionSeleccionada
+                ? " active"
+                : ""
+            );
+
+
+          let estadoTexto = "";
+
+
+          if (
+            conversation.estado ===
+            "finalizada"
+          ) {
+
+            estadoTexto = `
+
+              <span class="finished">
+                Finalizada
+              </span>
+
+            `;
+
+          } else if (
+            !conversation.asesorAsignado
+          ) {
+
+            estadoTexto = `
+
+              <span class="available">
+                Disponible
+              </span>
+
+            `;
+
+          } else if (
+            ultimo &&
+            ultimo.remitente ===
+            "cliente"
+          ) {
+
+            estadoTexto = `
+
+              <span class="waiting">
+                Esperando respuesta
+              </span>
+
+            `;
+
+          } else {
+
+            estadoTexto = `
+
+              <span class="assigned">
+                En atención
+              </span>
+
+            `;
+
+          }
+
+
+          let asignacion = "";
+
+
+          if (
+            conversation.asesorAsignado
+          ) {
+
+            asignacion =
+              " · " +
+              escaparHTML(
+                conversation.asesorAsignado
+              );
+
+          }
+
+
+          div.innerHTML = `
+
+            <div class="conversation-name">
+
+              ${escaparHTML(
+                datos.nombre ||
+                "Sin nombre"
+              )}
+
+            </div>
+
+            <div class="conversation-preview">
+
+              ${escaparHTML(
+                ultimo?.texto ||
+                "Sin mensajes"
+              )}
+
+            </div>
+
+            <div class="conversation-meta">
+
+              ${estadoTexto}
+              ${asignacion}
+              ·
+              ${tiempoRelativo(
+                ultimo?.fecha ||
+                conversation.fechaCreacion
+              )}
+
+            </div>
+
+          `;
+
+
+          div.addEventListener(
+            "click",
+            () => {
+
+              if (
+                !puedeVerConversacion(
+                  conversation
+                )
+              ) {
+
+                alert(
+                  "Esta conversación está asignada a otro asesor."
+                );
+
+                return;
+
+              }
+
+
+              conversacionSeleccionada =
+                conversation.id;
+
+
+              mostrarConversacion(
+                conversation
+              );
+
+
+              renderConversationList();
+
+            }
+          );
+
+
+          conversationList.appendChild(
+            div
+          );
+
+        }
+      );
 
     }
 
@@ -1137,14 +1658,29 @@
       conversation
     ) {
 
+      if (
+        !puedeVerConversacion(
+          conversation
+        )
+      ) {
+
+        cerrarChatSeleccionado();
+
+        return;
+
+      }
+
+
       emptyChat.style.display =
         "none";
 
       chatContent.style.display =
         "flex";
 
+
       const datos =
-        conversation.datosCliente || {};
+        conversation.datosCliente ||
+        {};
 
 
       document.getElementById(
@@ -1158,7 +1694,8 @@
         "clientDni"
       ).textContent =
         datos.dni
-          ? "DNI: " + datos.dni
+          ? "DNI: " +
+            datos.dni
           : "";
 
 
@@ -1166,7 +1703,8 @@
         "clientPhone"
       ).textContent =
         datos.telefono
-          ? "Tel: " + datos.telefono
+          ? "Tel: " +
+            datos.telefono
           : "";
 
 
@@ -1174,85 +1712,151 @@
         "clientMotive"
       ).textContent =
         datos.motivo
-          ? "Motivo: " + datos.motivo
+          ? "Motivo: " +
+            datos.motivo
           : "";
 
 
       document.getElementById(
         "conversationStatus"
       ).innerHTML =
+
         conversation.estado ===
         "finalizada"
 
-          ? `<span class="finished">
-               Finalizada
-             </span>`
+          ? `
 
-          : `<span>
-               Estado: ${
-                 escaparHTML(
-                   conversation.estado ||
-                   "pendiente"
-                 )
-               }
-             </span>`;
+            <span class="finished">
+              Finalizada
+            </span>
+
+          `
+
+          : !conversation.asesorAsignado
+
+            ? `
+
+              <span class="available">
+                Disponible
+              </span>
+
+            `
+
+            : `
+
+              <span>
+                Estado:
+                ${
+                  escaparHTML(
+                    conversation.estado ||
+                    "en_atencion"
+                  )
+                }
+              </span>
+
+            `;
 
 
       let assignment = "";
 
-      if (conversation.asesorAsignado) {
 
-        assignment =
-          `<div style="
-             margin-top:10px;
-             font-size:13px;
-             color:#555;
-           ">
-             Asignada a:
-             <strong>
-               ${escaparHTML(
-                 conversation.asesorAsignado
-               )}
-             </strong>
-           </div>`;
+      if (
+        conversation.asesorAsignado
+      ) {
+
+        assignment += `
+
+          <div style="
+            margin-top:10px;
+            font-size:13px;
+            color:#555;
+          ">
+
+            Asignada a:
+            <strong>
+
+              ${escaparHTML(
+                conversation.asesorAsignado
+              )}
+
+            </strong>
+
+          </div>
+
+        `;
+
+      } else {
+
+        assignment += `
+
+          <div style="
+            margin-top:10px;
+            font-size:13px;
+            color:#1565c0;
+            font-weight:bold;
+          ">
+
+            Conversación disponible para tomar
+
+          </div>
+
+        `;
 
       }
 
 
-      if (conversation.motivoFinalizacion) {
+      if (
+        conversation.motivoFinalizacion
+      ) {
 
-        assignment +=
-          `<div style="
-             margin-top:6px;
-             font-size:13px;
-             color:#555;
-           ">
-             Motivo de finalización:
-             <strong>
-               ${escaparHTML(
-                 conversation.motivoFinalizacion
-               )}
-             </strong>
-           </div>`;
+        assignment += `
+
+          <div style="
+            margin-top:6px;
+            font-size:13px;
+            color:#555;
+          ">
+
+            Motivo de finalización:
+            <strong>
+
+              ${escaparHTML(
+                conversation.motivoFinalizacion
+              )}
+
+            </strong>
+
+          </div>
+
+        `;
 
       }
 
 
-      if (conversation.finalizadoPor) {
+      if (
+        conversation.finalizadoPor
+      ) {
 
-        assignment +=
-          `<div style="
-             margin-top:6px;
-             font-size:13px;
-             color:#555;
-           ">
-             Finalizada por:
-             <strong>
-               ${escaparHTML(
-                 conversation.finalizadoPor
-               )}
-             </strong>
-           </div>`;
+        assignment += `
+
+          <div style="
+            margin-top:6px;
+            font-size:13px;
+            color:#555;
+          ">
+
+            Finalizada por:
+            <strong>
+
+              ${escaparHTML(
+                conversation.finalizadoPor
+              )}
+
+            </strong>
+
+          </div>
+
+        `;
 
       }
 
@@ -1263,27 +1867,136 @@
         assignment;
 
 
-      takeConversationBtn.disabled =
+      const finalizada =
         conversation.estado ===
         "finalizada";
 
+
+      const soyAsignado =
+        conversation.asesorEmail ===
+        usuarioActual?.email;
+
+
+      const sinAsignar =
+        !conversation.asesorAsignado;
+
+
+      /* =====================
+         BOTÓN TOMAR
+         ===================== */
+
+      takeConversationBtn.style.display =
+        "inline-block";
+
+
+      takeConversationBtn.disabled =
+        finalizada ||
+        !sinAsignar;
+
+
+      if (sinAsignar) {
+
+        takeConversationBtn.textContent =
+          "Tomar conversación";
+
+      } else {
+
+        takeConversationBtn.textContent =
+          "Conversación asignada";
+
+      }
+
+
+      /* =====================
+         TRANSFERIR
+         ===================== */
+
+      transferBtn.style.display =
+        "inline-block";
+
+
+      transferBtn.disabled =
+        finalizada ||
+        !puedeGestionarConversacion(
+          conversation
+        );
+
+
+      /* =====================
+         FINALIZAR
+         ===================== */
 
       finalizeBtn.disabled =
-        conversation.estado ===
-        "finalizada";
+        finalizada ||
+        !puedeGestionarConversacion(
+          conversation
+        );
+
+
+      /* =====================
+         MENSAJES
+         ===================== */
+
+      const puedeResponder =
+        !finalizada &&
+        puedeGestionarConversacion(
+          conversation
+        );
 
 
       messageInput.disabled =
-        conversation.estado ===
-        "finalizada";
+        !puedeResponder;
 
 
       sendBtn.disabled =
-        conversation.estado ===
-        "finalizada";
+        !puedeResponder;
 
 
-      cargarMensajes(conversation.id);
+      if (finalizada) {
+
+        messageInput.placeholder =
+          "Esta conversación está finalizada.";
+
+      } else if (
+        !puedeResponder
+      ) {
+
+        messageInput.placeholder =
+          "Tomá la conversación para responder.";
+
+      } else {
+
+        messageInput.placeholder =
+          "Escribí un mensaje...";
+
+      }
+
+
+      cargarMensajes(
+        conversation.id
+      );
+
+    }
+
+
+    /* =========================
+       CERRAR CHAT
+       ========================= */
+
+    function cerrarChatSeleccionado() {
+
+      conversacionSeleccionada =
+        null;
+
+      chatContent.style.display =
+        "none";
+
+      emptyChat.style.display =
+        "flex";
+
+      messages.innerHTML = "";
+
+      messageInput.value = "";
 
     }
 
@@ -1305,51 +2018,76 @@
         );
 
 
-      onValue(mensajesRef, (snapshot) => {
+      onValue(
+        mensajesRef,
+        (snapshot) => {
 
-        messages.innerHTML = "";
+          messages.innerHTML = "";
 
-        const lista = [];
-
-        snapshot.forEach((child) => {
-
-          lista.push({
-            id: child.key,
-            ...child.val()
-          });
-
-        });
+          const lista = [];
 
 
-        lista.sort((a, b) => {
+          snapshot.forEach(
+            (child) => {
 
-          return (
-            (a.fecha || 0) -
-            (b.fecha || 0)
+              const data =
+                child.val();
+
+              if (!data)
+                return;
+
+              lista.push({
+
+                id: child.key,
+
+                ...data
+
+              });
+
+            }
           );
 
-        });
+
+          lista.sort(
+            (a, b) => {
+
+              return (
+                (a.fecha || 0) -
+                (b.fecha || 0)
+              );
+
+            }
+          );
 
 
-        lista.forEach((message) => {
+          lista.forEach(
+            (message) => {
 
-          mostrarMensaje(message);
+              mostrarMensaje(
+                message
+              );
 
-        });
+            }
+          );
 
 
-        messages.scrollTop =
-          messages.scrollHeight;
+          messages.scrollTop =
+            messages.scrollHeight;
 
-      });
+        }
+      );
 
     }
 
 
-    function mostrarMensaje(message) {
+    function mostrarMensaje(
+      message
+    ) {
 
       const div =
-        document.createElement("div");
+        document.createElement(
+          "div"
+        );
 
 
       if (
@@ -1377,6 +2115,7 @@
 
 
       const nombre =
+
         message.remitente ===
         "asesor"
 
@@ -1396,15 +2135,22 @@
       div.innerHTML = `
 
         <div>
+
           ${escaparHTML(
-            message.texto || ""
+            message.texto ||
+            ""
           )}
+
         </div>
 
         <div class="message-info">
 
-          ${escaparHTML(nombre)}
+          ${escaparHTML(
+            nombre
+          )}
+
           ·
+
           ${formatearFecha(
             message.fecha
           )}
@@ -1414,7 +2160,9 @@
       `;
 
 
-      messages.appendChild(div);
+      messages.appendChild(
+        div
+      );
 
     }
 
@@ -1427,14 +2175,53 @@
       "click",
       async () => {
 
-        if (!conversacionSeleccionada)
+        if (
+          !conversacionSeleccionada
+        )
           return;
+
 
         const user =
           auth.currentUser;
 
         if (!user)
           return;
+
+
+        const conversation =
+          conversaciones[
+            conversacionSeleccionada
+          ];
+
+
+        if (!conversation)
+          return;
+
+
+        if (
+          conversation.estado ===
+          "finalizada"
+        ) {
+
+          return;
+
+        }
+
+
+        /* Solo se puede tomar
+           si todavía no tiene asesor */
+
+        if (
+          conversation.asesorAsignado
+        ) {
+
+          alert(
+            "Esta conversación ya fue tomada por otro asesor."
+          );
+
+          return;
+
+        }
 
 
         const nombre =
@@ -1451,7 +2238,9 @@
           ),
 
           {
-            estado: "en_atencion",
+
+            estado:
+              "en_atencion",
 
             asesorAsignado:
               nombre,
@@ -1461,9 +2250,11 @@
 
             fechaAsignacion:
               Date.now()
+
           }
 
         );
+
 
         alert(
           "Conversación tomada correctamente."
@@ -1512,7 +2303,9 @@
         !texto ||
         !conversacionSeleccionada
       ) {
+
         return;
+
       }
 
 
@@ -1529,13 +2322,22 @@
         ];
 
 
+      if (!conversation)
+        return;
+
+
       if (
-        conversation &&
-        conversation.estado ===
-        "finalizada"
+        !puedeGestionarConversacion(
+          conversation
+        )
       ) {
 
+        alert(
+          "No podés responder esta conversación."
+        );
+
         return;
+
       }
 
 
@@ -1610,6 +2412,204 @@
 
 
     /* =========================
+       TRANSFERIR
+       ========================= */
+
+    transferBtn.addEventListener(
+      "click",
+      () => {
+
+        if (
+          !conversacionSeleccionada
+        )
+          return;
+
+
+        const conversation =
+          conversaciones[
+            conversacionSeleccionada
+          ];
+
+
+        if (
+          !puedeGestionarConversacion(
+            conversation
+          )
+        ) {
+
+          alert(
+            "No podés transferir esta conversación."
+          );
+
+          return;
+
+        }
+
+
+        cargarOpcionesTransferencia();
+
+        transferModal.style.display =
+          "flex";
+
+      }
+    );
+
+
+    cancelTransfer.addEventListener(
+      "click",
+      () => {
+
+        transferModal.style.display =
+          "none";
+
+      }
+    );
+
+
+    confirmTransfer.addEventListener(
+      "click",
+      async () => {
+
+        const nuevoAsesor =
+          transferAdvisor.value;
+
+
+        if (!nuevoAsesor) {
+
+          alert(
+            "Seleccioná un asesor."
+          );
+
+          return;
+
+        }
+
+
+        const conversation =
+          conversaciones[
+            conversacionSeleccionada
+          ];
+
+
+        if (
+          !puedeGestionarConversacion(
+            conversation
+          )
+        ) {
+
+          alert(
+            "No podés transferir esta conversación."
+          );
+
+          transferModal.style.display =
+            "none";
+
+          return;
+
+        }
+
+
+        const emailNuevoAsesor =
+          obtenerEmailPorNombre(
+            nuevoAsesor
+          );
+
+
+        await update(
+
+          ref(
+            db,
+            `conversaciones/${conversacionSeleccionada}`
+          ),
+
+          {
+
+            estado:
+              "en_atencion",
+
+            asesorAsignado:
+              nuevoAsesor,
+
+            asesorEmail:
+              emailNuevoAsesor,
+
+            fechaTransferencia:
+              Date.now(),
+
+            transferidoPor:
+              nombreUsuarioActual
+
+          }
+
+        );
+
+
+        transferModal.style.display =
+          "none";
+
+
+        alert(
+          "Conversación transferida correctamente."
+        );
+
+      }
+    );
+
+
+    /* =========================
+       OPCIONES TRANSFERENCIA
+       ========================= */
+
+    function cargarOpcionesTransferencia() {
+
+      transferAdvisor.innerHTML = `
+
+        <option value="">
+          Seleccionar asesor
+        </option>
+
+      `;
+
+
+      Object.keys(perfiles)
+        .sort()
+        .forEach(
+          (nombre) => {
+
+            const option =
+              document.createElement(
+                "option"
+              );
+
+            option.value =
+              nombre;
+
+            option.textContent =
+              nombre +
+              " · " +
+              perfiles[nombre];
+
+            if (
+              nombre ===
+              nombreUsuarioActual
+            ) {
+
+              option.disabled =
+                true;
+
+            }
+
+            transferAdvisor.appendChild(
+              option
+            );
+
+          }
+        );
+
+    }
+
+
+    /* =========================
        FINALIZAR
        ========================= */
 
@@ -1617,10 +2617,35 @@
       "click",
       () => {
 
-        if (!conversacionSeleccionada)
+        if (
+          !conversacionSeleccionada
+        )
           return;
 
-        finalizationReason.value = "";
+
+        const conversation =
+          conversaciones[
+            conversacionSeleccionada
+          ];
+
+
+        if (
+          !puedeGestionarConversacion(
+            conversation
+          )
+        ) {
+
+          alert(
+            "No podés finalizar esta conversación."
+          );
+
+          return;
+
+        }
+
+
+        finalizationReason.value =
+          "";
 
         finalizeModal.style.display =
           "flex";
@@ -1655,6 +2680,7 @@
           );
 
           return;
+
         }
 
 
@@ -1663,6 +2689,30 @@
 
         if (!user)
           return;
+
+
+        const conversation =
+          conversaciones[
+            conversacionSeleccionada
+          ];
+
+
+        if (
+          !puedeGestionarConversacion(
+            conversation
+          )
+        ) {
+
+          alert(
+            "No podés finalizar esta conversación."
+          );
+
+          finalizeModal.style.display =
+            "none";
+
+          return;
+
+        }
 
 
         const nombre =
@@ -1707,6 +2757,25 @@
         alert(
           "Conversación finalizada correctamente."
         );
+
+
+        /* La quitamos de la
+           bandeja activa */
+
+        vistaActual =
+          "activos";
+
+        activeTab.classList.add(
+          "active"
+        );
+
+        historyTab.classList.remove(
+          "active"
+        );
+
+        cerrarChatSeleccionado();
+
+        renderConversationList();
 
       }
     );
@@ -1784,38 +2853,164 @@
     }
 
 
-    function escaparHTML(texto) {
+    function obtenerEmailPorNombre(
+      nombre
+    ) {
 
-      return String(texto ?? "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
+      const mapa = {
+
+        "Rocio":
+          "rocio.lopez@mansillayasoc.com.ar",
+
+        "Antonela":
+          "antonela.lopez@mansillayasoc.com.ar",
+
+        "Pilar":
+          "pilar.solano@mansillayasoc.com.ar",
+
+        "Daniela":
+          "daniela.cortez@mansillayasoc.com.ar",
+
+        "Paula":
+          "paula.lopez@mansillayasoc.com.ar",
+
+        "Ana":
+          "ana.rueda@mansillayasoc.com.ar",
+
+        "Maria Paz":
+          "ana.paz@mansillayasoc.com.ar",
+
+        "Agustina":
+          "agustina.baez@mansillayasoc.com.ar",
+
+        "Pablo":
+          "pablo.medina@mansillayasoc.com.ar",
+
+        "Giuliana":
+          "giulina.pancelo@mansillayasoc.com.ar",
+
+        "Candela":
+          "candela.espeche@mansillayasoc.com.ar",
+
+        "Delfina":
+          "delfina.sesto@mansillayasoc.com.ar",
+
+        "Julieta":
+          "julieta.araoz@mansillayasoc.com.ar",
+
+        "Moriana":
+          "moriana.rey@mansillayasoc.com.ar",
+
+        "Keila":
+          "keila.luduena@mansillayasoc.com.ar",
+
+        "Natalia":
+          "natalia.lopez@mansillayasoc.com.ar",
+
+        "Milagros":
+          "mavillegas@mansillayasoc.com.ar"
+
+      };
+
+
+      return (
+        mapa[nombre] ||
+        ""
+      );
 
     }
 
 
-    function formatearFecha(timestamp) {
+    function obtenerUltimaFecha(
+      conversation
+    ) {
 
-      if (!timestamp)
-        return "";
+      const mensajes =
+        Object.values(
+          conversation.mensajes ||
+          {}
+        );
 
-      return new Date(timestamp)
-        .toLocaleString(
-          "es-AR",
-          {
-            day: "2-digit",
-            month: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit"
-          }
+
+      if (
+        mensajes.length
+      ) {
+
+        return Math.max(
+          ...mensajes.map(
+            (m) =>
+              m.fecha || 0
+          )
+        );
+
+      }
+
+
+      return (
+        conversation.fechaCreacion ||
+        0
+      );
+
+    }
+
+
+    function escaparHTML(
+      texto
+    ) {
+
+      return String(
+        texto ?? ""
+      )
+        .replaceAll(
+          "&",
+          "&amp;"
+        )
+        .replaceAll(
+          "<",
+          "&lt;"
+        )
+        .replaceAll(
+          ">",
+          "&gt;"
+        )
+        .replaceAll(
+          '"',
+          "&quot;"
+        )
+        .replaceAll(
+          "'",
+          "&#039;"
         );
 
     }
 
 
-    function tiempoRelativo(timestamp) {
+    function formatearFecha(
+      timestamp
+    ) {
+
+      if (!timestamp)
+        return "";
+
+      return new Date(
+        timestamp
+      ).toLocaleString(
+        "es-AR",
+        {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit"
+        }
+      );
+
+    }
+
+
+    function tiempoRelativo(
+      timestamp
+    ) {
 
       if (!timestamp)
         return "";
@@ -1837,7 +3032,11 @@
 
 
       if (minutos < 60)
-        return `Hace ${minutos} min`;
+        return (
+          "Hace " +
+          minutos +
+          " min"
+        );
 
 
       const horas =
@@ -1847,7 +3046,11 @@
 
 
       if (horas < 24)
-        return `Hace ${horas} h`;
+        return (
+          "Hace " +
+          horas +
+          " h"
+        );
 
 
       const dias =
@@ -1856,9 +3059,16 @@
         );
 
 
-      return `Hace ${dias} día${
-        dias === 1 ? "" : "s"
-      }`;
+      return (
+        "Hace " +
+        dias +
+        " día" +
+        (
+          dias === 1
+            ? ""
+            : "s"
+        )
+      );
 
     }
 
