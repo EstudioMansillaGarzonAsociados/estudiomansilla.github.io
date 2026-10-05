@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Centro de Atención — Estudio Mansilla Garzon y Asociados</title>
+<title>Centro de Atención — Estudio Mansilla Garzon y Asociados — v2026.10.05-SOS</title>
 
 <style>
 :root{
@@ -215,6 +215,7 @@ button{cursor:pointer}
 .sos-item small{display:block;margin-top:3px;color:#777}
 .sos-button{font-weight:900;animation:sosPulse 1.5s infinite}
 @keyframes sosPulse{0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,.35)}50%{box-shadow:0 0 0 6px rgba(220,38,38,0)}}
+@keyframes sosNavPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.025);box-shadow:0 0 0 5px rgba(220,38,38,.14)}}
 .expediente-acuerdo{margin-top:12px;padding-top:10px;border-top:1px solid #e5e7eb}
 .expediente-acuerdo textarea{width:100%;box-sizing:border-box;border:1px solid #cfd6df;border-radius:8px;padding:9px;resize:vertical;margin-top:6px;font:inherit;min-height:90px}
 .agreement-readonly{background:#f7f8fa;border-radius:8px;padding:9px;margin-top:6px;min-height:45px}
@@ -279,6 +280,9 @@ button{cursor:pointer}
       </button>
       <button id="navHistorial" onclick="mostrarVista('historial')">
         <span>📚 Historial</span><span id="badgeHistorial" class="badge">0</span>
+      </button>
+      <button id="navSOS" class="sos-nav hidden" onclick="mostrarVista('sos')">
+        <span>🚨 SOS URGENTES</span><span id="badgeSOS" class="badge">0</span>
       </button>
       <button id="navAgenda" onclick="mostrarVista('agenda')">
         <span>📅 Agenda gestores</span>
@@ -842,14 +846,16 @@ function conversacionEsMia(c){
 }
 
 function puedeGestionarConversacion(c){
+  if(!c) return false;
   if(esSupervisor()) return true;
   if(esSenior()){
-    // Un senior puede gestionar todas las conversaciones de su equipo
-    // y también TODAS las que estén sin asignar.
     if(estaSinAsignar(c)) return true;
-    return puedeVerPorEquipo(c);
+    return conversacionEsMia(c) || puedeVerPorEquipo(c);
   }
-  if(esAsesor()) return puedeVerPorEquipo(c);
+  if(esAsesor()){
+    // Un gestor puede trabajar sus propios chats y los chats activos de su equipo.
+    return conversacionEsMia(c) || puedeVerPorEquipo(c);
+  }
   return false;
 }
 
@@ -877,7 +883,10 @@ function aplicarFiltroLista(lista){
 
 function mostrarNombreCliente(c){
   const d=obtenerDatosCliente(c);
-  return d.nombre || (d.dni ? `DNI ${d.dni}` : "Cliente sin identificar");
+  if(d.nombre && d.dni) return `${d.nombre} · DNI ${d.dni}`;
+  if(d.nombre) return d.nombre;
+  if(d.dni) return `DNI ${d.dni}`;
+  return "Cliente sin identificar";
 }
 
 function crearCardCliente(c,finalizada=false){
@@ -1004,8 +1013,12 @@ function abrirChatsDeGestor(nombre){
   items.appendChild(back);
 
   let lista=conversacionesActivas().filter(c=>{
-    if(normalizarTexto(obtenerGestorDeConversacion(c))!==normalizarTexto(nombre)) return false;
-    return esSupervisor() || puedeVerPorEquipo(c);
+    const gestor=obtenerGestorDeConversacion(c);
+    const email=normalizarTexto(obtenerEmailGestor(c));
+    const emailEsperado=normalizarTexto(emailDeNombre(nombre));
+    const coincide=personasCoinciden(gestor,nombre) || (email && emailEsperado && email===emailEsperado);
+    if(!coincide) return false;
+    return esSupervisor() || puedeVerPorEquipo(c) || personasCoinciden(obtenerGestorDeConversacion(c),nombre);
   });
 
   lista=aplicarFiltroLista(lista);
@@ -1055,6 +1068,31 @@ function renderizarHistorial(){
   lista.forEach(c=>items.appendChild(crearCardCliente(c,true)));
 }
 
+function renderizarSOS(){
+  if(!esSenior()&&!esSupervisor()){ mostrarVista("principal"); return; }
+  $("sectionTitle").textContent="SOS urgentes";
+  const items=$("items"); items.innerHTML="";
+  const pendientes=[];
+  const mapa=new Map();
+  Object.entries(urgencias||{}).forEach(([id,u])=>{ if(normalizarTexto(u?.estado)==="pendiente") mapa.set(id,{...u,_id:id}); });
+  Object.entries(conversaciones||{}).forEach(([id,c])=>{
+    for(const m of Object.values(c?.mensajes||{})){
+      if(m?.sos===true||m?.urgente===true){
+        if(!mapa.has(id)) mapa.set(id,{_id:id,gestor:m.remitente||obtenerGestorDeConversacion(c)||"Gestor",cliente:mostrarNombreCliente({...c,_id:id}),dni:obtenerDatosCliente(c).dni||"",fecha:m.fecha||Date.now(),estado:"pendiente"});
+        break;
+      }
+    }
+  });
+  pendientes.push(...mapa.values());
+  pendientes.sort((a,b)=>(b.fecha||0)-(a.fecha||0));
+  if(!pendientes.length){ items.innerHTML='<div class="empty">✅ No hay SOS pendientes.</div>'; return; }
+  pendientes.forEach(u=>{
+    const div=document.createElement("div"); div.className="card";
+    div.innerHTML=`<div class="card-title" style="color:#b42318">🚨 SOS URGENTE</div><div class="card-sub"><b>${escapeHtml(u.gestor||"Gestor")}</b> solicita ayuda con ${escapeHtml(u.cliente||"Cliente")}</div><div class="card-sub">🪪 DNI: ${escapeHtml(u.dni||"No informado")}</div><div class="card-sub">${formatFecha(u.fecha)}</div>`;
+    div.onclick=()=>abrirSOS(u._id); items.appendChild(div);
+  });
+}
+
 function mostrarVista(vista){
   // Seguridad de interfaz: un asesor nunca puede abrir la Agenda de gestores.
   if(vista==="agenda" && !puedeVerAgendaGestores()){
@@ -1070,7 +1108,7 @@ function mostrarVista(vista){
   vistaActual=vista;
   gestorSeleccionado=null;
   document.querySelectorAll(".nav button").forEach(b=>b.classList.remove("active"));
-  const mapa={principal:"navPrincipal",agentes:"navAgentes",sinAsignar:"navSinAsignar",historial:"navHistorial",agenda:"navAgenda",vencimientos:"navVencimientos"};
+  const mapa={principal:"navPrincipal",agentes:"navAgentes",sos:"navSOS",sinAsignar:"navSinAsignar",historial:"navHistorial",agenda:"navAgenda",vencimientos:"navVencimientos"};
   $(mapa[vista])?.classList.add("active");
 
   $("listSearch").value="";
@@ -1086,6 +1124,7 @@ function mostrarVista(vista){
   }
   if(vista==="principal") renderizarPrincipal();
   if(vista==="agentes") renderizarAgentes();
+  if(vista==="sos") renderizarSOS();
   if(vista==="sinAsignar") renderizarSinAsignar();
   if(vista==="historial") renderizarHistorial();
 }
@@ -1126,6 +1165,11 @@ function actualizarContadores(){
   $("badgeAgentes").textContent=agentes;
   $("badgeSinAsignar").textContent=sinAsignar;
   $("badgeHistorial").textContent=finalizadas.length;
+  const sosPendientes=new Set(Object.entries(urgencias||{}).filter(([,u])=>normalizarTexto(u?.estado)==="pendiente").map(([id])=>id));
+  Object.entries(conversaciones||{}).forEach(([id,c])=>{ if(Object.values(c?.mensajes||{}).some(m=>m?.sos===true||m?.urgente===true)) sosPendientes.add(id); });
+  $("badgeSOS").textContent=String(sosPendientes.size);
+  $("navSOS").classList.toggle("hidden",!esSenior()&&!esSupervisor());
+  $("navSOS").classList.toggle("sos-active",sosPendientes.size>0);
 
   $("navSinAsignar").classList.toggle("hidden",!esSenior()&&!esSupervisor());
   $("navAgenda").classList.toggle("hidden",!puedeVerAgendaGestores());
@@ -1182,7 +1226,7 @@ function renderizarFicha(c,finalizada){
   const equipo=obtenerEquipoDeConversacion(c);
   const gestor=obtenerGestorDeConversacion(c);
   const estado=finalizada?"Finalizada":(c.estado||"Activa");
-  const acuerdo=c.acuerdo || c.acuerdos || c.compromiso || c.observacionAcuerdo || "";
+  const acuerdo=c.acuerdo || c.acuerdos || c.compromiso || c.observacionAcuerdo || c.acuerdoCliente || c.compromisoCliente || c.observacionesAcuerdo || c.observacion || "";
   const puedeEditar=!finalizada && puedeGestionarConversacion(c);
 
   $("clientPanel").innerHTML=`
@@ -1280,40 +1324,40 @@ function renderizarMensajes(c){
 async function pedirAyudaSenior(){
   if(!conversacionSeleccionada) return;
   const c=conversaciones[conversacionSeleccionada];
-  if(!c || !esAsesor() || !puedeGestionarConversacion(c)) return;
+  if(!c || !esAsesor() || !estaActiva(c) || !(conversacionEsMia(c) || puedeVerPorEquipo(c))) return;
 
   const ahora=Date.now();
   const d=obtenerDatosCliente(c);
-  const equipo=obtenerEquipoDeConversacion(c)||obtenerEquipoDeGestor(nombreActual)[0]||"";
+  const equipo=obtenerEquipoDeConversacion(c)||obtenerEquipoDePersona(nombreActual)[0]||"";
   const id=conversacionSeleccionada;
+  const payload={
+    conversacionId:id, cliente:mostrarNombreCliente(c), dni:d.dni||"",
+    gestor:nombreActual, gestorEmail:usuarioActual?.email||"", equipo,
+    estado:"pendiente", fecha:ahora,
+    mensaje:`${nombreActual} solicita hablar con un senior de forma URGENTE.`
+  };
+
   try{
-    await set(ref(db,`urgencias/${id}`),{
-      conversacionId:id,
-      cliente:mostrarNombreCliente(c),
-      dni:d.dni || "",
-      gestor:nombreActual,
-      gestorEmail:usuarioActual?.email||"",
-      equipo,
-      estado:"pendiente",
-      fecha:ahora,
-      mensaje:`${nombreActual} solicita hablar con un senior de forma URGENTE.`
-    });
+    // Primero grabamos el SOS dentro del chat. Así el aviso sigue funcionando
+    // aunque las reglas de Firebase todavía no permitan escribir /urgencias.
     await push(ref(db,`conversaciones/${id}/mensajes`),{
       tipo:"interno",
       texto:`🚨 SOS URGENTE — ${nombreActual} solicita hablar con un senior.`,
-      remitente:nombreActual,
-      remitenteEmail:usuarioActual?.email||"",
-      fecha:ahora,
-      sos:true,
-      urgente:true
+      remitente:nombreActual, remitenteEmail:usuarioActual?.email||"", fecha:ahora,
+      sos:true, urgente:true
     });
-    alert("🚨 SOS enviado. El pedido quedó marcado como URGENTE para los seniors.");
+
+    try{ await set(ref(db,`urgencias/${id}`),payload); }
+    catch(e){ console.warn("No se pudo escribir /urgencias; se conserva el SOS dentro del chat.",e); }
+
+    urgencias[id]=payload;
+    renderizarPanelSOS();
+    alert("🚨 SOS ENVIADO. El senior verá el aviso en rojo y dentro del chat.");
   }catch(err){
     console.error(err);
-    alert("No se pudo enviar el SOS. Revisá los permisos de Firebase.");
+    alert("No se pudo enviar el SOS. Firebase no permitió guardar el aviso dentro del chat.");
   }
 }
-
 let urgencias={};
 let primerCargaUrgencias=true;
 let ultimoSOSIds=new Set();
@@ -1350,11 +1394,12 @@ function escucharUrgencias(){
 }
 
 function renderizarPanelSOS(){
-  const panel=$("sosPanel");
-  const list=$("sosList");
+  const panel=$("sosPanel"), list=$("sosList"), nav=$("navSOS"), badge=$("badgeSOS");
   if(!panel || !list) return;
-  if(!esSenior() && !esSupervisor()){
+  const superior=esSenior()||esSupervisor();
+  if(!superior){
     panel.classList.add("hidden");
+    nav?.classList.add("hidden");
     return;
   }
 
@@ -1363,37 +1408,35 @@ function renderizarPanelSOS(){
     if(normalizarTexto(u?.estado)==="pendiente") mapa.set(id,{...u,_id:id});
   });
 
-  // Respaldo: si el nodo /urgencias no tiene datos pero el SOS quedó grabado
-  // dentro de la conversación, el senior igual lo ve.
+  // Respaldo fuerte: busca SOS también dentro de TODOS los chats cargados.
   Object.entries(conversaciones||{}).forEach(([id,c])=>{
     for(const m of Object.values(c?.mensajes||{})){
       if(m?.sos===true || m?.urgente===true){
-        if(!mapa.has(id)){
-          mapa.set(id,{
-            _id:id,
-            gestor:m.remitente||obtenerGestorDeConversacion(c)||"Gestor",
-            cliente:mostrarNombreCliente({...c,_id:id}),
-            dni:obtenerDatosCliente(c).dni||"",
-            fecha:m.fecha||Date.now(),
-            estado:"pendiente"
-          });
-        }
+        const actual=mapa.get(id)||{};
+        mapa.set(id,{...actual,_id:id,gestor:actual.gestor||m.remitente||obtenerGestorDeConversacion(c)||"Gestor",
+          cliente:actual.cliente||mostrarNombreCliente({...c,_id:id}),dni:actual.dni||obtenerDatosCliente(c).dni||"",
+          fecha:actual.fecha||m.fecha||Date.now(),estado:"pendiente"});
         break;
       }
     }
   });
 
   const pendientes=[...mapa.values()].sort((a,b)=>(b.fecha||0)-(a.fecha||0));
-  panel.classList.remove("hidden");
+  badge.textContent=String(pendientes.length);
+  nav.classList.toggle("hidden",false);
+  nav.classList.toggle("sos-active",pendientes.length>0);
+  panel.classList.toggle("hidden",pendientes.length===0);
   list.innerHTML=pendientes.length ? pendientes.map(u=>`
     <button class="sos-item" onclick="abrirSOS('${escapeHtml(u._id)}')">
       <div class="sos-item-title">🚨🚨 SOS URGENTE 🚨🚨</div>
       <div><b>${escapeHtml(u.gestor||"Gestor")}</b> necesita hablar con un senior</div>
       <div>${escapeHtml(u.cliente||"Cliente")} ${u.dni?`· DNI ${escapeHtml(u.dni)}`:""}</div>
       <small>${formatFecha(u.fecha)}</small>
-    </button>
-  `).join("") : `<div style="font-size:11px;color:#777;padding:4px">No hay SOS pendientes.</div>`;
+    </button>`).join("") : "";
+
+  if(pendientes.length && !primerCargaUrgencias) sonidoNuevoChat();
 }
+
 function abrirSOS(id){
   const u=urgencias[id];
   if(!u) return;
@@ -1712,6 +1755,7 @@ function escucharConversaciones(){
     primerCargaConversaciones=false;
 
     actualizarContadores();
+    renderizarPanelSOS();
     refrescarVistaActual();
 
     if(conversacionSeleccionada && conversaciones[conversacionSeleccionada]){
@@ -2131,6 +2175,7 @@ onAuthStateChanged(auth,async user=>{
   const esGestionSuperior=esSenior()||esSupervisor();
   $("navAgenda").classList.toggle("hidden",!esGestionSuperior);
   $("navSinAsignar").classList.toggle("hidden",!esGestionSuperior);
+  $("navSOS").classList.toggle("hidden",!esGestionSuperior);
   renderizarPanelSOS();
 
   try{
