@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Centro de Atención — Estudio Mansilla Garzon y Asociados — v2026.10.05-SOS</title>
+<title>Centro de Atención — Estudio Mansilla Garzon y Asociados — v2026.10.05-SOS-IA</title>
 
 <style>
 :root{
@@ -1040,7 +1040,8 @@ function renderizarPrincipal(){
   }
 
   lista=lista.filter(c=>{
-    if(esSenior()||esAsesor()) return conversacionEsMia(c);
+    if(esSenior()) return conversacionEsMia(c) || puedeVerPorEquipo(c) || estaSinAsignar(c);
+    if(esAsesor()) return conversacionEsMia(c) || estaSinAsignar(c);
     return false;
   });
   lista=aplicarFiltroLista(lista);
@@ -1306,6 +1307,7 @@ async function abrirConversacion(id,finalizada=false){
   $("chatActions").innerHTML=`
     ${esSenior()||esSupervisor()?`<button class="btn blue" onclick="abrirModalAsignacion('${id}')">Asignar / transferir</button>`:""}
     ${`<button class="btn expediente-button" onclick="abrirExpediente()">📁 Ver expediente</button>`}
+    ${`<button class="btn blue" onclick="abrirIA()">✨ Ayuda IA</button>`}
     ${esAsesor() && gestionar?`<button class="btn red sos-button" onclick="pedirAyudaSenior()">🚨 SOS URGENTE · Hablar con senior</button>`:""}
     ${urgenciaPendiente && (esSenior()||esSupervisor())?`<button class="btn green" onclick="cerrarSOS('${id}')">✓ Marcar SOS atendido</button>`:""}
     ${gestionar?`<button class="btn" onclick="abrirIndicacionInterna()">🔒 Indicación</button>`:""}
@@ -1396,6 +1398,7 @@ function renderizarMensajes(c){
   }
 
   mensajes.forEach(m=>{
+    if((m?.sos===true || m?.urgente===true) && normalizarTexto(urgencias?.[conversacionSeleccionada]?.estado)==="atendido") return;
     const tipo=m.tipo||"texto";
     const div=document.createElement("div");
 
