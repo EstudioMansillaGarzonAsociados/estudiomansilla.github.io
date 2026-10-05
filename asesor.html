@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -2003,6 +2002,10 @@ function conversacionEsMia(c) {
 }
 
 
+/* =====================================================
+   PERMISOS POR EQUIPO
+===================================================== */
+
 function puedeVerPorEquipo(c) {
 
   if (esSupervisor()) {
@@ -2018,8 +2021,10 @@ function puedeVerPorEquipo(c) {
       obtenerGestorDeConversacion(c);
 
     if (gestor) {
+
       equipo =
         obtenerEquipoDeGestor(gestor);
+
     }
 
   }
@@ -2067,17 +2072,34 @@ function puedeVerPorEquipo(c) {
 }
 
 
+/* =====================================================
+   PERMISO PARA GESTIONAR
+   SUPERVISOR: TODO
+   SENIOR: TODO SU EQUIPO
+   ASESOR: TODO SU EQUIPO
+===================================================== */
+
 function puedeGestionarConversacion(c) {
 
   if (esSupervisor()) {
+
     return true;
+
   }
 
   if (esSenior()) {
+
     return puedeVerPorEquipo(c);
+
   }
 
-  return conversacionEsMia(c);
+  if (esAsesor()) {
+
+    return puedeVerPorEquipo(c);
+
+  }
+
+  return false;
 
 }
 
@@ -3060,6 +3082,13 @@ function obtenerTodosLosGestores() {
 }
 
 
+/* =====================================================
+   AGENTES
+   SUPERVISOR: TODOS
+   SENIOR: SU/SUS EQUIPOS
+   ASESOR: SU/SUS EQUIPOS
+===================================================== */
+
 function renderizarAgentes() {
 
   const items =
@@ -3069,7 +3098,7 @@ function renderizarAgentes() {
 
   items.innerHTML = "";
 
-  let gestores;
+  let gestores = [];
 
   if (esSupervisor()) {
 
@@ -3078,30 +3107,27 @@ function renderizarAgentes() {
 
   }
 
-  else if (esSenior()) {
+  else {
 
-    const equiposMios =
+    const misEquipos =
       obtenerEquipoDePersona(
         nombreActual
       );
 
-    gestores = [];
-
-    equiposMios.forEach(
+    misEquipos.forEach(
       equipo => {
 
-        (
-          equipos[equipo]?.gestores ||
-          []
-        )
-        .forEach(
-          g => {
+        const gestoresEquipo =
+          equipos[equipo]?.gestores || [];
+
+        gestoresEquipo.forEach(
+          gestor => {
 
             if (
-              !gestores.includes(g)
+              !gestores.includes(gestor)
             ) {
 
-              gestores.push(g);
+              gestores.push(gestor);
 
             }
 
@@ -3113,17 +3139,11 @@ function renderizarAgentes() {
 
   }
 
-  else {
-
-    gestores =
-      [nombreActual];
-
-  }
-
-  gestores.forEach(
-    nombre =>
-      items.appendChild(
-        crearCardGestor(nombre)
+  gestores.sort(
+    (a,b) =>
+      a.localeCompare(
+        b,
+        "es"
       )
   );
 
@@ -3134,7 +3154,19 @@ function renderizarAgentes() {
         No hay gestores para mostrar.
       </div>`;
 
+    return;
+
   }
+
+  gestores.forEach(
+    nombre => {
+
+      items.appendChild(
+        crearCardGestor(nombre)
+      );
+
+    }
+  );
 
 }
 
@@ -3390,10 +3422,14 @@ function abrirChatsDeGestor(
           normalizarTexto(nombre)
       );
 
-  if (
-    !esSupervisor() &&
-    esSenior()
-  ) {
+  /*
+    Para senior y asesor:
+    solo se muestran chats del mismo equipo.
+
+    Supervisor puede ver cualquiera.
+  */
+
+  if (!esSupervisor()) {
 
     lista =
       lista.filter(
@@ -3518,20 +3554,6 @@ function renderizarHistorial() {
     );
 
   items.innerHTML = "";
-
-  /*
-    IMPORTANTE:
-    NO hay filtro por equipo ni por gestor.
-
-    Cualquier usuario autenticado puede:
-    - ver todas las finalizadas
-    - buscar por DNI
-    - buscar por nombre
-    - buscar por teléfono
-    - abrir el chat completo
-
-    Las finalizadas siguen siendo de solo lectura.
-  */
 
   let lista =
     conversacionesFinalizadas();
@@ -5383,11 +5405,6 @@ function actualizarContadores() {
   let agentes = 0;
   let sinAsignar = 0;
 
-  /*
-    TODOS ven la cantidad total
-    de conversaciones finalizadas.
-  */
-
   const historial =
     finalizadas.length;
 
@@ -5443,7 +5460,7 @@ function actualizarContadores() {
     agentes =
       activas.filter(
         c =>
-          conversacionEsMia(c)
+          puedeVerPorEquipo(c)
       ).length;
 
   }
@@ -5559,4 +5576,3 @@ actualizarReloj();
 
 </body>
 </html>
-```
