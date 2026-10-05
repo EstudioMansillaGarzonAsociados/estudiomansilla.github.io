@@ -583,6 +583,7 @@ const emailsPorNombre = {
   "pilar.solano@mansillayasoc.com.ar": "Pilar",
   "daniela.cortez@mansillayasoc.com.ar": "Daniela",
   "paula.lopez@mansillayasoc.com.ar": "Paula",
+  "mavillegas@mansillayasoc.com.ar": "Milagros",
   "ana.rueda@mansillayasoc.com.ar": "Ana",
   "ana.paz@mansillayasoc.com.ar": "Maria Paz",
   "agustina.baez@mansillayasoc.com.ar": "Agustina",
@@ -765,6 +766,7 @@ const ROLES_FIJOS_POR_EMAIL = {
   "daniela.cortez@mansillayasoc.com.ar": "senior",
   "moriana.rey@mansillayasoc.com.ar": "senior",
   "paula.lopez@mansillayasoc.com.ar": "asesor",
+  "mavillegas@mansillayasoc.com.ar": "supervisor",
   "alejo.mansilla@mansillayasoc.com.ar": "supervisor",
   "r.arrambide@mansillayasoc.com.ar": "supervisor",
   "gonzalo@mansillayasoc.com.ar": "supervisor",
@@ -777,6 +779,7 @@ const IDENTIDAD_FIJA_POR_EMAIL = {
   "daniela.cortez@mansillayasoc.com.ar": "Daniela",
   "moriana.rey@mansillayasoc.com.ar": "Moriana",
   "paula.lopez@mansillayasoc.com.ar": "Paula",
+  "mavillegas@mansillayasoc.com.ar": "Milagros",
   "alejo.povina@mansillayasoc.com.ar": "Alejo Cuotero",
   "alejo.mansilla@mansillayasoc.com.ar": "Alejo Supervisor",
   "r.arrambide@mansillayasoc.com.ar": "Ramon",
@@ -1572,6 +1575,23 @@ function abrirIndicacionInterna(){
   $("internalText").focus();
 }
 
+async function marcarSOSAtendidoSiCorresponde(id){
+  if(!id || (!esSenior() && !esSupervisor())) return;
+  const u=urgencias?.[id];
+  if(!u || normalizarTexto(u.estado)!=="pendiente") return;
+  if(esSenior() && !puedeVerSOS(u, conversaciones[id])) return;
+  try{
+    await update(ref(db,`urgencias/${id}`),{
+      estado:"atendido",
+      atendidoPor:nombreActual,
+      atendidoPorEmail:usuarioActual?.email||"",
+      atendidoFecha:Date.now()
+    });
+  }catch(err){
+    console.warn("No se pudo cerrar automáticamente el SOS",err);
+  }
+}
+
 async function enviarMensajeInterno(){
   if(!conversacionSeleccionada) return;
   if(!esSenior()&&!esSupervisor()) return;
@@ -1587,6 +1607,7 @@ async function enviarMensajeInterno(){
     fecha:Date.now()
   });
 
+  await marcarSOSAtendidoSiCorresponde(conversacionSeleccionada);
   $("internalText").value="";
   $("internalComposer").classList.add("hidden");
 }
@@ -1607,6 +1628,7 @@ async function enviarMensaje(){
     fecha:Date.now()
   });
 
+  await marcarSOSAtendidoSiCorresponde(conversacionSeleccionada);
   $("messageText").value="";
   detenerTyping();
 }
@@ -1632,6 +1654,7 @@ $("imageInput").addEventListener("change",async e=>{
       remitenteEmail:usuarioActual?.email||"",
       fecha:Date.now()
     });
+    await marcarSOSAtendidoSiCorresponde(conversacionSeleccionada);
   }catch(err){
     console.error(err);
     alert("No se pudo enviar la imagen. Revisá la configuración de Firebase Storage.");
