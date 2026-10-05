@@ -632,15 +632,42 @@ function nombreCorto(n){
   return n;
 }
 
+function valorCampoProfundo(obj, claves){
+  const buscadas = new Set(claves.map(k => normalizarTexto(k).replace(/[^a-z0-9]/g,"")));
+  const vistos = new Set();
+  function recorrer(x, profundidad=0){
+    if(x===null || x===undefined || profundidad>5) return "";
+    if(typeof x === "string"){
+      const t=x.trim();
+      if((t.startsWith("{") && t.endsWith("}")) || (t.startsWith("[") && t.endsWith("]"))){
+        try { return recorrer(JSON.parse(t), profundidad+1); } catch(e){}
+      }
+      return "";
+    }
+    if(typeof x !== "object") return "";
+    if(vistos.has(x)) return "";
+    vistos.add(x);
+    for(const [k,v] of Object.entries(x)){
+      const nk=normalizarTexto(k).replace(/[^a-z0-9]/g,"");
+      if(buscadas.has(nk) && v!==null && v!==undefined && String(v).trim()!=="") return v;
+    }
+    for(const v of Object.values(x)){
+      const r=recorrer(v, profundidad+1);
+      if(r!=="" && r!==undefined && r!==null) return r;
+    }
+    return "";
+  }
+  return recorrer(obj);
+}
+
 function obtenerDatosCliente(c){
-  const d = c?.datosCliente || c?.cliente || c?.datos || {};
-  return {
-    nombre: d.nombre || c.nombre || c.nombreCliente || c.clienteNombre || "",
-    dni: d.dni || c.dni || c.documento || c.document || "",
-    telefono: d.telefono || c.telefono || c.celular || c.phone || "",
-    fecha: d.fecha || c.fecha || "",
-    motivo: d.motivo || c.motivo || c.asunto || c.motivoConsulta || ""
-  };
+  const fuentes=[c?.datosCliente,c?.cliente,c?.datos,c];
+  const nombre=valorCampoProfundo({fuentes},["nombre","nombreCliente","clienteNombre","cliente","name","fullName","nombreCompleto"]);
+  const dni=valorCampoProfundo({fuentes},["dni","DNI","documento","document","documentNumber","documentoCliente","dniCliente","nroDni","numeroDni","numeroDocumento","nroDocumento","doc"]);
+  const telefono=valorCampoProfundo({fuentes},["telefono","teléfono","celular","phone","telefonoCliente","numeroTelefono","mobile"]);
+  const fecha=valorCampoProfundo({fuentes},["fecha","fechaCliente","fechaConsulta"]);
+  const motivo=valorCampoProfundo({fuentes},["motivo","asunto","motivoConsulta","consulta","tema"]);
+  return { nombre:String(nombre||""), dni:String(dni||""), telefono:String(telefono||""), fecha:String(fecha||""), motivo:String(motivo||"") };
 }
 
 function obtenerEquipoDeConversacion(c){
@@ -808,7 +835,7 @@ function crearCardCliente(c,finalizada=false){
       <div class="card-title ${ultima?.noLeido ? "unread":""}">${escapeHtml(mostrarNombreCliente(c))}</div>
       ${equipo?`<span class="team-tag">${escapeHtml(equipo)}</span>`:""}
     </div>
-    ${d.dni?`<div class="card-sub">DNI: ${escapeHtml(d.dni)}</div>`:""}
+    <div class="card-sub" style="font-weight:800;color:#2457a6">🪪 DNI: ${escapeHtml(d.dni || "No informado")}</div>
     ${d.telefono?`<div class="card-sub">📱 ${escapeHtml(d.telefono)}</div>`:""}
     ${gestor?`<div class="card-sub">👤 ${escapeHtml(gestor)}</div>`:""}
     ${finalizada?`<div class="card-sub">📚 Finalizada ${formatFecha(c.fechaFinalizacion)}</div>`:""}
@@ -1073,6 +1100,7 @@ async function abrirConversacion(id,finalizada=false){
 
   $("chatActions").innerHTML=`
     ${esSenior()||esSupervisor()?`<button class="btn blue" onclick="abrirModalAsignacion('${id}')">Asignar / transferir</button>`:""}
+    ${esAsesor() && gestionar?`<button class="btn red" onclick="pedirAyudaSenior()">🆘 SOS · Hablar con senior</button>`:""}
     ${gestionar?`<button class="btn" onclick="abrirIndicacionInterna()">🔒 Indicación</button>`:""}
     ${gestionar?`<button class="btn red" onclick="finalizarConversacion()">Finalizar</button>`:""}
   `;
@@ -1159,6 +1187,38 @@ function renderizarMensajes(c){
   });
 
   box.scrollTop=box.scrollHeight;
+}
+
+async function pedirAyudaSenior(){
+  if(!conversacionSeleccionada) return;
+  const c=conversaciones[conversacionSeleccionada];
+  if(!c || !esAsesor() || !puedeGestionarConversacion(c)) return;
+
+  const ahora=Date.now();
+  try{
+    await set(ref(db,`urgencias/${conversacionSeleccionada}`),{
+      conversacionId:conversacionSeleccionada,
+      cliente:mostrarNombreCliente(c),
+      dni:obtenerDatosCliente(c).dni || "",
+      gestor:nombreActual,
+      gestorEmail:usuarioActual?.email||"",
+      equipo:obtenerEquipoDeConversacion(c)||obtenerEquipoDeGestor(nombreActual)[0]||"",
+      estado:"pendiente",
+      fecha:ahora
+    });
+    await push(ref(db,`conversaciones/${conversacionSeleccionada}/mensajes`),{
+      tipo:"interno",
+      texto:`🆘 ${nombreActual} pidió hablar con un senior.`,
+      remitente:nombreActual,
+      remitenteEmail:usuarioActual?.email||"",
+      fecha:ahora,
+      sos:true
+    });
+    alert("🆘 Se avisó al senior. La conversación quedó marcada como urgente.");
+  }catch(err){
+    console.error(err);
+    alert("No se pudo enviar el SOS. Revisá los permisos de Firebase.");
+  }
 }
 
 function abrirIndicacionInterna(){
