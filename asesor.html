@@ -807,40 +807,70 @@ function esSenior(){ return (rolFijoPorCorreo() || perfilActual)==="senior"; }
 function esAsesor(){ return (rolFijoPorCorreo() || perfilActual)==="asesor"; }
 function puedeVerAgendaGestores(){ return esSenior() || esSupervisor(); }
 
-// Cada SOS tiene un senior destinatario ÚNICO.
-// Esto evita que un senior de otro equipo vea el SOS aunque comparta otro equipo.
-const SENIOR_SOS_POR_GESTOR = {
-  "Paula": "pilar.solano@mansillayasoc.com.ar",
-  "Giuliana": "pilar.solano@mansillayasoc.com.ar",
-  "Candela": "pilar.solano@mansillayasoc.com.ar",
-  "Francesca": "pilar.solano@mansillayasoc.com.ar",
-  "Belen": "pilar.solano@mansillayasoc.com.ar",
-  "Maria Paz": "daniela.cortez@mansillayasoc.com.ar",
-  "Agustina": "daniela.cortez@mansillayasoc.com.ar",
-  "Pablo": "daniela.cortez@mansillayasoc.com.ar",
-  "Florencia": "daniela.cortez@mansillayasoc.com.ar",
-  "Ana": "antonela.lopez@mansillayasoc.com.ar",
-  "Delfina": "antonela.lopez@mansillayasoc.com.ar",
-  "Marcela": "antonela.lopez@mansillayasoc.com.ar",
-  "Valentina": "antonela.lopez@mansillayasoc.com.ar",
-  "Julieta": "antonela.lopez@mansillayasoc.com.ar",
-  "Natalia": "moriana.rey@mansillayasoc.com.ar",
-  "Maica": "moriana.rey@mansillayasoc.com.ar",
-  "Alejandra": "moriana.rey@mansillayasoc.com.ar",
-  "Keila": "moriana.rey@mansillayasoc.com.ar",
-  "Gustavo": "moriana.rey@mansillayasoc.com.ar",
-  "Alejo Cuotero": "rocio.lopez@mansillayasoc.com.ar",
-  "Gregorio": "rocio.lopez@mansillayasoc.com.ar"
+// SOS POR EQUIPO:
+// Un SOS solo puede ser visto por los seniors que pertenecen al MISMO equipo
+// que el gestor que lo envió. Nunca se muestra a un senior de otro equipo.
+const EMAIL_SENIOR_POR_NOMBRE = {
+  "Rocio": "rocio.lopez@mansillayasoc.com.ar",
+  "Antonela": "antonela.lopez@mansillayasoc.com.ar",
+  "Pilar": "pilar.solano@mansillayasoc.com.ar",
+  "Daniela": "daniela.cortez@mansillayasoc.com.ar",
+  "Moriana": "moriana.rey@mansillayasoc.com.ar"
 };
+
+function obtenerEmailsSeniorDelEquipoDeGestor(gestor){
+  const canon=nombreCanonico(gestor);
+  for(const [equipo,datos] of Object.entries(equipos)){
+    const esGestor=(datos.gestores||[]).some(g=>personasCoinciden(g,canon));
+    if(esGestor){
+      return (datos.seniors||[])
+        .map(s=>EMAIL_SENIOR_POR_NOMBRE[nombreCanonico(s)]||"")
+        .filter(Boolean)
+        .map(normalizarTexto);
+    }
+  }
+  return [];
+}
+
+// Compatibilidad con SOS antiguos que guardaban seniorEmail como un único correo.
+const SENIOR_SOS_POR_GESTOR = {};
+Object.entries(equipos).forEach(([equipo,datos])=>{
+  (datos.gestores||[]).forEach(gestor=>{
+    const emails=(datos.seniors||[])
+      .map(s=>EMAIL_SENIOR_POR_NOMBRE[nombreCanonico(s)]||"")
+      .filter(Boolean);
+    if(emails.length) SENIOR_SOS_POR_GESTOR[nombreCanonico(gestor)]=emails[0];
+  });
+});
+
 function puedeVerSOS(u){
   if(!u || !esSenior()) return false;
   const emailActual=normalizarTexto(usuarioActual?.email);
+  if(!emailActual) return false;
+
+  const gestor=u.gestor || u.remitente || u.gestorNombre || "";
+  const emailsEquipo=obtenerEmailsSeniorDelEquipoDeGestor(gestor);
+
+  // CUOTEROS: siempre llega a TODAS las seniors del equipo,
+  // incluso si el SOS fue creado con una versión anterior del sistema
+  // que guardaba un solo seniorEmail.
+  const equipoGestor=Object.entries(equipos).find(([equipo,datos]) =>
+    (datos.gestores||[]).some(g=>personasCoinciden(g,gestor))
+  )?.[0] || "";
+  if(normalizarTexto(equipoGestor)==="cuoteros") return emailsEquipo.includes(emailActual);
+
+  // SOS nuevos: se valida contra TODOS los seniors del equipo del gestor.
+  const emailsGuardados=Array.isArray(u.seniorEmails)
+    ? u.seniorEmails.map(normalizarTexto).filter(Boolean)
+    : [];
+  if(emailsGuardados.length) return emailsGuardados.includes(emailActual);
+
+  // SOS antiguos de equipos con un único senior: se respeta el destinatario guardado.
   const emailObjetivo=normalizarTexto(u.seniorEmail || "");
   if(emailObjetivo) return emailActual===emailObjetivo;
-  const gestor=u.gestor || u.remitente || u.gestorNombre || "";
-  const canon=nombreCanonico(gestor);
-  const objetivo=SENIOR_SOS_POR_GESTOR[canon] || SENIOR_SOS_POR_GESTOR[gestor] || "";
-  return objetivo ? emailActual===normalizarTexto(objetivo) : false;
+
+  // SOS antiguos que no guardaron destinatario: se calcula por equipo.
+  return emailsEquipo.includes(emailActual);
 }
 
 function estaActiva(c){
@@ -1409,6 +1439,7 @@ async function pedirAyudaSenior(){
     conversacionId:id, cliente:mostrarNombreCliente(c), dni:d.dni||"",
     gestor:nombreActual, gestorEmail:usuarioActual?.email||"", equipo,
     seniorEmail:SENIOR_SOS_POR_GESTOR[nombreCanonico(nombreActual)]||"",
+    seniorEmails:obtenerEmailsSeniorDelEquipoDeGestor(nombreActual),
     estado:"pendiente", fecha:ahora,
     mensaje:`${nombreActual} solicita hablar con un senior de forma URGENTE.`
   };
