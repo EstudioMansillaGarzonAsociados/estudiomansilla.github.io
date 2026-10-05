@@ -19,7 +19,9 @@
       font: inherit;
     }
 
-    /* LOGIN */
+    /* =========================
+       LOGIN
+       ========================= */
 
     #loginScreen {
       min-height: 100vh;
@@ -76,7 +78,9 @@
       text-align: center;
     }
 
-    /* APP */
+    /* =========================
+       APP
+       ========================= */
 
     #app {
       display: none;
@@ -120,7 +124,9 @@
       height: calc(100vh - 65px);
     }
 
-    /* SIDEBAR */
+    /* =========================
+       SIDEBAR
+       ========================= */
 
     .sidebar {
       width: 390px;
@@ -167,6 +173,15 @@
       overflow-y: auto;
     }
 
+    .team-title {
+      padding: 10px 15px;
+      background: #f1f1f1;
+      border-bottom: 1px solid #ddd;
+      font-weight: bold;
+      font-size: 13px;
+      color: #555;
+    }
+
     .conversation-item {
       padding: 15px;
       border-bottom: 1px solid #eee;
@@ -198,6 +213,7 @@
       margin-top: 7px;
       font-size: 12px;
       color: #888;
+      line-height: 1.5;
     }
 
     .waiting {
@@ -220,7 +236,20 @@
       font-weight: bold;
     }
 
-    /* CHAT */
+    .team-badge {
+      display: inline-block;
+      padding: 3px 7px;
+      border-radius: 5px;
+      background: #eee;
+      color: #555;
+      font-size: 11px;
+      font-weight: bold;
+      margin-top: 4px;
+    }
+
+    /* =========================
+       CHAT
+       ========================= */
 
     .chat {
       flex: 1;
@@ -337,6 +366,31 @@
       color: #777;
     }
 
+    .hidden-messages {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      color: #777;
+      padding: 30px;
+      background: #f5f5f5;
+    }
+
+    .hidden-messages-box {
+      max-width: 450px;
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      border: 1px solid #ddd;
+    }
+
+    .hidden-messages-box strong {
+      display: block;
+      margin-bottom: 8px;
+      color: #222;
+    }
+
     .composer {
       background: white;
       border-top: 1px solid #ddd;
@@ -368,7 +422,9 @@
       cursor: not-allowed;
     }
 
-    /* MODALES */
+    /* =========================
+       MODALES
+       ========================= */
 
     #finalizeModal,
     #transferModal {
@@ -440,9 +496,14 @@
   <!-- LOGIN -->
 
   <div id="loginScreen">
+
     <div class="login-box">
+
       <h1>Centro de Atención</h1>
-      <p>Ingreso para asesores</p>
+
+      <p>
+        Ingreso para asesores
+      </p>
 
       <input
         type="email"
@@ -458,10 +519,14 @@
         autocomplete="current-password"
       >
 
-      <button id="loginBtn">Ingresar</button>
+      <button id="loginBtn">
+        Ingresar
+      </button>
 
       <div id="loginError"></div>
+
     </div>
+
   </div>
 
 
@@ -470,15 +535,26 @@
   <div id="app">
 
     <div class="topbar">
-      <h2>Centro de Atención</h2>
+
+      <h2>
+        Centro de Atención
+      </h2>
 
       <div class="user-info">
+
         <span id="loggedUser"></span>
-        <button class="logout-btn" id="logoutBtn">
+
+        <button
+          class="logout-btn"
+          id="logoutBtn"
+        >
           Cerrar sesión
         </button>
+
       </div>
+
     </div>
+
 
     <div class="main">
 
@@ -502,6 +578,7 @@
 
         </div>
 
+
         <div class="search-box">
 
           <input
@@ -511,6 +588,7 @@
           >
 
         </div>
+
 
         <div id="conversationList"></div>
 
@@ -523,7 +601,9 @@
 
           <div>
 
-            <h3>Seleccioná una conversación</h3>
+            <h3>
+              Seleccioná una conversación
+            </h3>
 
             <p>
               Las conversaciones aparecerán en este panel.
@@ -538,7 +618,9 @@
 
           <div class="chat-header">
 
-            <h3 id="clientName">Cliente</h3>
+            <h3 id="clientName">
+              Cliente
+            </h3>
 
             <div class="client-data">
 
@@ -553,6 +635,7 @@
             </div>
 
             <div id="assignmentInfo"></div>
+
 
             <div class="chat-actions">
 
@@ -616,7 +699,9 @@
 
     <div class="modal">
 
-      <h3>Finalizar conversación</h3>
+      <h3>
+        Finalizar conversación
+      </h3>
 
       <p>
         Seleccioná el motivo de finalización:
@@ -662,6 +747,7 @@
 
       </select>
 
+
       <div class="modal-buttons">
 
         <button
@@ -691,7 +777,9 @@
 
     <div class="modal">
 
-      <h3>Transferir conversación</h3>
+      <h3>
+        Transferir conversación
+      </h3>
 
       <p>
         Seleccioná el asesor al que querés transferir esta conversación:
@@ -755,7 +843,7 @@
     const firebaseConfig = {
 
       apiKey:
-        "AIzaSyBIwTvMk2FPGWMAjnqGdQg6up_D6ofUo_I",
+        "AIzaSyBIwTvMk2FPGWMAjnqGQg6up_D6ofUo_I",
 
       authDomain:
         "estudiomansilla.firebaseapp.com",
@@ -777,6 +865,7 @@
 
       measurementId:
         "G-8710S26Z8L"
+
     };
 
 
@@ -802,6 +891,7 @@
       "Antonela": "senior",
       "Pilar": "senior",
       "Daniela": "senior",
+      "Moriana": "senior",
 
       "Paula": "asesor",
       "Ana": "asesor",
@@ -813,7 +903,6 @@
       "Belen": "asesor",
       "Delfina": "asesor",
       "Julieta": "asesor",
-      "Moriana": "asesor",
       "Keila": "asesor",
       "Alejandra": "asesor",
       "Maica": "asesor",
@@ -824,11 +913,102 @@
       "Francesca": "asesor",
       "Florencia": "asesor",
       "Valentina": "asesor",
+      "Marcela": "asesor"
 
-      "Alejo Supervisor": "supervisor",
-      "Ramon": "supervisor",
-      "Gonzalo": "supervisor",
-      "Javier": "supervisor"
+    };
+
+
+    /* =========================
+       EQUIPOS
+       ========================= */
+
+    const equipos = {
+
+      "Verde": {
+
+        seniors: [
+          "Daniela",
+          "Rocio"
+        ],
+
+        gestores: [
+          "Maria Paz",
+          "Agustina",
+          "Pablo",
+          "Florencia"
+        ]
+
+      },
+
+
+      "Rojo": {
+
+        seniors: [
+          "Antonela"
+        ],
+
+        gestores: [
+          "Ana",
+          "Delfina",
+          "Marcela",
+          "Valentina",
+          "Julieta"
+        ]
+
+      },
+
+
+      "Azul": {
+
+        seniors: [
+          "Pilar"
+        ],
+
+        gestores: [
+          "Paula",
+          "Giuliana",
+          "Candela",
+          "Francesca",
+          "Belen"
+        ]
+
+      },
+
+
+      "1142": {
+
+        seniors: [
+          "Moriana"
+        ],
+
+        gestores: [
+          "Natalia",
+          "Maica",
+          "Alejandra",
+          "Keila",
+          "Gustavo"
+        ]
+
+      },
+
+
+      "Cuoteros": {
+
+        seniors: [
+          "Rocio",
+          "Daniela",
+          "Antonela",
+          "Pilar",
+          "Moriana"
+        ],
+
+        gestores: [
+          "Alejo",
+          "Gregorio"
+        ]
+
+      }
+
     };
 
 
@@ -838,15 +1018,20 @@
 
     let conversaciones = {};
 
-    let conversacionSeleccionada = null;
+    let conversacionSeleccionada =
+      null;
 
-    let vistaActual = "activos";
+    let vistaActual =
+      "activos";
 
-    let usuarioActual = null;
+    let usuarioActual =
+      null;
 
-    let nombreUsuarioActual = "";
+    let nombreUsuarioActual =
+      "";
 
-    let rolUsuarioActual = "asesor";
+    let rolUsuarioActual =
+      "asesor";
 
 
     /* =========================
@@ -854,88 +1039,144 @@
        ========================= */
 
     const loginScreen =
-      document.getElementById("loginScreen");
+      document.getElementById(
+        "loginScreen"
+      );
 
     const appScreen =
-      document.getElementById("app");
+      document.getElementById(
+        "app"
+      );
 
     const loginBtn =
-      document.getElementById("loginBtn");
+      document.getElementById(
+        "loginBtn"
+      );
 
     const logoutBtn =
-      document.getElementById("logoutBtn");
+      document.getElementById(
+        "logoutBtn"
+      );
 
     const loginError =
-      document.getElementById("loginError");
+      document.getElementById(
+        "loginError"
+      );
 
     const emailInput =
-      document.getElementById("email");
+      document.getElementById(
+        "email"
+      );
 
     const passwordInput =
-      document.getElementById("password");
+      document.getElementById(
+        "password"
+      );
 
     const loggedUser =
-      document.getElementById("loggedUser");
+      document.getElementById(
+        "loggedUser"
+      );
 
     const conversationList =
-      document.getElementById("conversationList");
+      document.getElementById(
+        "conversationList"
+      );
 
     const searchInput =
-      document.getElementById("searchInput");
+      document.getElementById(
+        "searchInput"
+      );
 
     const emptyChat =
-      document.getElementById("emptyChat");
+      document.getElementById(
+        "emptyChat"
+      );
 
     const chatContent =
-      document.getElementById("chatContent");
+      document.getElementById(
+        "chatContent"
+      );
 
     const messages =
-      document.getElementById("messages");
+      document.getElementById(
+        "messages"
+      );
 
     const messageInput =
-      document.getElementById("messageInput");
+      document.getElementById(
+        "messageInput"
+      );
 
     const sendBtn =
-      document.getElementById("sendBtn");
+      document.getElementById(
+        "sendBtn"
+      );
 
     const takeConversationBtn =
-      document.getElementById("takeConversationBtn");
+      document.getElementById(
+        "takeConversationBtn"
+      );
 
     const transferBtn =
-      document.getElementById("transferBtn");
+      document.getElementById(
+        "transferBtn"
+      );
 
     const finalizeBtn =
-      document.getElementById("finalizeBtn");
+      document.getElementById(
+        "finalizeBtn"
+      );
 
     const finalizeModal =
-      document.getElementById("finalizeModal");
+      document.getElementById(
+        "finalizeModal"
+      );
 
     const cancelFinalize =
-      document.getElementById("cancelFinalize");
+      document.getElementById(
+        "cancelFinalize"
+      );
 
     const confirmFinalize =
-      document.getElementById("confirmFinalize");
+      document.getElementById(
+        "confirmFinalize"
+      );
 
     const finalizationReason =
-      document.getElementById("finalizationReason");
+      document.getElementById(
+        "finalizationReason"
+      );
 
     const transferModal =
-      document.getElementById("transferModal");
+      document.getElementById(
+        "transferModal"
+      );
 
     const transferAdvisor =
-      document.getElementById("transferAdvisor");
+      document.getElementById(
+        "transferAdvisor"
+      );
 
     const cancelTransfer =
-      document.getElementById("cancelTransfer");
+      document.getElementById(
+        "cancelTransfer"
+      );
 
     const confirmTransfer =
-      document.getElementById("confirmTransfer");
+      document.getElementById(
+        "confirmTransfer"
+      );
 
     const activeTab =
-      document.getElementById("activeTab");
+      document.getElementById(
+        "activeTab"
+      );
 
     const historyTab =
-      document.getElementById("historyTab");
+      document.getElementById(
+        "historyTab"
+      );
 
 
     /* =========================
@@ -960,12 +1201,14 @@
             "Ingresá correo y contraseña.";
 
           return;
+
         }
 
         loginBtn.disabled = true;
 
         loginBtn.textContent =
           "Ingresando...";
+
 
         try {
 
@@ -991,6 +1234,7 @@
 
           loginBtn.textContent =
             "Ingresar";
+
         }
 
       }
@@ -1001,8 +1245,13 @@
       "keydown",
       (event) => {
 
-        if (event.key === "Enter") {
+        if (
+          event.key ===
+          "Enter"
+        ) {
+
           loginBtn.click();
+
         }
 
       }
@@ -1019,7 +1268,8 @@
 
         if (user) {
 
-          usuarioActual = user;
+          usuarioActual =
+            user;
 
           nombreUsuarioActual =
             obtenerNombrePorEmail(
@@ -1031,24 +1281,36 @@
               nombreUsuarioActual
             ] || "asesor";
 
+
           loginScreen.style.display =
             "none";
 
           appScreen.style.display =
             "block";
 
+
           loggedUser.textContent =
             nombreUsuarioActual +
             " · " +
             rolUsuarioActual;
 
+
           cargarConversaciones();
 
           cargarOpcionesTransferencia();
 
+
         } else {
 
-          usuarioActual = null;
+          usuarioActual =
+            null;
+
+          nombreUsuarioActual =
+            "";
+
+          rolUsuarioActual =
+            "asesor";
+
 
           loginScreen.style.display =
             "flex";
@@ -1056,7 +1318,8 @@
           appScreen.style.display =
             "none";
 
-          loggedUser.textContent = "";
+          loggedUser.textContent =
+            "";
 
         }
 
@@ -1072,7 +1335,9 @@
       "click",
       async () => {
 
-        await signOut(auth);
+        await signOut(
+          auth
+        );
 
       }
     );
@@ -1086,11 +1351,16 @@
       "click",
       () => {
 
-        vistaActual = "activos";
+        vistaActual =
+          "activos";
 
-        activeTab.classList.add("active");
+        activeTab.classList.add(
+          "active"
+        );
 
-        historyTab.classList.remove("active");
+        historyTab.classList.remove(
+          "active"
+        );
 
         cerrarChatSeleccionado();
 
@@ -1104,11 +1374,16 @@
       "click",
       () => {
 
-        vistaActual = "historial";
+        vistaActual =
+          "historial";
 
-        historyTab.classList.add("active");
+        historyTab.classList.add(
+          "active"
+        );
 
-        activeTab.classList.remove("active");
+        activeTab.classList.remove(
+          "active"
+        );
 
         cerrarChatSeleccionado();
 
@@ -1130,11 +1405,14 @@
           "conversaciones"
         );
 
+
       onValue(
         conversacionesRef,
         (snapshot) => {
 
-          conversaciones = {};
+          conversaciones =
+            {};
+
 
           snapshot.forEach(
             (child) => {
@@ -1145,11 +1423,13 @@
               if (!data)
                 return;
 
+
               conversaciones[
                 child.key
               ] = {
 
-                id: child.key,
+                id:
+                  child.key,
 
                 ...data
 
@@ -1158,7 +1438,9 @@
             }
           );
 
+
           renderConversationList();
+
 
           if (
             conversacionSeleccionada
@@ -1168,6 +1450,7 @@
               conversaciones[
                 conversacionSeleccionada
               ];
+
 
             if (
               actual &&
@@ -1195,20 +1478,174 @@
 
 
     /* =========================
-       PERMISOS VISUALES
+       ADMINISTRADORES
        ========================= */
 
-    function esAdministrador() {
+    function esSupervisor() {
 
       return (
         rolUsuarioActual ===
-          "supervisor" ||
-        rolUsuarioActual ===
-          "senior"
+        "supervisor"
       );
 
     }
 
+
+    function esSenior() {
+
+      return (
+        rolUsuarioActual ===
+        "senior"
+      );
+
+    }
+
+
+    function esAdministrador() {
+
+      return (
+        esSupervisor() ||
+        esSenior()
+      );
+
+    }
+
+
+    /* =========================
+       EQUIPO DEL USUARIO
+       ========================= */
+
+    function obtenerEquiposDelUsuario(
+      nombre
+    ) {
+
+      const resultado = [];
+
+
+      Object.entries(
+        equipos
+      ).forEach(
+        ([equipo, datos]) => {
+
+          if (
+            datos.seniors.includes(
+              nombre
+            ) ||
+            datos.gestores.includes(
+              nombre
+            )
+          ) {
+
+            resultado.push(
+              equipo
+            );
+
+          }
+
+        }
+      );
+
+
+      return resultado;
+
+    }
+
+
+    function obtenerEquipoDePersona(
+      nombre
+    ) {
+
+      for (
+        const [equipo, datos]
+        of Object.entries(
+          equipos
+        )
+      ) {
+
+        if (
+          datos.gestores.includes(
+            nombre
+          )
+        ) {
+
+          return equipo;
+
+        }
+
+        if (
+          datos.seniors.includes(
+            nombre
+          )
+        ) {
+
+          return equipo;
+
+        }
+
+      }
+
+
+      return "";
+
+    }
+
+
+    function obtenerSeniorDelEquipo(
+      equipo
+    ) {
+
+      if (
+        !equipos[equipo]
+      ) {
+
+        return "";
+
+      }
+
+
+      return equipos[equipo]
+        .seniors
+        .join(" y ");
+
+    }
+
+
+    /* =========================
+       EQUIPO DE CONVERSACIÓN
+       ========================= */
+
+    function obtenerEquipoConversacion(
+      conversation
+    ) {
+
+      if (
+        conversation.equipo
+      ) {
+
+        return conversation.equipo;
+
+      }
+
+
+      if (
+        conversation.asesorAsignado
+      ) {
+
+        return obtenerEquipoDePersona(
+          conversation.asesorAsignado
+        );
+
+      }
+
+
+      return "";
+
+    }
+
+
+    /* =========================
+       PERMISO PARA VER CHAT
+       ========================= */
 
     function puedeVerConversacion(
       conversation
@@ -1218,10 +1655,9 @@
         return false;
 
 
-      /* HISTORIAL:
-         todos los usuarios pueden
-         consultar conversaciones
-         finalizadas */
+      /* =====================
+         HISTORIAL
+         ===================== */
 
       if (
         conversation.estado ===
@@ -1233,12 +1669,18 @@
       }
 
 
-      /* CONVERSACIÓN SIN ASIGNAR:
-         todos pueden verla para
-         poder tomarla */
+      const equipo =
+        obtenerEquipoConversacion(
+          conversation
+        );
+
+
+      /* =====================
+         SUPERVISOR
+         ===================== */
 
       if (
-        !conversation.asesorAsignado
+        esSupervisor()
       ) {
 
         return true;
@@ -1246,26 +1688,150 @@
       }
 
 
-      /* SUPERVISORES Y SENIORS:
-         pueden ver activos */
+      /* =====================
+         SENIOR
+         ===================== */
 
-      if (esAdministrador()) {
+      if (
+        esSenior()
+      ) {
+
+        const equiposUsuario =
+          obtenerEquiposDelUsuario(
+            nombreUsuarioActual
+          );
+
+
+        /*
+         * Cuoteros es visible
+         * para todos los seniors.
+         */
+
+        if (
+          equipo ===
+          "Cuoteros"
+        ) {
+
+          return true;
+
+        }
+
+
+        return equiposUsuario.includes(
+          equipo
+        );
+
+      }
+
+
+      /* =====================
+         GESTORES
+         ===================== */
+
+      if (
+        rolUsuarioActual ===
+        "asesor"
+      ) {
+
+        /*
+         * Si tiene asesor asignado,
+         * solamente lo puede ver
+         * el gestor correspondiente.
+         */
+
+        if (
+          conversation.asesorAsignado
+        ) {
+
+          return (
+            conversation.asesorAsignado ===
+              nombreUsuarioActual ||
+            conversation.asesorEmail ===
+              usuarioActual?.email
+          );
+
+        }
+
+
+        /*
+         * Si no tiene asignado,
+         * puede ver la ficha para
+         * poder tomarla.
+         *
+         * Pero NO podrá ver
+         * los mensajes.
+         */
 
         return true;
 
       }
 
 
-      /* ASESOR:
-         solamente su propia conversación */
-
-      return (
-        conversation.asesorEmail ===
-        usuarioActual?.email
-      );
+      return false;
 
     }
 
+
+    /* =========================
+       PERMISO PARA LEER MENSAJES
+       ========================= */
+
+    function puedeLeerMensajes(
+      conversation
+    ) {
+
+      if (!conversation)
+        return false;
+
+
+      if (
+        esAdministrador()
+      ) {
+
+        return true;
+
+      }
+
+
+      if (
+        conversation.estado ===
+        "finalizada"
+      ) {
+
+        return true;
+
+      }
+
+
+      /*
+       * Un gestor solamente puede
+       * leer cuando el chat está
+       * asignado a él.
+       */
+
+      if (
+        rolUsuarioActual ===
+        "asesor"
+      ) {
+
+        return (
+          conversation.asesorAsignado ===
+            nombreUsuarioActual ||
+          conversation.asesorEmail ===
+            usuarioActual?.email
+        );
+
+      }
+
+
+      return false;
+
+    }
+
+
+    /* =========================
+       PERMISO PARA GESTIONAR
+       ========================= */
 
     function puedeGestionarConversacion(
       conversation
@@ -1286,6 +1852,40 @@
 
 
       if (
+        esAdministrador()
+      ) {
+
+        return true;
+
+      }
+
+
+      if (
+        conversation.asesorAsignado ===
+        nombreUsuarioActual
+      ) {
+
+        return true;
+
+      }
+
+
+      if (
+        conversation.asesorEmail ===
+        usuarioActual?.email
+      ) {
+
+        return true;
+
+      }
+
+
+      /*
+       * Un chat sin asignar puede
+       * ser tomado.
+       */
+
+      if (
         !conversation.asesorAsignado
       ) {
 
@@ -1294,17 +1894,7 @@
       }
 
 
-      if (esAdministrador()) {
-
-        return true;
-
-      }
-
-
-      return (
-        conversation.asesorEmail ===
-        usuarioActual?.email
-      );
+      return false;
 
     }
 
@@ -1320,7 +1910,9 @@
           .trim()
           .toLowerCase();
 
-      conversationList.innerHTML = "";
+
+      conversationList.innerHTML =
+        "";
 
 
       let lista =
@@ -1330,7 +1922,7 @@
 
 
       /* =====================
-         FILTRO POR VISTA
+         ACTIVOS
          ===================== */
 
       if (
@@ -1351,6 +1943,7 @@
 
               }
 
+
               return puedeVerConversacion(
                 conversation
               );
@@ -1358,7 +1951,14 @@
             }
           );
 
-      } else {
+      }
+
+
+      /* =====================
+         HISTORIAL
+         ===================== */
+
+      else {
 
         lista =
           lista.filter(
@@ -1387,19 +1987,30 @@
               conversation.datosCliente ||
               {};
 
+
             const texto = [
 
               datos.nombre,
+
               datos.dni,
+
               datos.telefono,
+
               datos.motivo,
+
               conversation.asesorAsignado,
-              conversation.finalizadoPor
+
+              conversation.finalizadoPor,
+
+              obtenerEquipoConversacion(
+                conversation
+              )
 
             ]
               .filter(Boolean)
               .join(" ")
               .toLowerCase();
+
 
             return texto.includes(
               search
@@ -1455,21 +2066,66 @@
       }
 
 
+      let equipoActual =
+        null;
+
+
       lista.forEach(
         (conversation) => {
+
+          const equipo =
+            obtenerEquipoConversacion(
+              conversation
+            ) ||
+            "Sin equipo";
+
+
+          if (
+            equipo !==
+            equipoActual
+          ) {
+
+            equipoActual =
+              equipo;
+
+
+            const titulo =
+              document.createElement(
+                "div"
+              );
+
+
+            titulo.className =
+              "team-title";
+
+
+            titulo.textContent =
+              "Equipo " +
+              equipo;
+
+
+            conversationList.appendChild(
+              titulo
+            );
+
+          }
+
 
           const datos =
             conversation.datosCliente ||
             {};
 
+
           const mensajesObj =
             conversation.mensajes ||
             {};
+
 
           const mensajesArray =
             Object.values(
               mensajesObj
             );
+
 
           const ultimo =
             mensajesArray.length
@@ -1484,6 +2140,7 @@
               "div"
             );
 
+
           div.className =
             "conversation-item" +
             (
@@ -1494,7 +2151,8 @@
             );
 
 
-          let estadoTexto = "";
+          let estadoTexto =
+            "";
 
 
           if (
@@ -1510,19 +2168,23 @@
 
             `;
 
-          } else if (
+          }
+
+          else if (
             !conversation.asesorAsignado
           ) {
 
             estadoTexto = `
 
               <span class="available">
-                Disponible
+                Pendiente de asignación
               </span>
 
             `;
 
-          } else if (
+          }
+
+          else if (
             ultimo &&
             ultimo.remitente ===
             "cliente"
@@ -1536,7 +2198,9 @@
 
             `;
 
-          } else {
+          }
+
+          else {
 
             estadoTexto = `
 
@@ -1549,7 +2213,8 @@
           }
 
 
-          let asignacion = "";
+          let asignacion =
+            "";
 
 
           if (
@@ -1561,6 +2226,39 @@
               escaparHTML(
                 conversation.asesorAsignado
               );
+
+          }
+
+
+          /*
+           * MUY IMPORTANTE:
+           * Si es un gestor y el chat
+           * no está asignado, no se
+           * muestra el último mensaje.
+           */
+
+          let preview =
+            "Sin mensajes";
+
+
+          if (
+            puedeLeerMensajes(
+              conversation
+            )
+          ) {
+
+            preview =
+              ultimo?.texto ||
+              "Sin mensajes";
+
+          }
+
+          else if (
+            !conversation.asesorAsignado
+          ) {
+
+            preview =
+              "Mensaje oculto hasta asignación";
 
           }
 
@@ -1579,8 +2277,7 @@
             <div class="conversation-preview">
 
               ${escaparHTML(
-                ultimo?.texto ||
-                "Sin mensajes"
+                preview
               )}
 
             </div>
@@ -1588,8 +2285,21 @@
             <div class="conversation-meta">
 
               ${estadoTexto}
+
               ${asignacion}
+
+              <br>
+
+              <span class="team-badge">
+
+                ${escaparHTML(
+                  equipo
+                )}
+
+              </span>
+
               ·
+
               ${tiempoRelativo(
                 ultimo?.fecha ||
                 conversation.fechaCreacion
@@ -1611,7 +2321,7 @@
               ) {
 
                 alert(
-                  "Esta conversación está asignada a otro asesor."
+                  "No tenés acceso a esta conversación."
                 );
 
                 return;
@@ -1717,6 +2427,12 @@
           : "";
 
 
+      const equipo =
+        obtenerEquipoConversacion(
+          conversation
+        );
+
+
       document.getElementById(
         "conversationStatus"
       ).innerHTML =
@@ -1737,7 +2453,7 @@
             ? `
 
               <span class="available">
-                Disponible
+                Pendiente de asignación
               </span>
 
             `
@@ -1757,7 +2473,34 @@
             `;
 
 
-      let assignment = "";
+      let assignment =
+        "";
+
+
+      if (equipo) {
+
+        assignment += `
+
+          <div style="
+            margin-top:10px;
+            font-size:13px;
+            color:#555;
+          ">
+
+            Equipo:
+            <strong>
+
+              ${escaparHTML(
+                equipo
+              )}
+
+            </strong>
+
+          </div>
+
+        `;
+
+      }
 
 
       if (
@@ -1767,7 +2510,7 @@
         assignment += `
 
           <div style="
-            margin-top:10px;
+            margin-top:6px;
             font-size:13px;
             color:#555;
           ">
@@ -1785,18 +2528,51 @@
 
         `;
 
-      } else {
+      }
+
+      else {
 
         assignment += `
 
           <div style="
-            margin-top:10px;
+            margin-top:6px;
             font-size:13px;
             color:#1565c0;
             font-weight:bold;
           ">
 
-            Conversación disponible para tomar
+            Conversación pendiente de asignación
+
+          </div>
+
+        `;
+
+      }
+
+
+      if (
+        equipo &&
+        equipos[equipo]
+      ) {
+
+        assignment += `
+
+          <div style="
+            margin-top:6px;
+            font-size:13px;
+            color:#555;
+          ">
+
+            Senior:
+            <strong>
+
+              ${escaparHTML(
+                obtenerSeniorDelEquipo(
+                  equipo
+                )
+              )}
+
+            </strong>
 
           </div>
 
@@ -1872,37 +2648,62 @@
         "finalizada";
 
 
-      const soyAsignado =
-        conversation.asesorEmail ===
-        usuarioActual?.email;
-
-
       const sinAsignar =
         !conversation.asesorAsignado;
 
 
+      const soyAsignado =
+        conversation.asesorAsignado ===
+          nombreUsuarioActual ||
+        conversation.asesorEmail ===
+          usuarioActual?.email;
+
+
       /* =====================
-         BOTÓN TOMAR
+         TOMAR
          ===================== */
 
       takeConversationBtn.style.display =
         "inline-block";
 
 
-      takeConversationBtn.disabled =
-        finalizada ||
-        !sinAsignar;
+      if (finalizada) {
 
+        takeConversationBtn.disabled =
+          true;
 
-      if (sinAsignar) {
+        takeConversationBtn.textContent =
+          "Conversación finalizada";
+
+      }
+
+      else if (sinAsignar) {
+
+        takeConversationBtn.disabled =
+          false;
 
         takeConversationBtn.textContent =
           "Tomar conversación";
 
-      } else {
+      }
+
+      else if (soyAsignado) {
+
+        takeConversationBtn.disabled =
+          true;
 
         takeConversationBtn.textContent =
-          "Conversación asignada";
+          "Asignada a vos";
+
+      }
+
+      else {
+
+        takeConversationBtn.disabled =
+          true;
+
+        takeConversationBtn.textContent =
+          "Asignada a otro gestor";
 
       }
 
@@ -1934,14 +2735,15 @@
 
 
       /* =====================
-         MENSAJES
+         RESPUESTA
          ===================== */
 
       const puedeResponder =
         !finalizada &&
         puedeGestionarConversacion(
           conversation
-        );
+        ) &&
+        !sinAsignar;
 
 
       messageInput.disabled =
@@ -1957,20 +2759,35 @@
         messageInput.placeholder =
           "Esta conversación está finalizada.";
 
-      } else if (
-        !puedeResponder
-      ) {
+      }
+
+      else if (sinAsignar) {
 
         messageInput.placeholder =
-          "Tomá la conversación para responder.";
+          "Tomá la conversación para poder responder.";
 
-      } else {
+      }
+
+      else if (!puedeResponder) {
+
+        messageInput.placeholder =
+          "Esta conversación está asignada a otro gestor.";
+
+      }
+
+      else {
 
         messageInput.placeholder =
           "Escribí un mensaje...";
 
       }
 
+
+      /*
+       * CARGAMOS LOS MENSAJES
+       * solamente si el usuario
+       * tiene permiso para leerlos.
+       */
 
       cargarMensajes(
         conversation.id
@@ -1994,9 +2811,11 @@
       emptyChat.style.display =
         "flex";
 
-      messages.innerHTML = "";
+      messages.innerHTML =
+        "";
 
-      messageInput.value = "";
+      messageInput.value =
+        "";
 
     }
 
@@ -2009,7 +2828,69 @@
       conversationId
     ) {
 
-      messages.innerHTML = "";
+      const conversation =
+        conversaciones[
+          conversationId
+        ];
+
+
+      if (!conversation)
+        return;
+
+
+      /*
+       * Si el gestor todavía
+       * no tiene asignado el chat,
+       * NO cargamos los mensajes.
+       */
+
+      if (
+        !puedeLeerMensajes(
+          conversation
+        )
+      ) {
+
+        messages.innerHTML = `
+
+          <div class="hidden-messages">
+
+            <div class="hidden-messages-box">
+
+              <strong>
+                🔒 Mensajes ocultos
+              </strong>
+
+              <div>
+                Esta conversación todavía
+                no está asignada a vos.
+              </div>
+
+              <div style="
+                margin-top:10px;
+                color:#777;
+                font-size:13px;
+              ">
+
+                Tomá la conversación para
+                poder ver el historial y
+                responder al cliente.
+
+              </div>
+
+            </div>
+
+          </div>
+
+        `;
+
+        return;
+
+      }
+
+
+      messages.innerHTML =
+        "";
+
 
       const mensajesRef =
         ref(
@@ -2022,7 +2903,53 @@
         mensajesRef,
         (snapshot) => {
 
-          messages.innerHTML = "";
+          /*
+           * Verificamos nuevamente
+           * el permiso antes de mostrar.
+           */
+
+          const actual =
+            conversaciones[
+              conversationId
+            ];
+
+
+          if (
+            !actual ||
+            !puedeLeerMensajes(
+              actual
+            )
+          ) {
+
+            messages.innerHTML = `
+
+              <div class="hidden-messages">
+
+                <div class="hidden-messages-box">
+
+                  <strong>
+                    🔒 Mensajes ocultos
+                  </strong>
+
+                  <div>
+                    Esta conversación
+                    ya no está asignada a vos.
+                  </div>
+
+                </div>
+
+              </div>
+
+            `;
+
+            return;
+
+          }
+
+
+          messages.innerHTML =
+            "";
+
 
           const lista = [];
 
@@ -2036,9 +2963,11 @@
               if (!data)
                 return;
 
+
               lista.push({
 
-                id: child.key,
+                id:
+                  child.key,
 
                 ...data
 
@@ -2098,7 +3027,9 @@
         div.className =
           "message message-system";
 
-      } else if (
+      }
+
+      else if (
         message.remitente ===
         "asesor"
       ) {
@@ -2106,7 +3037,9 @@
         div.className =
           "message advisor";
 
-      } else {
+      }
+
+      else {
 
         div.className =
           "message client";
@@ -2184,6 +3117,7 @@
         const user =
           auth.currentUser;
 
+
         if (!user)
           return;
 
@@ -2208,15 +3142,12 @@
         }
 
 
-        /* Solo se puede tomar
-           si todavía no tiene asesor */
-
         if (
           conversation.asesorAsignado
         ) {
 
           alert(
-            "Esta conversación ya fue tomada por otro asesor."
+            "Esta conversación ya fue tomada por otro gestor."
           );
 
           return;
@@ -2229,6 +3160,17 @@
             user.email
           );
 
+
+        const equipo =
+          obtenerEquipoDePersona(
+            nombre
+          );
+
+
+        /*
+         * Cuoteros y otros equipos
+         * se guardan explícitamente.
+         */
 
         await update(
 
@@ -2247,6 +3189,18 @@
 
             asesorEmail:
               user.email,
+
+            equipo:
+              equipo ||
+              conversation.equipo ||
+              "",
+
+            senior:
+              equipo
+                ? obtenerSeniorDelEquipo(
+                    equipo
+                  )
+                : "",
 
             fechaAsignacion:
               Date.now()
@@ -2279,7 +3233,8 @@
       (event) => {
 
         if (
-          event.key === "Enter" &&
+          event.key ===
+          "Enter" &&
           !event.shiftKey
         ) {
 
@@ -2312,6 +3267,7 @@
       const user =
         auth.currentUser;
 
+
       if (!user)
         return;
 
@@ -2341,6 +3297,24 @@
       }
 
 
+      /*
+       * Un gestor NO puede responder
+       * si todavía no está asignado.
+       */
+
+      if (
+        !conversation.asesorAsignado
+      ) {
+
+        alert(
+          "Primero tenés que tomar la conversación."
+        );
+
+        return;
+
+      }
+
+
       const nombre =
         obtenerNombrePorEmail(
           user.email
@@ -2355,7 +3329,9 @@
 
 
       const nuevoMensaje =
-        push(mensajesRef);
+        push(
+          mensajesRef
+        );
 
 
       await set(
@@ -2406,7 +3382,8 @@
       );
 
 
-      messageInput.value = "";
+      messageInput.value =
+        "";
 
     }
 
@@ -2448,6 +3425,7 @@
 
         cargarOpcionesTransferencia();
 
+
         transferModal.style.display =
           "flex";
 
@@ -2477,7 +3455,7 @@
         if (!nuevoAsesor) {
 
           alert(
-            "Seleccioná un asesor."
+            "Seleccioná un gestor."
           );
 
           return;
@@ -2509,8 +3487,35 @@
         }
 
 
+        /*
+         * No permitimos transferir
+         * a supervisores ni seniors.
+         * La transferencia es entre
+         * gestores.
+         */
+
+        if (
+          perfiles[nuevoAsesor] !==
+          "asesor"
+        ) {
+
+          alert(
+            "Seleccioná un gestor, no un senior o supervisor."
+          );
+
+          return;
+
+        }
+
+
         const emailNuevoAsesor =
           obtenerEmailPorNombre(
+            nuevoAsesor
+          );
+
+
+        const nuevoEquipo =
+          obtenerEquipoDePersona(
             nuevoAsesor
           );
 
@@ -2533,14 +3538,70 @@
             asesorEmail:
               emailNuevoAsesor,
 
+            equipo:
+              nuevoEquipo ||
+              conversation.equipo ||
+              "",
+
+            senior:
+              nuevoEquipo
+                ? obtenerSeniorDelEquipo(
+                    nuevoEquipo
+                  )
+                : "",
+
             fechaTransferencia:
               Date.now(),
 
             transferidoPor:
-              nombreUsuarioActual
+              nombreUsuarioActual,
+
+            transferidoPorEmail:
+              usuarioActual?.email ||
+              ""
 
           }
 
+        );
+
+
+        /*
+         * Guardamos un mensaje
+         * de sistema para dejar
+         * registro de la transferencia.
+         */
+
+        const mensajesRef =
+          ref(
+            db,
+            `conversaciones/${conversacionSeleccionada}/mensajes`
+          );
+
+
+        const mensajeSistema =
+          push(
+            mensajesRef
+          );
+
+
+        await set(
+          mensajeSistema,
+          {
+
+            texto:
+              "Conversación transferida de " +
+              nombreUsuarioActual +
+              " a " +
+              nuevoAsesor +
+              ".",
+
+            remitente:
+              "sistema",
+
+            fecha:
+              Date.now()
+
+          }
         );
 
 
@@ -2565,13 +3626,18 @@
       transferAdvisor.innerHTML = `
 
         <option value="">
-          Seleccionar asesor
+          Seleccionar gestor
         </option>
 
       `;
 
 
       Object.keys(perfiles)
+        .filter(
+          (nombre) =>
+            perfiles[nombre] ===
+            "asesor"
+        )
         .sort()
         .forEach(
           (nombre) => {
@@ -2581,13 +3647,26 @@
                 "option"
               );
 
+
             option.value =
               nombre;
 
+
+            const equipo =
+              obtenerEquipoDePersona(
+                nombre
+              );
+
+
             option.textContent =
               nombre +
-              " · " +
-              perfiles[nombre];
+              (
+                equipo
+                  ? " · Equipo " +
+                    equipo
+                  : ""
+              );
+
 
             if (
               nombre ===
@@ -2598,6 +3677,7 @@
                 true;
 
             }
+
 
             transferAdvisor.appendChild(
               option
@@ -2647,6 +3727,7 @@
         finalizationReason.value =
           "";
 
+
         finalizeModal.style.display =
           "flex";
 
@@ -2686,6 +3767,7 @@
 
         const user =
           auth.currentUser;
+
 
         if (!user)
           return;
@@ -2759,19 +3841,19 @@
         );
 
 
-        /* La quitamos de la
-           bandeja activa */
-
         vistaActual =
           "activos";
+
 
         activeTab.classList.add(
           "active"
         );
 
+
         historyTab.classList.remove(
           "active"
         );
+
 
         cerrarChatSeleccionado();
 
@@ -2782,7 +3864,7 @@
 
 
     /* =========================
-       FUNCIONES
+       EMAIL → NOMBRE
        ========================= */
 
     function obtenerNombrePorEmail(
@@ -2853,6 +3935,10 @@
     }
 
 
+    /* =========================
+       NOMBRE → EMAIL
+       ========================= */
+
     function obtenerEmailPorNombre(
       nombre
     ) {
@@ -2921,6 +4007,10 @@
     }
 
 
+    /* =========================
+       ÚLTIMA FECHA
+       ========================= */
+
     function obtenerUltimaFecha(
       conversation
     ) {
@@ -2954,6 +4044,10 @@
     }
 
 
+    /* =========================
+       ESCAPAR HTML
+       ========================= */
+
     function escaparHTML(
       texto
     ) {
@@ -2985,6 +4079,10 @@
     }
 
 
+    /* =========================
+       FECHA
+       ========================= */
+
     function formatearFecha(
       timestamp
     ) {
@@ -2992,21 +4090,37 @@
       if (!timestamp)
         return "";
 
+
       return new Date(
         timestamp
       ).toLocaleString(
         "es-AR",
         {
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit"
+
+          day:
+            "2-digit",
+
+          month:
+            "2-digit",
+
+          year:
+            "numeric",
+
+          hour:
+            "2-digit",
+
+          minute:
+            "2-digit"
+
         }
       );
 
     }
 
+
+    /* =========================
+       TIEMPO RELATIVO
+       ========================= */
 
     function tiempoRelativo(
       timestamp
@@ -3014,6 +4128,7 @@
 
       if (!timestamp)
         return "";
+
 
       const diferencia =
         Date.now() -
@@ -3027,11 +4142,15 @@
         );
 
 
-      if (minutos < 1)
+      if (
+        minutos < 1
+      )
         return "Ahora";
 
 
-      if (minutos < 60)
+      if (
+        minutos < 60
+      )
         return (
           "Hace " +
           minutos +
@@ -3045,7 +4164,9 @@
         );
 
 
-      if (horas < 24)
+      if (
+        horas < 24
+      )
         return (
           "Hace " +
           horas +
