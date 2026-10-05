@@ -1124,10 +1124,8 @@ function renderizarSOS(){
   Object.entries(conversaciones||{}).forEach(([id,c])=>{
     for(const m of Object.values(c?.mensajes||{})){
       if(m?.sos===true||m?.urgente===true){
-        if(!mapa.has(id)){
-          const candidato={_id:id,gestor:m.remitente||obtenerGestorDeConversacion(c)||"Gestor",cliente:mostrarNombreCliente({...c,_id:id}),dni:obtenerDatosCliente(c).dni||"",fecha:m.fecha||Date.now(),estado:"pendiente"};
-          if(puedeVerSOS(candidato)) mapa.set(id,candidato);
-        }
+        const candidato={_id:id,gestor:m.remitente||obtenerGestorDeConversacion(c)||"Gestor",cliente:mostrarNombreCliente({...c,_id:id}),dni:obtenerDatosCliente(c).dni||"",fecha:m.fecha||Date.now(),estado:"pendiente"};
+        if(puedeVerSOS(candidato,c)) mapa.set(id,candidato);
         break;
       }
     }
@@ -1219,18 +1217,21 @@ function actualizarContadores(){
   $("badgeAgentes").textContent=agentes;
   $("badgeSinAsignar").textContent=sinAsignar;
   $("badgeHistorial").textContent=finalizadas.length;
-  const sosPendientes=new Set(Object.entries(urgencias||{}).filter(([id,u])=>normalizarTexto(u?.estado)==="pendiente" && puedeVerSOS(u)).map(([id])=>id));
+  const sosPendientes=new Set();
+  Object.entries(urgencias||{}).forEach(([id,u])=>{
+    if(normalizarTexto(u?.estado)==="pendiente" && puedeVerSOS(u,conversaciones[id])) sosPendientes.add(id);
+  });
   Object.entries(conversaciones||{}).forEach(([id,c])=>{
     for(const m of Object.values(c?.mensajes||{})){
       if(m?.sos===true||m?.urgente===true){
         const candidato={_id:id,gestor:m.remitente||obtenerGestorDeConversacion(c)||"",estado:"pendiente"};
-        if(puedeVerSOS(candidato)) sosPendientes.add(id);
+        if(puedeVerSOS(candidato,c)) sosPendientes.add(id);
         break;
       }
     }
   });
   $("badgeSOS").textContent=String(sosPendientes.size);
-  $("navSOS").classList.toggle("hidden",!esSenior());
+  $("navSOS").classList.toggle("hidden",sosPendientes.size===0);
   $("navSOS").classList.toggle("sos-active",sosPendientes.size>0);
 
   $("navSinAsignar").classList.toggle("hidden",!esSenior()&&!esSupervisor());
@@ -1440,7 +1441,7 @@ let ultimoSOSIds=new Set();
 function escucharUrgencias(){
   onValue(ref(db,"urgencias"),snap=>{
     const data=snap.val()||{};
-    const pendientes=new Set(Object.entries(data).filter(([,u])=>normalizarTexto(u?.estado)==="pendiente").map(([id])=>id));
+    const pendientes=new Set(Object.entries(data).filter(([id,u])=>normalizarTexto(u?.estado)==="pendiente" && puedeVerSOS(u,conversaciones[id])).map(([id])=>id));
     if(!primerCargaUrgencias && esSenior()){
       for(const id of pendientes){
         const u=data[id];
@@ -1461,7 +1462,7 @@ function escucharUrgencias(){
       $("chatActions").innerHTML=`
         ${esSenior()||esSupervisor()?`<button class="btn blue" onclick="abrirModalAsignacion('${conversacionSeleccionada}')">Asignar / transferir</button>`:""}
         ${esAsesor() && !esFin && puedeGestionarConversacion(c)?`<button class="btn red sos-button" onclick="pedirAyudaSenior()">🚨 SOS URGENTE · Hablar con senior</button>`:""}
-        ${normalizarTexto(urgencias[conversacionSeleccionada]?.estado)==="pendiente" && (esSenior()||esSupervisor())?`<button class="btn green" onclick="cerrarSOS('${conversacionSeleccionada}')">✓ Marcar SOS atendido</button>`:""}
+        ${normalizarTexto(urgencias[conversacionSeleccionada]?.estado)==="pendiente" && puedeVerSOS(urgencias[conversacionSeleccionada],conversaciones[conversacionSeleccionada])?`<button class="btn green" onclick="cerrarSOS('${conversacionSeleccionada}')">✓ Marcar SOS atendido</button>`:""}
         ${!esFin && puedeGestionarConversacion(c)?`<button class="btn" onclick="abrirIndicacionInterna()">🔒 Indicación</button>`:""}
         ${!esFin && puedeGestionarConversacion(c)?`<button class="btn red" onclick="finalizarConversacion()">Finalizar</button>`:""}
       `;
@@ -1500,7 +1501,7 @@ function renderizarPanelSOS(){
 
   const pendientes=[...mapa.values()].sort((a,b)=>(b.fecha||0)-(a.fecha||0));
   badge.textContent=String(pendientes.length);
-  nav.classList.toggle("hidden",false);
+  nav.classList.toggle("hidden",pendientes.length===0);
   nav.classList.toggle("sos-active",pendientes.length>0);
   panel.classList.toggle("hidden",pendientes.length===0);
   list.innerHTML=pendientes.length ? pendientes.map(u=>`
@@ -1516,8 +1517,9 @@ function renderizarPanelSOS(){
 
 function abrirSOS(id){
   const u=urgencias[id];
-  if(!u) return;
   const c=conversaciones[id];
+  if(!u || !puedeVerSOS(u,c)) return;
+
   if(c){
     mostrarVista("principal");
     setTimeout(()=>abrirConversacion(id,false),0);
