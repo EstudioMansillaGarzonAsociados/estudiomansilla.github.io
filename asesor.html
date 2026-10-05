@@ -222,6 +222,7 @@ button{cursor:pointer}
 .expediente-acuerdo{margin-top:12px;padding-top:10px;border-top:1px solid #e5e7eb}
 .expediente-acuerdo textarea{width:100%;box-sizing:border-box;border:1px solid #cfd6df;border-radius:8px;padding:9px;resize:vertical;margin-top:6px;font:inherit;min-height:90px}
 .agreement-readonly{background:#f7f8fa;border-radius:8px;padding:9px;margin-top:6px;min-height:45px}
+ .ai-box{margin:10px 0;padding:12px;border:1px solid #cfd8e3;border-radius:12px;background:#f8fbff}.ai-box h3{margin:0 0 7px;font-size:14px}.ai-actions{display:flex;gap:6px;flex-wrap:wrap}.ai-actions button{border:1px solid #c7d2e0;background:white;border-radius:8px;padding:7px 9px;font-size:11px;font-weight:700}.ai-result{margin-top:9px;background:white;border:1px solid #dfe5ec;border-radius:9px;padding:9px;font-size:12px;line-height:1.45;white-space:pre-wrap}.ai-note{font-size:10px;color:#667085;margin-top:7px}
 </style>
 </head>
 
@@ -328,7 +329,7 @@ button{cursor:pointer}
           <div id="chatTitle" class="chat-header-title">Seleccioná una conversación</div>
           <div id="chatSubtitle" class="chat-header-sub">Las conversaciones aparecerán aquí.</div>
         </div>
-        <div id="chatActions" class="chat-actions"></div>
+        <div id="chatActions" class="chat-actions"><button class="btn blue" onclick="abrirIA()">✨ Ayuda IA</button></div>
       </div>
 
       <div class="chat-body">
@@ -1158,7 +1159,9 @@ function renderizarSOS(){
     for(const m of Object.values(c?.mensajes||{})){
       if(m?.sos===true||m?.urgente===true){
         const candidato={_id:id,gestor:m.remitente||obtenerGestorDeConversacion(c)||"Gestor",cliente:mostrarNombreCliente({...c,_id:id}),dni:obtenerDatosCliente(c).dni||"",fecha:m.fecha||Date.now(),estado:"pendiente"};
-        if(puedeVerSOS(candidato,c)) mapa.set(id,candidato);
+        // Solo usamos el SOS guardado dentro del chat como respaldo si NO existe
+        // un registro en /urgencias. Si existe y fue atendido, no debe reaparecer.
+        if(!urgencias[id] && puedeVerSOS(candidato,c)) mapa.set(id,candidato);
         break;
       }
     }
@@ -1527,7 +1530,9 @@ function renderizarPanelSOS(){
         const candidato={...actual,_id:id,gestor:actual.gestor||m.remitente||obtenerGestorDeConversacion(c)||"Gestor",
           cliente:actual.cliente||mostrarNombreCliente({...c,_id:id}),dni:actual.dni||obtenerDatosCliente(c).dni||"",
           fecha:actual.fecha||m.fecha||Date.now(),estado:"pendiente"};
-        if(puedeVerSOS(candidato)) mapa.set(id,candidato);
+        // Si Firebase ya tiene un registro de urgencia, ese registro manda.
+        // Evita que un SOS atendido vuelva a aparecer por el mensaje histórico.
+        if(!urgencias[id] && puedeVerSOS(candidato)) mapa.set(id,candidato);
         break;
       }
     }
@@ -1546,7 +1551,6 @@ function renderizarPanelSOS(){
       <small>${formatFecha(u.fecha)}</small>
     </button>`).join("") : "";
 
-  if(pendientes.length && !primerCargaUrgencias) sonidoNuevoChat();
 }
 
 function abrirSOS(id){
@@ -2358,6 +2362,50 @@ window.pedirAyudaSenior=pedirAyudaSenior;
 window.abrirSOS=abrirSOS;
 window.cerrarSOS=cerrarSOS;
 window.guardarAcuerdoCliente=guardarAcuerdoCliente;
+function abrirIA(){
+  if(!conversacionSeleccionada){ alert("Primero seleccioná una conversación."); return; }
+  $("aiModal").classList.remove("hidden");
+  $("aiResult").textContent="Elegí una opción.";
+}
+function cerrarIA(){ $("aiModal").classList.add("hidden"); }
+function contextoIA(){
+  const c=conversaciones[conversacionSeleccionada];
+  if(!c) return [];
+  return Object.values(c.mensajes||{}).filter(m=>m && m.texto).slice(-20);
+}
+function textoClienteIA(){
+  const ms=contextoIA().filter(m=>normalizarTexto(m.tipo)!=="interno");
+  return ms.filter(m=>normalizarTexto(m.remitente)!==normalizarTexto(nombreActual)).map(m=>m.texto||"").join(" ").trim();
+}
+function iaSugerirRespuesta(){
+  const t=textoClienteIA();
+  let r="Hola. Gracias por comunicarte con nosotros. Voy a revisar tu situación y te informo las alternativas disponibles.";
+  const n=normalizarTexto(t);
+  if(n.includes("deuda")||n.includes("monto")) r="Hola. Claro, podemos revisar el estado de tu deuda y las alternativas disponibles. Dame un momento para verificar la información de tu expediente.";
+  else if(n.includes("pago")||n.includes("pague")||n.includes("transfer")) r="Hola. Para poder verificar correctamente el pago, necesito revisar la información registrada en el expediente. En cuanto la confirme, te indico cómo queda imputado.";
+  else if(n.includes("cuota")||n.includes("convenio")||n.includes("plan")) r="Hola. Podemos revisar las alternativas de financiación disponibles para tu situación. Voy a verificar el expediente y te informo las opciones.";
+  $("aiResult").textContent=r;
+}
+function iaResumir(){
+  const ms=contextoIA();
+  if(!ms.length){ $("aiResult").textContent="No hay mensajes suficientes para resumir."; return; }
+  const ult=ms.slice(-5).map(m=>`${m.remitente||"Usuario"}: ${m.texto}`).join("\n");
+  $("aiResult").textContent="Resumen preliminar:\n"+ult;
+}
+function iaAnalizar(){
+  const t=textoClienteIA(); const n=normalizarTexto(t); const hallazgos=[];
+  if(n.includes("deuda")||n.includes("monto")) hallazgos.push("• Consulta relacionada con deuda/monto.");
+  if(n.includes("pago")||n.includes("transfer")) hallazgos.push("• Menciona un pago o transferencia; conviene verificar imputación.");
+  if(n.includes("cuota")||n.includes("convenio")||n.includes("plan")) hallazgos.push("• Consulta sobre cuotas/convenio.");
+  if(n.includes("reclamo")||n.includes("queja")||n.includes("denuncia")) hallazgos.push("• Hay lenguaje de reclamo; revisar antes de responder.");
+  if(!hallazgos.length) hallazgos.push("• No se detectó una categoría específica con las palabras disponibles.");
+  $("aiResult").textContent="Análisis preliminar:\n"+hallazgos.join("\n");
+}
+function iaNota(){
+  const c=conversaciones[conversacionSeleccionada]; const d=obtenerDatosCliente(c||{});
+  $("aiResult").textContent=`Nota interna sugerida:\nCliente ${mostrarNombreCliente({...c,_id:conversacionSeleccionada})}. DNI: ${d.dni||"no informado"}. Revisar conversación y dejar asentada la gestión realizada.`;
+}
+
 window.enviarMensajeInterno=enviarMensajeInterno;
 window.enviarMensaje=enviarMensaje;
 window.finalizarConversacion=finalizarConversacion;
@@ -2381,5 +2429,23 @@ window.cerrarModalVencimiento=cerrarModalVencimiento;
 window.guardarVencimiento=guardarVencimiento;
 
 </script>
+
+<div id="aiModal" class="modal-bg hidden">
+  <div class="modal">
+    <h2>✨ Asistente IA</h2>
+    <div class="small">Analiza la conversación seleccionada y te ayuda a preparar la gestión.</div>
+    <div class="ai-box">
+      <div class="ai-actions">
+        <button onclick="iaSugerirRespuesta()">💬 Sugerir respuesta</button>
+        <button onclick="iaResumir()">🧠 Resumir conversación</button>
+        <button onclick="iaAnalizar()">🔎 Analizar caso</button>
+        <button onclick="iaNota()">📝 Nota interna</button>
+      </div>
+      <div id="aiResult" class="ai-result">Elegí una opción.</div>
+      <div class="ai-note">La interfaz queda preparada para conectar un modelo de IA mediante un backend seguro. No se coloca una clave de API dentro de esta página.</div>
+    </div>
+    <div class="modal-actions"><button class="cancel" onclick="cerrarIA()">Cerrar</button></div>
+  </div>
+</div>
 </body>
 </html>
