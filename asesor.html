@@ -87,6 +87,7 @@ button{cursor:pointer}
 .list-panel{width:350px;background:#fff;border-right:1px solid var(--gris2);display:flex;flex-direction:column;min-width:0}
 .list-header{padding:17px;border-bottom:1px solid var(--gris2)}
 .greeting{font-size:17px;font-weight:800}
+.motivational{margin-top:7px;background:#eef8f2;border-left:4px solid #176b4d;border-radius:8px;padding:8px 10px;color:#176b4d;font-size:12px;font-weight:700;line-height:1.35}
 .section-title{font-size:13px;color:var(--muted);margin-top:4px}
 .search{margin-top:13px}
 .search input{width:100%;padding:10px;border:1px solid #d7dde3;border-radius:10px}
@@ -207,8 +208,8 @@ button{cursor:pointer}
 .calendar-grid .day-number{font-size:11px !important}
 .calendar-grid .event{padding:2px 3px !important;margin-top:2px !important;font-size:9px !important;line-height:1.15 !important}
 
-.sos-panel{margin:12px;border:2px solid #dc2626;background:#fff5f5;border-radius:12px;padding:10px;box-shadow:0 4px 14px rgba(180,35,24,.12)}
-.sos-title{font-weight:900;color:#b42318;font-size:13px;margin-bottom:7px}
+.sos-panel{margin:12px;position:relative;z-index:5;border:2px solid #dc2626;background:#fff5f5;border-radius:12px;padding:10px;box-shadow:0 4px 14px rgba(180,35,24,.12)}
+.sos-title{font-weight:900;color:#b42318;font-size:14px;margin-bottom:7px}
 .sos-item{display:block;width:100%;text-align:left;border:1px solid #f2a3a3;background:#fff;border-radius:9px;padding:8px;margin-top:6px;cursor:pointer;color:#5f1111}
 .sos-item-title{font-weight:900;color:#b42318;margin-bottom:2px}
 .sos-item small{display:block;margin-top:3px;color:#777}
@@ -301,6 +302,7 @@ button{cursor:pointer}
     <section class="list-panel">
       <div class="list-header">
         <div id="greeting" class="greeting">¡Buen día! 👋</div>
+        <div id="motivational" class="motivational"></div>
         <div id="sectionTitle" class="section-title">Conversaciones</div>
         <div class="search">
           <input id="listSearch" placeholder="Buscar por DNI, nombre o teléfono..." oninput="refrescarVistaActual()">
@@ -523,7 +525,7 @@ const equipos = {
   },
   "Cuoteros": {
     seniors: ["Rocio","Daniela","Antonela","Pilar","Moriana"],
-    gestores: ["Alejo","Gregorio"]
+    gestores: ["Alejo Cuotero","Gregorio"]
   }
 };
 
@@ -549,13 +551,13 @@ const perfiles = {
   "Maica":"asesor",
   "Natalia":"asesor",
   "Gustavo":"asesor",
-  "Alejo Povina":"asesor",
+  "Alejo Cuotero":"asesor",
   "Gregorio":"asesor",
   "Francesca":"asesor",
   "Florencia":"asesor",
   "Valentina":"asesor",
   "Marcela":"asesor",
-  "Alejo Mansilla":"supervisor",
+  "Alejo Supervisor":"supervisor",
   "Ramon":"supervisor",
   "Gonzalo":"supervisor",
   "Javier":"supervisor"
@@ -583,8 +585,8 @@ const emailsPorNombre = {
   "alejandra.rivas@mansillayasoc.com.ar": "Alejandra",
   "maica.ceron@mansillayasoc.com.ar": "Maica",
   "gustavo.gaitan@mansillayasoc.com.ar": "Gustavo",
-  "alejo.povina@mansillayasoc.com.ar": "Alejo Povina",
-  "alejo.mansilla@mansillayasoc.com.ar": "Alejo Mansilla",
+  "alejo.povina@mansillayasoc.com.ar": "Alejo Cuotero",
+  "alejo.mansilla@mansillayasoc.com.ar": "Alejo Supervisor",
   "r.arrambide@mansillayasoc.com.ar": "Ramon",
   "gonzalo@mansillayasoc.com.ar": "Gonzalo",
   "jmansilla@mansillayasoc.com.ar": "Javier",
@@ -688,7 +690,16 @@ function obtenerDatosCliente(c){
   const telefono=valorCampoProfundo({fuentes},["telefono","teléfono","celular","phone","telefonoCliente","numeroTelefono","mobile"]);
   const fecha=valorCampoProfundo({fuentes},["fecha","fechaCliente","fechaConsulta"]);
   const motivo=valorCampoProfundo({fuentes},["motivo","asunto","motivoConsulta","consulta","tema"]);
-  return { nombre:String(nombre||""), dni:String(dni||""), telefono:String(telefono||""), fecha:String(fecha||""), motivo:String(motivo||"") };
+  let dniFinal=String(dni||"").trim();
+  if(!dniFinal){
+    const candidatos=[c?.idCliente,c?.clienteId,c?.dniCliente,c?.documentoCliente,c?.numeroDocumento,c?.numeroDni,c?.documentNumber,c?.id];
+    for(const x of candidatos){
+      const t=String(x??"").trim();
+      if(/^[0-9]{6,12}$/.test(t)){ dniFinal=t; break; }
+    }
+    if(!dniFinal && /^[0-9]{6,12}$/.test(String(c?._id||""))) dniFinal=String(c._id);
+  }
+  return { nombre:String(nombre||""), dni:dniFinal, telefono:String(telefono||""), fecha:String(fecha||""), motivo:String(motivo||"") };
 }
 
 function obtenerEquipoDeConversacion(c){
@@ -707,7 +718,7 @@ function obtenerEmailGestor(c){
 function obtenerEquipoDeGestor(nombre){
   const resultado=[];
   for(const equipo in equipos){
-    if((equipos[equipo].gestores||[]).some(x => normalizarTexto(x)===normalizarTexto(nombre))){
+    if((equipos[equipo].gestores||[]).some(x => personasCoinciden(x,nombre))){
       resultado.push(equipo);
     }
   }
@@ -717,8 +728,8 @@ function obtenerEquipoDeGestor(nombre){
 function obtenerEquipoDePersona(nombre){
   const resultado=[];
   for(const equipo in equipos){
-    if((equipos[equipo].gestores||[]).some(x => normalizarTexto(x)===normalizarTexto(nombre)) ||
-       (equipos[equipo].seniors||[]).some(x => normalizarTexto(x)===normalizarTexto(nombre))){
+    if((equipos[equipo].gestores||[]).some(x => personasCoinciden(x,nombre)) ||
+       (equipos[equipo].seniors||[]).some(x => personasCoinciden(x,nombre))){
       resultado.push(equipo);
     }
   }
@@ -745,7 +756,34 @@ const ROLES_FIJOS_POR_EMAIL = {
   "gonzalo@mansillayasoc.com.ar": "supervisor",
   "jmansilla@mansillayasoc.com.ar": "supervisor"
 };
+const IDENTIDAD_FIJA_POR_EMAIL = {
+  "rocio.lopez@mansillayasoc.com.ar": "Rocio",
+  "antonela.lopez@mansillayasoc.com.ar": "Antonela",
+  "pilar.solano@mansillayasoc.com.ar": "Pilar",
+  "daniela.cortez@mansillayasoc.com.ar": "Daniela",
+  "moriana.rey@mansillayasoc.com.ar": "Moriana",
+  "paula.lopez@mansillayasoc.com.ar": "Paula",
+  "alejo.povina@mansillayasoc.com.ar": "Alejo Cuotero",
+  "alejo.mansilla@mansillayasoc.com.ar": "Alejo Supervisor",
+  "r.arrambide@mansillayasoc.com.ar": "Ramon",
+  "gonzalo@mansillayasoc.com.ar": "Gonzalo",
+  "jmansilla@mansillayasoc.com.ar": "Javier"
+};
+const ALIAS_PERSONA = {
+  "alejo": "Alejo Cuotero",
+  "alejo povina": "Alejo Cuotero",
+  "alejo cuotero": "Alejo Cuotero",
+  "alejo mansilla": "Alejo Supervisor",
+  "alejo supervisor": "Alejo Supervisor"
+};
 
+function nombreCanonico(nombre){
+  const n=normalizarTexto(nombre);
+  return ALIAS_PERSONA[n] || String(nombre||"").trim();
+}
+function personasCoinciden(a,b){
+  return normalizarTexto(nombreCanonico(a))===normalizarTexto(nombreCanonico(b));
+}
 function rolFijoPorCorreo(){
   return ROLES_FIJOS_POR_EMAIL[normalizarTexto(usuarioActual?.email)] || "";
 }
@@ -799,7 +837,7 @@ function puedeVerPorEquipo(c){
 function conversacionEsMia(c){
   const gestor=normalizarTexto(obtenerGestorDeConversacion(c));
   const email=normalizarTexto(obtenerEmailGestor(c));
-  return gestor===normalizarTexto(nombreActual) ||
+  return personasCoinciden(gestor,nombreActual) ||
          email===normalizarTexto(usuarioActual?.email);
 }
 
@@ -981,6 +1019,7 @@ function abrirChatsDeGestor(nombre){
 }
 
 function renderizarSinAsignar(){
+  if(!esSenior() && !esSupervisor()){ mostrarVista("principal"); return; }
   const items=$("items");
   items.innerHTML="";
   // Seniors y supervisores ven TODAS las conversaciones sin asignar.
@@ -1318,22 +1357,43 @@ function renderizarPanelSOS(){
     panel.classList.add("hidden");
     return;
   }
-  const pendientes=Object.entries(urgencias)
-    .map(([id,u])=>({...u,_id:id}))
-    .filter(u=>normalizarTexto(u.estado)==="pendiente")
-    .sort((a,b)=>(b.fecha||0)-(a.fecha||0));
 
-  panel.classList.toggle("hidden",pendientes.length===0);
-  list.innerHTML=pendientes.map(u=>`
+  const mapa=new Map();
+  Object.entries(urgencias||{}).forEach(([id,u])=>{
+    if(normalizarTexto(u?.estado)==="pendiente") mapa.set(id,{...u,_id:id});
+  });
+
+  // Respaldo: si el nodo /urgencias no tiene datos pero el SOS quedó grabado
+  // dentro de la conversación, el senior igual lo ve.
+  Object.entries(conversaciones||{}).forEach(([id,c])=>{
+    for(const m of Object.values(c?.mensajes||{})){
+      if(m?.sos===true || m?.urgente===true){
+        if(!mapa.has(id)){
+          mapa.set(id,{
+            _id:id,
+            gestor:m.remitente||obtenerGestorDeConversacion(c)||"Gestor",
+            cliente:mostrarNombreCliente({...c,_id:id}),
+            dni:obtenerDatosCliente(c).dni||"",
+            fecha:m.fecha||Date.now(),
+            estado:"pendiente"
+          });
+        }
+        break;
+      }
+    }
+  });
+
+  const pendientes=[...mapa.values()].sort((a,b)=>(b.fecha||0)-(a.fecha||0));
+  panel.classList.remove("hidden");
+  list.innerHTML=pendientes.length ? pendientes.map(u=>`
     <button class="sos-item" onclick="abrirSOS('${escapeHtml(u._id)}')">
-      <div class="sos-item-title">🚨 SOS URGENTE</div>
-      <div>${escapeHtml(u.gestor||"Gestor")}</div>
+      <div class="sos-item-title">🚨🚨 SOS URGENTE 🚨🚨</div>
+      <div><b>${escapeHtml(u.gestor||"Gestor")}</b> necesita hablar con un senior</div>
       <div>${escapeHtml(u.cliente||"Cliente")} ${u.dni?`· DNI ${escapeHtml(u.dni)}`:""}</div>
       <small>${formatFecha(u.fecha)}</small>
     </button>
-  `).join("");
+  `).join("") : `<div style="font-size:11px;color:#777;padding:4px">No hay SOS pendientes.</div>`;
 }
-
 function abrirSOS(id){
   const u=urgencias[id];
   if(!u) return;
@@ -1597,10 +1657,20 @@ function pintarPresencia(p){
 
 $("presenceSelect").addEventListener("change",()=>actualizarPresencia($("presenceSelect").value));
 
+const frasesMotivadoras=[
+  "💚 Hoy puede ser un gran día para hacer la diferencia.",
+  "✨ Un buen equipo transforma los días difíciles en logros.",
+  "🌱 Paso a paso también se llega muy lejos.",
+  "💪 Tu trabajo importa más de lo que imaginás.",
+  "🚀 Cada gestión cuenta. Cada esfuerzo también.",
+  "🔥 Vamos que hoy sale."
+];
 function greeting(){
   const h=new Date().getHours();
   const saludo=h>=5&&h<12?"¡Buen día":h>=12&&h<19?"¡Buenas tardes":"¡Buenas noches";
   $("greeting").textContent=`${saludo}, ${nombreCorto(nombreActual)}! 👋`;
+  const indice=Math.floor(Date.now()/86400000)%frasesMotivadoras.length;
+  $("motivational").textContent=frasesMotivadoras[indice];
 }
 
 function sonidoNuevoChat(){
@@ -1676,6 +1746,7 @@ function gestoresVisibles(){
 }
 
 function renderizarAgenda(){
+  if(!puedeVerAgendaGestores()){ mostrarVista("principal"); return; }
   $("sectionTitle").textContent="Agenda de gestores";
   $("listSearch").style.display="none";
   $("items").innerHTML=`
@@ -1958,18 +2029,17 @@ function escucharVencimientos(){
 
 async function resolverUsuarioPorEmail(user){
   const email=normalizarTexto(user.email);
-  let nombre=emailsPorNombre[email]||user.displayName||"";
+  let nombre=IDENTIDAD_FIJA_POR_EMAIL[email]||emailsPorNombre[email]||user.displayName||"";
   let perfil=ROLES_FIJOS_POR_EMAIL[email]||"";
 
   try{
     const snap=await get(ref(db,"usuarios"));
     usuariosDB=snap.val()||{};
-
     for(const [key,u] of Object.entries(usuariosDB)){
       const ue=normalizarTexto(u?.email||key);
       if(ue===email){
-        nombre=u.nombre||u.displayName||nombre;
-        perfil=u.perfil||u.rol||perfil;
+        if(!IDENTIDAD_FIJA_POR_EMAIL[email]) nombre=u.nombre||u.displayName||nombre;
+        if(!ROLES_FIJOS_POR_EMAIL[email]) perfil=u.perfil||u.rol||perfil;
         break;
       }
     }
@@ -1977,18 +2047,8 @@ async function resolverUsuarioPorEmail(user){
     console.warn("No se pudo leer usuarios:",e);
   }
 
-  // Si es una cuenta especial, se mantiene la identidad definida por correo.
-  if(email==="alejo.povina@mansillayasoc.com.ar"){
-    nombre="Alejo Povina"; perfil="asesor";
-  }
-  if(email==="alejo.mansilla@mansillayasoc.com.ar"){
-    nombre="Alejo Mansilla"; perfil="supervisor";
-  }
-
-  // La identidad y el rol de las cuentas conocidas prevalecen sobre cualquier dato
-  // incompleto o antiguo guardado en /usuarios.
+  if(IDENTIDAD_FIJA_POR_EMAIL[email]) nombre=IDENTIDAD_FIJA_POR_EMAIL[email];
   if(ROLES_FIJOS_POR_EMAIL[email]) perfil=ROLES_FIJOS_POR_EMAIL[email];
-  if(emailsPorNombre[email]) nombre=emailsPorNombre[email];
   if(!perfil) perfil=perfiles[nombre]||"";
 
   return {nombre,perfil};
@@ -2038,6 +2098,10 @@ onAuthStateChanged(auth,async user=>{
   }
 
   usuarioActual=user;
+  // Identidad/rol por correo antes de consultar /usuarios.
+  const correoFijo=normalizarTexto(user.email);
+  if(IDENTIDAD_FIJA_POR_EMAIL[correoFijo]) nombreActual=IDENTIDAD_FIJA_POR_EMAIL[correoFijo];
+  if(ROLES_FIJOS_POR_EMAIL[correoFijo]) perfilActual=ROLES_FIJOS_POR_EMAIL[correoFijo];
   const infoUser=await resolverUsuarioPorEmail(user);
   nombreActual=infoUser.nombre;
   perfilActual=normalizarTexto(infoUser.perfil);
@@ -2060,7 +2124,7 @@ onAuthStateChanged(auth,async user=>{
   $("currentUserName").textContent=nombreActual;
   $("currentUserRole").textContent=
     perfilActual==="supervisor"?"Supervisor":
-    perfilActual==="senior"?"Senior":"Gestor";
+    perfilActual==="senior"?"Senior":perfilActual==="asesor"?"Gestor":"Supervisor";
 
   greeting();
   // Ocultamiento físico de funciones según rol. Paula y cualquier asesor no reciben Agenda ni Sin asignar.
