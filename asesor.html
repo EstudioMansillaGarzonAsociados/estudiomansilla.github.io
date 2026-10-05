@@ -1,3263 +1,2693 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <title>Centro de Atención - Asesor</title>
-
-  <style>
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      font-family: Arial, Helvetica, sans-serif;
-      background: #f3f4f6;
-      color: #111827;
-    }
-
-    button,
-    input,
-    textarea,
-    select {
-      font-family: inherit;
-    }
-
-    /* =========================
-       LOGIN
-    ========================= */
-
-    #loginScreen {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: linear-gradient(135deg, #111827, #1f2937);
-    }
-
-    .login-box {
-      width: 390px;
-      max-width: calc(100% - 30px);
-      background: white;
-      border-radius: 16px;
-      padding: 32px;
-      box-shadow: 0 20px 50px rgba(0,0,0,.25);
-    }
-
-    .login-box h1 {
-      margin: 0 0 8px;
-      font-size: 25px;
-    }
-
-    .login-box p {
-      margin: 0 0 25px;
-      color: #6b7280;
-    }
-
-    .login-box label {
-      display: block;
-      margin: 15px 0 7px;
-      font-size: 13px;
-      font-weight: bold;
-    }
-
-    .login-box input {
-      width: 100%;
-      padding: 12px;
-      border: 1px solid #d1d5db;
-      border-radius: 8px;
-      outline: none;
-    }
-
-    .login-box input:focus {
-      border-color: #2563eb;
-    }
-
-    .login-btn {
-      width: 100%;
-      margin-top: 22px;
-      padding: 12px;
-      border: 0;
-      border-radius: 8px;
-      background: #2563eb;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    #loginError {
-      display: none;
-      margin-top: 15px;
-      padding: 10px;
-      border-radius: 8px;
-      background: #fee2e2;
-      color: #b91c1c;
-      font-size: 13px;
-    }
-
-    /* =========================
-       APP
-    ========================= */
-
-    #app {
-      display: none;
-      height: 100vh;
-      overflow: hidden;
-    }
-
-    .topbar {
-      height: 60px;
-      padding: 0 18px;
-      background: #111827;
-      color: white;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .topbar-title {
-      font-size: 19px;
-      font-weight: bold;
-    }
-
-    .topbar-user {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-      font-size: 13px;
-    }
-
-    .logout-btn {
-      border: 1px solid rgba(255,255,255,.25);
-      background: transparent;
-      color: white;
-      padding: 8px 12px;
-      border-radius: 7px;
-      cursor: pointer;
-    }
-
-    /* =========================
-       LAYOUT
-    ========================= */
-
-    .main-layout {
-      height: calc(100vh - 60px);
-      display: grid;
-      grid-template-columns: 330px minmax(450px, 1fr) 290px;
-    }
-
-    /* =========================
-       SIDEBAR
-    ========================= */
-
-    .sidebar {
-      background: white;
-      border-right: 1px solid #ddd;
-      overflow-y: auto;
-    }
-
-    .sidebar-header {
-      padding: 14px;
-      border-bottom: 1px solid #eee;
-    }
-
-    .search-box {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid #d1d5db;
-      border-radius: 8px;
-      outline: none;
-    }
-
-    .filters {
-      display: flex;
-      gap: 5px;
-      margin-top: 10px;
-    }
-
-    .filter-btn {
-      flex: 1;
-      padding: 8px 4px;
-      border: 1px solid #ddd;
-      background: white;
-      border-radius: 7px;
-      cursor: pointer;
-      font-size: 12px;
-    }
-
-    .filter-btn.active {
-      background: #2563eb;
-      color: white;
-      border-color: #2563eb;
-    }
-
-    #conversationList {
-      padding: 4px;
-    }
-
-    .conversation-card {
-      padding: 13px;
-      border-bottom: 1px solid #eee;
-      cursor: pointer;
-    }
-
-    .conversation-card:hover {
-      background: #f5f7fa;
-    }
-
-    .conversation-card.selected {
-      background: #e8f0fe;
-    }
-
-    .conversation-top {
-      display: flex;
-      justify-content: space-between;
-      gap: 8px;
-    }
-
-    .conversation-name {
-      font-size: 14px;
-      font-weight: bold;
-    }
-
-    .conversation-time {
-      color: #6b7280;
-      font-size: 10px;
-    }
-
-    .conversation-preview {
-      margin-top: 5px;
-      color: #6b7280;
-      font-size: 12px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .conversation-meta {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-top: 8px;
-    }
-
-    .badge {
-      display: inline-block;
-      padding: 3px 7px;
-      border-radius: 20px;
-      font-size: 10px;
-      font-weight: bold;
-      margin-right: 4px;
-    }
-
-    .badge-active {
-      background: #dcfce7;
-      color: #166534;
-    }
-
-    .badge-pending {
-      background: #fef3c7;
-      color: #92400e;
-    }
-
-    .badge-finished {
-      background: #e5e7eb;
-      color: #374151;
-    }
-
-    .badge-team {
-      background: #e0e7ff;
-      color: #3730a3;
-    }
-
-    .waiting-timer {
-      color: #dc2626;
-      font-size: 11px;
-      font-weight: bold;
-      font-variant-numeric: tabular-nums;
-    }
-
-    /* =========================
-       CHAT
-    ========================= */
-
-    .chat {
-      display: flex;
-      flex-direction: column;
-      min-width: 0;
-      background: #eef1f5;
-    }
-
-    .chat-header {
-      min-height: 70px;
-      padding: 12px 18px;
-      background: white;
-      border-bottom: 1px solid #ddd;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 15px;
-    }
-
-    .client-name {
-      font-size: 18px;
-      font-weight: bold;
-    }
-
-    .client-sub {
-      margin-top: 4px;
-      color: #6b7280;
-      font-size: 12px;
-    }
-
-    .chat-actions {
-      display: flex;
-      gap: 7px;
-    }
-
-    .action-btn {
-      padding: 8px 11px;
-      border: 0;
-      border-radius: 7px;
-      cursor: pointer;
-      font-size: 12px;
-      font-weight: bold;
-    }
-
-    .btn-primary {
-      background: #2563eb;
-      color: white;
-    }
-
-    .btn-warning {
-      background: #f59e0b;
-      color: white;
-    }
-
-    .btn-danger {
-      background: #dc2626;
-      color: white;
-    }
-
-    .timer-bar {
-      padding: 8px 18px;
-      background: white;
-      border-bottom: 1px solid #ddd;
-      display: flex;
-      justify-content: space-between;
-    }
-
-    .timer-label {
-      color: #6b7280;
-      font-size: 12px;
-    }
-
-    #mainTimer {
-      color: #dc2626;
-      font-weight: bold;
-      font-variant-numeric: tabular-nums;
-    }
-
-    #messages {
-      flex: 1;
-      overflow-y: auto;
-      padding: 20px;
-    }
-
-    .empty-chat,
-    .loading,
-    .no-selection {
-      color: #9ca3af;
-      text-align: center;
-      padding: 30px;
-    }
-
-    .message {
-      display: flex;
-      margin-bottom: 10px;
-    }
-
-    .message.client {
-      justify-content: flex-start;
-    }
-
-    .message.team {
-      justify-content: flex-end;
-    }
-
-    .message-bubble {
-      max-width: 70%;
-      padding: 10px 13px;
-      border-radius: 12px;
-      font-size: 13px;
-      line-height: 1.4;
-      box-shadow: 0 1px 2px rgba(0,0,0,.08);
-    }
-
-    .message.client .message-bubble {
-      background: white;
-      border-bottom-left-radius: 3px;
-    }
-
-    .message.team .message-bubble {
-      background: #dbeafe;
-      border-bottom-right-radius: 3px;
-    }
-
-    .message-author {
-      margin-bottom: 4px;
-      color: #6b7280;
-      font-size: 10px;
-      font-weight: bold;
-    }
-
-    .message-time {
-      margin-top: 4px;
-      color: #9ca3af;
-      font-size: 9px;
-      text-align: right;
-    }
-
-    .composer {
-      padding: 12px;
-      background: white;
-      border-top: 1px solid #ddd;
-      display: flex;
-      gap: 8px;
-    }
-
-    #messageInput {
-      flex: 1;
-      min-height: 42px;
-      max-height: 130px;
-      resize: vertical;
-      padding: 10px;
-      border: 1px solid #d1d5db;
-      border-radius: 8px;
-      outline: none;
-    }
-
-    #sendBtn {
-      width: 90px;
-      border: 0;
-      border-radius: 8px;
-      background: #2563eb;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    #sendBtn:disabled {
-      background: #9ca3af;
-    }
-
-    /* =========================
-       DETAILS
-    ========================= */
-
-    .details {
-      background: white;
-      border-left: 1px solid #ddd;
-      overflow-y: auto;
-    }
-
-    .details-header {
-      padding: 18px;
-      border-bottom: 1px solid #eee;
-      font-size: 17px;
-      font-weight: bold;
-    }
-
-    .detail-section {
-      padding: 16px;
-      border-bottom: 1px solid #eee;
-    }
-
-    .detail-title {
-      margin-bottom: 7px;
-      color: #6b7280;
-      font-size: 11px;
-      font-weight: bold;
-      text-transform: uppercase;
-    }
-
-    .detail-value {
-      font-size: 14px;
-      word-break: break-word;
-    }
-
-    .detail-timer {
-      color: #dc2626;
-      font-size: 23px;
-      font-weight: bold;
-      font-variant-numeric: tabular-nums;
-    }
-
-    .assignment-select {
-      width: 100%;
-      margin-top: 8px;
-      padding: 9px;
-      border: 1px solid #d1d5db;
-      border-radius: 7px;
-    }
-
-    @media (max-width: 1050px) {
-
-      .main-layout {
-        grid-template-columns: 290px minmax(350px, 1fr);
-      }
-
-      .details {
-        display: none;
-      }
-
-    }
-
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Centro de Atención — Estudio Mansilla Garzon y Asociados — v2026.10.05-SOS-IA</title>
+
+<style>
+:root{
+  --verde:#176b4d;
+  --verde2:#e9f6ef;
+  --azul:#2457a6;
+  --rojo:#b63838;
+  --amarillo:#c58b16;
+  --gris:#f4f6f8;
+  --gris2:#e7ebef;
+  --texto:#1f2933;
+  --muted:#6b7280;
+  --blanco:#fff;
+  --sombra:0 8px 28px rgba(0,0,0,.08);
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--gris);color:var(--texto)}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+.hidden{display:none!important}
+
+/* LOGIN */
+#loginScreen{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,#0f5138,#1d7b58);
+  padding:20px;
+}
+.login-card{
+  width:min(420px,100%);background:white;border-radius:22px;padding:32px;
+  box-shadow:0 20px 60px rgba(0,0,0,.22)
+}
+.logo{font-size:28px;font-weight:800;color:var(--verde);margin-bottom:5px}
+.subtitle{color:var(--muted);margin-bottom:25px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:13px;font-weight:700;margin-bottom:6px}
+.field input,.field select,.field textarea{
+  width:100%;border:1px solid #d7dde3;border-radius:10px;padding:11px;background:white;
+  outline:none
+}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--verde)}
+.primary{
+  border:0;background:var(--verde);color:white;border-radius:10px;padding:12px 16px;
+  font-weight:700;width:100%
+}
+.error{color:#a11b1b;background:#fdecec;border-radius:10px;padding:10px;margin-top:12px;font-size:13px}
+.small{font-size:12px;color:var(--muted)}
+
+/* APP */
+#app{height:100vh;display:flex;overflow:hidden}
+.sidebar{
+  width:250px;background:#fff;border-right:1px solid var(--gris2);display:flex;
+  flex-direction:column;padding:18px 12px;flex-shrink:0
+}
+.brand{padding:5px 10px 18px}
+.brand-title{font-size:18px;font-weight:800;color:var(--verde)}
+.brand-sub{font-size:12px;color:var(--muted);margin-top:4px}
+.user-box{background:var(--gris);border-radius:13px;padding:12px;margin-bottom:15px}
+.user-name{font-weight:800}
+.user-role{font-size:12px;color:var(--muted);margin:3px 0 10px}
+.presence{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:700}
+.presence-dot{width:9px;height:9px;border-radius:50%;background:#9ca3af}
+.presence-dot.active{background:#16a34a}
+.presence-dot.break{background:#eab308}
+.presence-dot.rest{background:#3b82f6}
+.presence-dot.finished{background:#6b7280}
+.presence-select{width:100%;margin-top:8px;border:1px solid #d7dde3;border-radius:8px;padding:8px;background:white;font-size:12px}
+
+.nav{display:flex;flex-direction:column;gap:5px}
+.nav button{
+  border:0;background:transparent;text-align:left;padding:11px 12px;border-radius:10px;
+  display:flex;justify-content:space-between;align-items:center;color:#374151
+}
+.nav button:hover,.nav button.active{background:var(--verde2);color:var(--verde);font-weight:700}
+.badge{min-width:22px;height:22px;border-radius:11px;background:#e5e7eb;display:flex;align-items:center;justify-content:center;font-size:11px}
+.nav button.active .badge{background:#ccebd9}
+.sidebar-bottom{margin-top:auto;padding:10px}
+.logout{border:1px solid #ddd;background:white;border-radius:9px;padding:9px;width:100%}
+
+/* MAIN */
+.main{flex:1;display:flex;min-width:0}
+.list-panel{width:270px;background:#fff;border-right:1px solid var(--gris2);display:flex;flex-direction:column;min-width:0}
+.list-header{padding:17px;border-bottom:1px solid var(--gris2)}
+.greeting{font-size:17px;font-weight:800}
+.motivational{margin-top:7px;background:#eef8f2;border-left:4px solid #176b4d;border-radius:8px;padding:8px 10px;color:#176b4d;font-size:12px;font-weight:700;line-height:1.35}
+.section-title{font-size:13px;color:var(--muted);margin-top:4px}
+.search{margin-top:13px}
+.search input{width:100%;padding:10px;border:1px solid #d7dde3;border-radius:10px}
+.list-tools{display:flex;gap:7px;margin-top:9px}
+.list-tools button{flex:1;border:1px solid #d7dde3;background:#fff;border-radius:8px;padding:8px;font-size:12px}
+.items{overflow:auto;flex:1;padding:9px}
+.card{
+  background:#fff;border:1px solid #e1e6eb;border-radius:12px;padding:12px;margin-bottom:8px;
+  cursor:pointer
+}
+.card:hover{border-color:#a9cdb9;box-shadow:0 2px 10px rgba(0,0,0,.04)}
+.card.selected{border-color:var(--verde);background:#f5fbf7}
+.card-title{font-weight:800}
+.card-sub{font-size:12px;color:var(--muted);margin-top:4px}
+.card-row{display:flex;justify-content:space-between;gap:8px}
+.team-tag{font-size:10px;border-radius:10px;padding:3px 7px;background:#eef2f7;color:#475569}
+.unread{font-weight:800}
+.empty{padding:35px 15px;text-align:center;color:var(--muted);font-size:13px}
+.back{border:0;background:#eef5f0;color:var(--verde);border-radius:8px;padding:8px 10px;margin-bottom:10px;font-weight:700}
+
+/* CHAT */
+.chat-panel{flex:1;display:flex;min-width:0;flex-direction:column;min-width:0;background:#f7f8fa;min-width:0}
+.chat-header{
+  background:white;border-bottom:1px solid var(--gris2);padding:14px 18px;
+  display:flex;justify-content:space-between;gap:15px;align-items:center
+}
+.chat-header-title{font-weight:800;font-size:16px}
+.chat-header-sub{font-size:12px;color:var(--muted);margin-top:4px}
+.chat-actions{display:flex;gap:7px;flex-wrap:wrap}
+.btn{border:1px solid #d5dbe1;background:white;border-radius:8px;padding:8px 10px;font-size:12px;font-weight:700}
+.btn.green{background:var(--verde);border-color:var(--verde);color:white}
+.btn.red{background:#b42318;border-color:#b42318;color:white}
+.btn.blue{background:var(--azul);border-color:var(--azul);color:white}
+.chat-body{flex:1;display:flex;min-height:0}
+.messages{flex:1;overflow:auto;padding:24px 28px}
+.msg{
+  max-width:82%;padding:10px 12px;border-radius:13px;margin-bottom:9px;line-height:1.4;
+  box-shadow:0 1px 2px rgba(0,0,0,.04);word-wrap:break-word
+}
+.msg.client{background:white;border:1px solid #e4e8ed;margin-right:auto}
+.msg.agent{background:#dcf5e7;margin-left:auto}
+.msg.system{background:#eef2f7;margin:10px auto;max-width:90%;text-align:center;font-size:12px;color:#667085}
+.msg.internal{
+  background:#fff4d8;border:1px solid #e7c968;margin:10px auto;max-width:88%;
+  position:relative
+}
+.msg-meta{font-size:10px;color:#667085;margin-top:5px}
+.msg-author{font-weight:800}
+.typing{font-size:12px;color:var(--verde);padding:0 20px 7px;font-weight:700;min-height:20px}
+.composer{background:white;border-top:1px solid var(--gris2);padding:10px;display:flex;gap:7px}
+.composer textarea{flex:1;resize:none;height:58px;border:1px solid #d7dde3;border-radius:10px;padding:10px}
+.composer button{border:0;border-radius:9px;padding:0 13px;background:var(--verde);color:white;font-weight:700}
+.internal-composer{background:#fffaf0;border-top:1px solid #eadcae;padding:9px;display:flex;gap:7px}
+.internal-composer textarea{flex:1;resize:none;height:42px;border:1px solid #dfc66d;border-radius:9px;padding:9px}
+.internal-composer button{border:0;border-radius:9px;padding:0 12px;background:#a36d00;color:white;font-weight:700}
+
+/* CLIENT INFO */
+.client-panel{display:none;width:285px;background:white;border-left:1px solid var(--gris2);overflow:auto;padding:15px}
+.client-panel h3{margin:0 0 13px}
+.info-box{border:1px solid #e2e7eb;border-radius:11px;padding:10px;margin-bottom:8px}
+.info-label{font-size:10px;text-transform:uppercase;color:#7a8490;font-weight:700}
+.info-value{margin-top:3px;font-size:13px;word-break:break-word}
+.assignment{margin-top:15px;padding-top:13px;border-top:1px solid var(--gris2)}
+.assignment select{width:100%;padding:9px;border:1px solid #d7dde3;border-radius:8px;margin-bottom:7px}
+
+/* CALENDARS */
+.calendar-wrap{padding:16px;overflow:auto;flex:1}
+.calendar-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.calendar-toolbar h2{margin:0}
+.calendar-controls{display:flex;gap:7px;align-items:center}
+.calendar-controls button,.calendar-controls select{border:1px solid #d5dbe1;background:white;border-radius:8px;padding:8px}
+.calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(110px,1fr));gap:5px;min-width:770px}
+.day-name{font-size:11px;font-weight:800;color:#68727e;padding:8px}
+.day{
+  min-height:125px;background:white;border:1px solid #e1e6eb;border-radius:9px;padding:7px;
+}
+.day.other{opacity:.45}
+.day-number{font-weight:800;font-size:12px}
+.event{font-size:10px;margin-top:5px;border-radius:6px;padding:5px;background:#eaf5ee;border-left:3px solid var(--verde);cursor:pointer}
+.event.client{background:#fff3d8;border-left-color:#c58b16}
+.event.red{background:#fdeaea;border-left-color:#b63838}
+.event.blue{background:#eaf0fc;border-left-color:#2457a6}
+.calendar-empty{padding:40px;text-align:center;color:var(--muted)}
+
+/* MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;padding:20px;z-index:50}
+.modal{background:white;width:min(600px,100%);max-height:90vh;overflow:auto;border-radius:16px;padding:20px;box-shadow:var(--sombra)}
+.modal h2{margin-top:0}
+.expediente-modal{width:min(560px,100%);max-height:88vh}
+.expediente-modal .info-box{margin-bottom:9px}
+.expediente-button{white-space:nowrap}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:15px}
+.modal-actions button{border:0;border-radius:9px;padding:10px 14px}
+.modal-actions .cancel{background:#eef1f4}
+.modal-actions .save{background:var(--verde);color:white}
+.file-label{display:inline-block;border:1px solid #d7dde3;border-radius:8px;padding:8px;background:white;font-size:12px;font-weight:700;cursor:pointer}
+.file-label input{display:none}
+
+/* RESPONSIVE */
+@media(max-width:1100px){
+  .client-panel{width:240px}
+}
+@media(max-width:850px){
+  .sidebar{width:190px}
+  .list-panel{width:300px}
+  .client-panel{display:none}
+}
+@media(max-width:650px){
+  #app{height:auto;min-height:100vh}
+  .sidebar{width:100%;height:auto;position:static}
+  .main{display:block}
+  .list-panel{width:100%;height:360px}
+  .chat-panel{height:600px}
+}
+
+/* Ajustes de permisos y calendario compacto */
+.calendar-wrap{padding:8px !important}
+.calendar-grid{gap:3px !important}
+.calendar-grid .day{min-height:68px !important;padding:4px !important;font-size:10px !important}
+.calendar-grid .day-name{padding:4px 2px !important;font-size:10px !important}
+.calendar-grid .day-number{font-size:11px !important}
+.calendar-grid .event{padding:2px 3px !important;margin-top:2px !important;font-size:9px !important;line-height:1.15 !important}
+
+.sos-panel{margin:12px;position:relative;z-index:5;border:2px solid #dc2626;background:#fff5f5;border-radius:12px;padding:10px;box-shadow:0 4px 14px rgba(180,35,24,.12)}
+.sos-title{font-weight:900;color:#b42318;font-size:14px;margin-bottom:7px}
+.sos-item{display:block;width:100%;text-align:left;border:1px solid #f2a3a3;background:#fff;border-radius:9px;padding:8px;margin-top:6px;cursor:pointer;color:#5f1111}
+.sos-item-title{font-weight:900;color:#b42318;margin-bottom:2px}
+.sos-item small{display:block;margin-top:3px;color:#777}
+.sos-button{font-weight:900;animation:sosPulse 1.5s infinite}
+@keyframes sosPulse{0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,.35)}50%{box-shadow:0 0 0 6px rgba(220,38,38,0)}}
+@keyframes sosNavPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.025);box-shadow:0 0 0 5px rgba(220,38,38,.14)}}
+.expediente-acuerdo{margin-top:12px;padding-top:10px;border-top:1px solid #e5e7eb}
+.expediente-acuerdo textarea{width:100%;box-sizing:border-box;border:1px solid #cfd6df;border-radius:8px;padding:9px;resize:vertical;margin-top:6px;font:inherit;min-height:90px}
+.agreement-readonly{background:#f7f8fa;border-radius:8px;padding:9px;margin-top:6px;min-height:45px}
+ .ai-box{margin:10px 0;padding:12px;border:1px solid #cfd8e3;border-radius:12px;background:#f8fbff}.ai-box h3{margin:0 0 7px;font-size:14px}.ai-actions{display:flex;gap:6px;flex-wrap:wrap}.ai-actions button{border:1px solid #c7d2e0;background:white;border-radius:8px;padding:7px 9px;font-size:11px;font-weight:700}.ai-result{margin-top:9px;background:white;border:1px solid #dfe5ec;border-radius:9px;padding:9px;font-size:12px;line-height:1.45;white-space:pre-wrap}.ai-note{font-size:10px;color:#667085;margin-top:7px}
+</style>
 </head>
 
 <body>
 
-<!-- =========================
-     LOGIN
-========================= -->
-
 <div id="loginScreen">
+  <div class="login-card">
+    <div class="logo">Estudio Mansilla Garzon y Asociados</div>
+    <div class="subtitle">Centro de Atención</div>
 
-  <div class="login-box">
+    <div class="field">
+      <label>Correo laboral</label>
+      <input id="loginEmail" type="email" autocomplete="username" placeholder="nombre@mansillayasoc.com.ar">
+    </div>
 
-    <h1>Centro de Atención</h1>
+    <div class="field">
+      <label>Contraseña</label>
+      <input id="loginPassword" type="password" autocomplete="current-password" placeholder="Contraseña">
+    </div>
 
-    <p>Ingreso para asesores</p>
-
-    <form id="loginForm">
-
-      <label for="email">
-        Correo electrónico
-      </label>
-
-      <input
-        type="email"
-        id="email"
-        placeholder="correo@mansillayasoc.com.ar"
-        autocomplete="username"
-        required
-      >
-
-      <label for="password">
-        Contraseña
-      </label>
-
-      <input
-        type="password"
-        id="password"
-        placeholder="Contraseña"
-        autocomplete="current-password"
-        required
-      >
-
-      <button
-        type="submit"
-        class="login-btn"
-      >
-        Iniciar sesión
-      </button>
-
-    </form>
-
-    <div id="loginError"></div>
-
+    <button class="primary" id="loginBtn">Ingresar</button>
+    <div id="loginError" class="error hidden"></div>
   </div>
-
 </div>
 
+<div id="app" class="hidden">
 
-<!-- =========================
-     APP
-========================= -->
-
-<div id="app">
-
-  <div class="topbar">
-
-    <div class="topbar-title">
-      Centro de Atención
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-title">Estudio Mansilla Garzon y Asociados</div>
+      <div class="brand-sub">Centro de Atención</div>
     </div>
 
-    <div class="topbar-user">
+    <div class="user-box">
+      <div id="currentUserName" class="user-name">—</div>
+      <div id="currentUserRole" class="user-role">—</div>
+      <div class="presence">
+        <span id="presenceDot" class="presence-dot"></span>
+        <span id="presenceText">Sin jornada</span>
+      </div>
+      <select id="presenceSelect" class="presence-select">
+        <option value="sin">Sin jornada</option>
+        <option value="activo">Activo</option>
+        <option value="break">Break</option>
+        <option value="rest">Descanso</option>
+        <option value="finalizado">Finalizar jornada</option>
+      </select>
+    </div>
 
-      <span id="currentUserName">
-        Cargando...
-      </span>
-
-      <button
-        id="logoutBtn"
-        class="logout-btn"
-      >
-        Cerrar sesión
+    <nav class="nav">
+      <button id="navPrincipal" onclick="mostrarVista('principal')">
+        <span>🏠 Principal</span><span id="badgePrincipal" class="badge">0</span>
       </button>
+      <button id="navAgentes" onclick="mostrarVista('agentes')">
+        <span>👥 Agentes</span><span id="badgeAgentes" class="badge">0</span>
+      </button>
+      <button id="navSinAsignar" onclick="mostrarVista('sinAsignar')">
+        <span>⚠️ Sin asignar</span><span id="badgeSinAsignar" class="badge">0</span>
+      </button>
+      <button id="navHistorial" onclick="mostrarVista('historial')">
+        <span>📚 Historial</span><span id="badgeHistorial" class="badge">0</span>
+      </button>
+      <button id="navSOS" class="sos-nav hidden" onclick="mostrarVista('sos')">
+        <span>🚨 SOS URGENTES</span><span id="badgeSOS" class="badge">0</span>
+      </button>
+      <button id="navAgenda" onclick="mostrarVista('agenda')">
+        <span>📅 Agenda gestores</span>
+      </button>
+      <button id="navVencimientos" onclick="mostrarVista('vencimientos')">
+        <span>📆 Vencimientos</span>
+      </button>
+    </nav>
 
+    <div id="sosPanel" class="sos-panel hidden">
+      <div class="sos-title">🚨 SOS URGENTES</div>
+      <div id="sosList"></div>
     </div>
 
-  </div>
+    <div class="sidebar-bottom">
+      <button class="logout" onclick="cerrarSesion()">Cerrar sesión</button>
+    </div>
+  </aside>
 
-
-  <div class="main-layout">
-
-    <!-- =====================
-         CONVERSACIONES
-    ====================== -->
-
-    <aside class="sidebar">
-
-      <div class="sidebar-header">
-
-        <input
-          type="text"
-          id="searchInput"
-          class="search-box"
-          placeholder="Buscar conversación..."
-        >
-
-        <div class="filters">
-
-          <button
-            class="filter-btn active"
-            data-filter="activas"
-          >
-            Activas
-          </button>
-
-          <button
-            class="filter-btn"
-            data-filter="pendientes"
-          >
-            Pendientes
-          </button>
-
-          <button
-            class="filter-btn"
-            data-filter="finalizadas"
-          >
-            Finalizadas
-          </button>
-
+  <main class="main">
+    <section class="list-panel">
+      <div class="list-header">
+        <div id="greeting" class="greeting">¡Buen día! 👋</div>
+        <div id="motivational" class="motivational"></div>
+        <div id="sectionTitle" class="section-title">Conversaciones</div>
+        <div class="search">
+          <input id="listSearch" placeholder="Buscar por DNI, nombre o teléfono..." oninput="refrescarVistaActual()">
         </div>
-
-      </div>
-
-      <div id="conversationList">
-        <div class="loading">
-          Cargando conversaciones...
+        <div class="list-tools">
+          <button onclick="refrescarVistaActual()">↻ Actualizar</button>
+          <button onclick="limpiarBusqueda()">Limpiar</button>
         </div>
       </div>
+      <div id="items" class="items"></div>
+    </section>
 
-    </aside>
-
-
-    <!-- =====================
-         CHAT
-    ====================== -->
-
-    <main class="chat">
-
-      <div class="chat-header">
-
+    <section class="chat-panel">
+      <div id="chatHeader" class="chat-header">
         <div>
+          <div id="chatTitle" class="chat-header-title">Seleccioná una conversación</div>
+          <div id="chatSubtitle" class="chat-header-sub">Las conversaciones aparecerán aquí.</div>
+        </div>
+        <div id="chatActions" class="chat-actions"><button class="btn blue" onclick="abrirIA()">✨ Ayuda IA</button></div>
+      </div>
 
-          <div
-            id="clientName"
-            class="client-name"
-          >
-            Seleccioná una conversación
+      <div class="chat-body">
+        <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+          <div id="messages" class="messages">
+            <div class="empty">💬 Seleccioná un chat para comenzar.</div>
           </div>
-
-          <div
-            id="clientSub"
-            class="client-sub"
-          >
-            —
+          <div id="typingIndicator" class="typing"></div>
+          <div id="internalComposer" class="internal-composer hidden">
+            <textarea id="internalText" placeholder="🔒 Escribí una indicación interna para el gestor..."></textarea>
+            <button onclick="enviarMensajeInterno()">Enviar</button>
           </div>
-
+          <div id="composer" class="composer hidden">
+            <label class="file-label" title="Enviar foto">
+              📷
+              <input id="imageInput" type="file" accept="image/*">
+            </label>
+            <textarea id="messageText" placeholder="Escribí un mensaje..." oninput="manejarEscritura()"></textarea>
+            <button onclick="enviarMensaje()">Enviar</button>
+          </div>
         </div>
 
-
-        <div class="chat-actions">
-
-          <button
-            id="takeBtn"
-            class="action-btn btn-primary"
-            style="display:none"
-          >
-            Tomar chat
-          </button>
-
-          <button
-            id="transferBtn"
-            class="action-btn btn-warning"
-            style="display:none"
-          >
-            Transferir
-          </button>
-
-          <button
-            id="finishBtn"
-            class="action-btn btn-danger"
-            style="display:none"
-          >
-            Finalizar
-          </button>
-
-        </div>
-
+        <aside id="clientPanel" class="client-panel">
+          <h3>Ficha del cliente</h3>
+          <div class="empty">Seleccioná una conversación.</div>
+        </aside>
       </div>
-
-
-      <div class="timer-bar">
-
-        <span class="timer-label">
-          Tiempo esperando respuesta:
-        </span>
-
-        <span id="mainTimer">
-          00:00:00
-        </span>
-
-      </div>
-
-
-      <div id="messages">
-
-        <div class="empty-chat">
-          Seleccioná una conversación para comenzar.
-        </div>
-
-      </div>
-
-
-      <div class="composer">
-
-        <textarea
-          id="messageInput"
-          placeholder="Escribí un mensaje..."
-          disabled
-        ></textarea>
-
-        <button
-          id="sendBtn"
-          disabled
-        >
-          Enviar
-        </button>
-
-      </div>
-
-    </main>
-
-
-    <!-- =====================
-         DETALLES
-    ====================== -->
-
-    <aside class="details">
-
-      <div class="details-header">
-        Detalles
-      </div>
-
-      <div id="detailsContent">
-
-        <div class="no-selection">
-          Seleccioná una conversación.
-        </div>
-
-      </div>
-
-    </aside>
-
-  </div>
-
+    </section>
+  </main>
 </div>
 
+<!-- MODAL EXPEDIENTE -->
+<div id="expedienteModal" class="modal-bg hidden">
+  <div class="modal expediente-modal">
+    <div id="expedienteContent"></div>
+  </div>
+</div>
 
-<!-- =========================
-     FIREBASE
-========================= -->
+<!-- MODAL ASIGNACIÓN -->
+<div id="assignmentModal" class="modal-bg hidden">
+  <div class="modal">
+    <h2>Asignar conversación</h2>
+
+    <div class="field">
+      <label>Equipo</label>
+      <select id="assignTeam" onchange="cargarGestoresModal()"></select>
+    </div>
+
+    <div class="field">
+      <label>Asignar a</label>
+      <select id="assignGestor"></select>
+    </div>
+
+    <div class="modal-actions">
+      <button class="cancel" onclick="cerrarModalAsignacion()">Cancelar</button>
+      <button class="save" onclick="guardarAsignacion()">Guardar asignación</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EVENTO -->
+<div id="eventModal" class="modal-bg hidden">
+  <div class="modal">
+    <h2 id="eventModalTitle">Nuevo evento</h2>
+    <div class="field">
+      <label>Fecha</label>
+      <input id="eventDate" type="date">
+    </div>
+    <div class="field">
+      <label>Hora de inicio</label>
+      <input id="eventStart" type="time">
+    </div>
+    <div class="field">
+      <label>Hora de fin</label>
+      <input id="eventEnd" type="time">
+    </div>
+    <div class="field">
+      <label>Gestor</label>
+      <select id="eventGestor"></select>
+    </div>
+    <div class="field">
+      <label>Tipo de actividad</label>
+      <input id="eventType" placeholder="Reunión, capacitación, tarea...">
+    </div>
+    <div class="field">
+      <label>Observación</label>
+      <textarea id="eventNote" rows="3"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="cancel" onclick="cerrarModalEvento()">Cancelar</button>
+      <button class="save" onclick="guardarEventoAgenda()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL VENCIMIENTO -->
+<div id="dueModal" class="modal-bg hidden">
+  <div class="modal">
+    <h2 id="dueModalTitle">Nuevo vencimiento</h2>
+    <div class="field">
+      <label>Cliente</label>
+      <input id="dueName" placeholder="Nombre del cliente">
+    </div>
+    <div class="field">
+      <label>DNI</label>
+      <input id="dueDni" placeholder="DNI">
+    </div>
+    <div class="field">
+      <label>Teléfono</label>
+      <input id="duePhone" placeholder="Teléfono">
+    </div>
+    <div class="field">
+      <label>Fecha de vencimiento</label>
+      <input id="dueDate" type="date">
+    </div>
+    <div class="field">
+      <label>Hora</label>
+      <input id="dueTime" type="time">
+    </div>
+    <div class="field">
+      <label>Equipo</label>
+      <select id="dueTeam" onchange="cargarGestoresVencimiento()"></select>
+    </div>
+    <div class="field">
+      <label>Gestor</label>
+      <select id="dueGestor"></select>
+    </div>
+    <div class="field">
+      <label>Monto</label>
+      <input id="dueAmount" placeholder="Opcional">
+    </div>
+    <div class="field">
+      <label>Estado</label>
+      <select id="dueStatus">
+        <option value="pendiente">Pendiente</option>
+        <option value="gestionado">Gestionado</option>
+        <option value="vencido">Vencido</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Observación</label>
+      <textarea id="dueNote" rows="3"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="cancel" onclick="cerrarModalVencimiento()">Cancelar</button>
+      <button class="save" onclick="guardarVencimiento()">Guardar</button>
+    </div>
+  </div>
+</div>
 
 <script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  onAuthStateChanged,
+  signOut
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {
+  getDatabase,
+  ref,
+  onValue,
+  get,
+  set,
+  update,
+  push,
+  onDisconnect
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import {
+  getStorage,
+  ref as storageRef,
+  uploadBytes,
+  getDownloadURL
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
-  import {
-    initializeApp
-  } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+const firebaseConfig = {
+  apiKey: "AIzaSyC1sOc1O1aBwkzz5DXT3GD_OEcFFrkOua8",
+  authDomain: "estudiomansilla.firebaseapp.com",
+  databaseURL: "https://estudiomansilla-default-rtdb.firebaseio.com",
+  projectId: "estudiomansilla",
+  storageBucket: "estudiomansilla.firebasestorage.app",
+  messagingSenderId: "482010073100",
+  appId: "1:482010073100:web:d5cb61259de293b1420629",
+  measurementId: "G-8710S26Z8L"
+};
 
-  import {
-    getAuth,
-    signInWithEmailAndPassword,
-    onAuthStateChanged,
-    signOut
-  } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getDatabase(app);
+const storage = getStorage(app);
 
-  import {
-    getDatabase,
-    ref,
-    onValue,
-    get,
-    push,
-    set,
-    update
-  } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-database.js";
+const equipos = {
+  "Verde": {
+    seniors: ["Daniela","Rocio"],
+    gestores: ["Maria Paz","Agustina","Pablo","Florencia"]
+  },
+  "Rojo": {
+    seniors: ["Antonela"],
+    gestores: ["Ana","Delfina","Marcela","Valentina","Julieta"]
+  },
+  "Azul": {
+    seniors: ["Pilar"],
+    gestores: ["Paula","Giuliana","Candela","Francesca","Belen"]
+  },
+  "1142": {
+    seniors: ["Moriana"],
+    gestores: ["Natalia","Maica","Alejandra","Keila","Gustavo"]
+  },
+  "Cuoteros": {
+    seniors: ["Rocio","Daniela","Antonela","Pilar","Moriana"],
+    gestores: ["Alejo Cuotero","Gregorio"]
+  }
+};
 
+const perfiles = {
+  "Milagros":"supervisor",
+  "Rocio":"senior",
+  "Antonela":"senior",
+  "Pilar":"senior",
+  "Daniela":"senior",
+  "Moriana":"senior",
+  "Paula":"asesor",
+  "Ana":"asesor",
+  "Maria Paz":"asesor",
+  "Agustina":"asesor",
+  "Pablo":"asesor",
+  "Giuliana":"asesor",
+  "Candela":"asesor",
+  "Belen":"asesor",
+  "Delfina":"asesor",
+  "Julieta":"asesor",
+  "Keila":"asesor",
+  "Alejandra":"asesor",
+  "Maica":"asesor",
+  "Natalia":"asesor",
+  "Gustavo":"asesor",
+  "Alejo Cuotero":"asesor",
+  "Gregorio":"asesor",
+  "Francesca":"asesor",
+  "Florencia":"asesor",
+  "Valentina":"asesor",
+  "Marcela":"asesor",
+  "Alejo Supervisor":"supervisor",
+  "Ramon":"supervisor",
+  "Gonzalo":"supervisor",
+  "Javier":"supervisor"
+};
 
-  /* =====================================================
-     FIREBASE CONFIG
-     
-     ÚNICO CAMBIO:
-     Se colocan los datos reales que me pasaste.
-  ===================================================== */
+const emailsPorNombre = {
+  "rocio.lopez@mansillayasoc.com.ar": "Rocio",
+  "antonela.lopez@mansillayasoc.com.ar": "Antonela",
+  "pilar.solano@mansillayasoc.com.ar": "Pilar",
+  "daniela.cortez@mansillayasoc.com.ar": "Daniela",
+  "paula.lopez@mansillayasoc.com.ar": "Paula",
+  "mavillegas@mansillayasoc.com.ar": "Milagros",
+  "ana.rueda@mansillayasoc.com.ar": "Ana",
+  "ana.paz@mansillayasoc.com.ar": "Maria Paz",
+  "agustina.baez@mansillayasoc.com.ar": "Agustina",
+  "pablo.medina@mansillayasoc.com.ar": "Pablo",
+  "giulina.pancelo@mansillayasoc.com.ar": "Giuliana",
+  "candela.espeche@mansillayasoc.com.ar": "Candela",
+  "delfina.sesto@mansillayasoc.com.ar": "Delfina",
+  "julieta.araoz@mansillayasoc.com.ar": "Julieta",
+  "moriana.rey@mansillayasoc.com.ar": "Moriana",
+  "keila.luduena@mansillayasoc.com.ar": "Keila",
+  "natalia.lopez@mansillayasoc.com.ar": "Natalia",
+  "mavillegas@mansillayasoc.com.ar": "Milagros",
 
-  const firebaseConfig = {
+  "alejandra.rivas@mansillayasoc.com.ar": "Alejandra",
+  "maica.ceron@mansillayasoc.com.ar": "Maica",
+  "gustavo.gaitan@mansillayasoc.com.ar": "Gustavo",
+  "alejo.povina@mansillayasoc.com.ar": "Alejo Cuotero",
+  "alejo.mansilla@mansillayasoc.com.ar": "Alejo Supervisor",
+  "r.arrambide@mansillayasoc.com.ar": "Ramon",
+  "gonzalo@mansillayasoc.com.ar": "Gonzalo",
+  "jmansilla@mansillayasoc.com.ar": "Javier",
+  "gregorio.campora@mansillayasoc.com.ar": "Gregorio",
+  "francesca.ferrin@mansillayasoc.com.ar": "Francesca",
+  "florencia.martinez@mansillayasoc.com.ar": "Florencia",
+  "valentina.romero@mansillayasoc.com.ar": "Valentina",
+  "matias.sanchez@mansillayasoc.com.ar": "Marcela",
+  "luciana.hortas@mansillayasoc.com.ar": "Belen"
+};
 
-    apiKey:
-      "AIzaSyC1sOc1O1aBwkzz5DXT3GD_OEcFFrkOua8",
+let usuarioActual = null;
+let nombreActual = "";
+let perfilActual = "";
+let conversaciones = {};
+let presencias = {};
+let usuariosDB = {};
+let vistaActual = "principal";
+let gestorSeleccionado = null;
+let conversacionSeleccionada = null;
+let listenerMensajes = null;
+let listenerTyping = null;
+let typingTimer = null;
+let asignacionConversacion = null;
+let eventoEditando = null;
+let vencimientoEditando = null;
+let eventosAgenda = {};
+let vencimientos = {};
+let sonidoPermitido = false;
+let primerCargaConversaciones = true;
+let ultimoSnapshotIds = new Set();
 
-    authDomain:
-      "estudiomansilla.firebaseapp.com",
+const $ = id => document.getElementById(id);
 
-    databaseURL:
-      "https://estudiomansilla-default-rtdb.firebaseio.com",
+function normalizarTexto(v){
+  return String(v ?? "").trim().toLowerCase();
+}
 
-    projectId:
-      "estudiomansilla",
+function escapeHtml(v){
+  return String(v ?? "").replace(/[&<>"']/g, m => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+  }[m]));
+}
 
-    storageBucket:
-      "estudiomansilla.firebasestorage.app",
+function formatFecha(ts){
+  if(!ts) return "";
+  const d = new Date(Number(ts));
+  if(Number.isNaN(d.getTime())) return String(ts);
+  return d.toLocaleString("es-AR",{dateStyle:"short",timeStyle:"short"});
+}
 
-    messagingSenderId:
-      "482010073100",
+function hoyISO(){
+  const d = new Date();
+  const off = d.getTimezoneOffset();
+  const local = new Date(d.getTime() - off*60000);
+  return local.toISOString().slice(0,10);
+}
 
-    appId:
-      "1:482010073100:web:d5cb61259de293b1420629",
+function nombreCorto(n){
+  if(!n) return "Usuario";
+  return n;
+}
 
-    measurementId:
-      "G-8710S26Z8L"
+function valorCampoProfundo(obj, claves){
+  const buscadas = new Set(claves.map(k => normalizarTexto(k).replace(/[^a-z0-9]/g,"")));
+  const vistos = new Set();
+  function recorrer(x, profundidad=0){
+    if(x===null || x===undefined || profundidad>5) return "";
+    if(typeof x === "string"){
+      const t=x.trim();
+      if((t.startsWith("{") && t.endsWith("}")) || (t.startsWith("[") && t.endsWith("]"))){
+        try { return recorrer(JSON.parse(t), profundidad+1); } catch(e){}
+      }
+      return "";
+    }
+    if(typeof x !== "object") return "";
+    if(vistos.has(x)) return "";
+    vistos.add(x);
+    for(const [k,v] of Object.entries(x)){
+      const nk=normalizarTexto(k).replace(/[^a-z0-9]/g,"");
+      if(buscadas.has(nk) && v!==null && v!==undefined && String(v).trim()!=="") return v;
+      // También acepta nombres de campos como numero_de_dni, documentoCliente, nro_documento, etc.
+      if((/dni|documento|documentnumber/.test(nk)) && v!==null && v!==undefined && String(v).trim()!==""){
+        const sv=String(v).trim();
+        if(/\d{6,}/.test(sv)) return v;
+      }
+    }
+    for(const v of Object.values(x)){
+      const r=recorrer(v, profundidad+1);
+      if(r!=="" && r!==undefined && r!==null) return r;
+    }
+    return "";
+  }
+  return recorrer(obj);
+}
 
+function obtenerDatosCliente(c){
+  const fuentes=[c?.datosCliente,c?.cliente,c?.datos,c];
+  const nombre=valorCampoProfundo({fuentes},["nombre","nombreCliente","clienteNombre","cliente","name","fullName","nombreCompleto"]);
+  const dni=valorCampoProfundo({fuentes},["dni","DNI","documento","document","documentNumber","documentoCliente","dniCliente","nroDni","numeroDni","numeroDocumento","nroDocumento","doc"]);
+  const telefono=valorCampoProfundo({fuentes},["telefono","teléfono","celular","phone","telefonoCliente","numeroTelefono","mobile"]);
+  const fecha=valorCampoProfundo({fuentes},["fecha","fechaCliente","fechaConsulta"]);
+  const motivo=valorCampoProfundo({fuentes},["motivo","asunto","motivoConsulta","consulta","tema"]);
+  let dniFinal=String(dni||"").trim();
+  if(!dniFinal){
+    const candidatos=[c?.idCliente,c?.clienteId,c?.dniCliente,c?.documentoCliente,c?.numeroDocumento,c?.numeroDni,c?.documentNumber,c?.id];
+    for(const x of candidatos){
+      const t=String(x??"").trim();
+      if(/^[0-9]{6,12}$/.test(t)){ dniFinal=t; break; }
+    }
+    if(!dniFinal && /^[0-9]{6,12}$/.test(String(c?._id||""))) dniFinal=String(c._id);
+  }
+  return { nombre:String(nombre||""), dni:dniFinal, telefono:String(telefono||""), fecha:String(fecha||""), motivo:String(motivo||"") };
+}
+
+function obtenerEquipoDeConversacion(c){
+  return c?.equipo || c?.nombreEquipo || c?.team || c?.equipoAsignado || "";
+}
+
+function obtenerGestorDeConversacion(c){
+  return c?.gestor || c?.gestorAsignado || c?.asignadoA || c?.asesor ||
+         c?.usuarioAsignado || c?.nombreGestor || "";
+}
+
+function obtenerEmailGestor(c){
+  return c?.gestorEmail || c?.asignadoEmail || c?.emailGestor || c?.asesorEmail || "";
+}
+
+function obtenerEquipoDeGestor(nombre){
+  const resultado=[];
+  for(const equipo in equipos){
+    if((equipos[equipo].gestores||[]).some(x => personasCoinciden(x,nombre))){
+      resultado.push(equipo);
+    }
+  }
+  return resultado;
+}
+
+function obtenerEquipoDePersona(nombre){
+  const resultado=[];
+  for(const equipo in equipos){
+    if((equipos[equipo].gestores||[]).some(x => personasCoinciden(x,nombre)) ||
+       (equipos[equipo].seniors||[]).some(x => personasCoinciden(x,nombre))){
+      resultado.push(equipo);
+    }
+  }
+  return resultado;
+}
+
+function obtenerTodosLosGestores(){
+  const lista=[];
+  Object.values(equipos).forEach(e => (e.gestores||[]).forEach(g=>{
+    if(!lista.some(x=>normalizarTexto(x)===normalizarTexto(g))) lista.push(g);
+  }));
+  return lista;
+}
+
+const ROLES_FIJOS_POR_EMAIL = {
+  "rocio.lopez@mansillayasoc.com.ar": "senior",
+  "antonela.lopez@mansillayasoc.com.ar": "senior",
+  "pilar.solano@mansillayasoc.com.ar": "senior",
+  "daniela.cortez@mansillayasoc.com.ar": "senior",
+  "moriana.rey@mansillayasoc.com.ar": "senior",
+  "paula.lopez@mansillayasoc.com.ar": "asesor",
+  "mavillegas@mansillayasoc.com.ar": "supervisor",
+  "alejo.mansilla@mansillayasoc.com.ar": "supervisor",
+  "r.arrambide@mansillayasoc.com.ar": "supervisor",
+  "gonzalo@mansillayasoc.com.ar": "supervisor",
+  "jmansilla@mansillayasoc.com.ar": "supervisor"
+};
+const IDENTIDAD_FIJA_POR_EMAIL = {
+  "rocio.lopez@mansillayasoc.com.ar": "Rocio",
+  "antonela.lopez@mansillayasoc.com.ar": "Antonela",
+  "pilar.solano@mansillayasoc.com.ar": "Pilar",
+  "daniela.cortez@mansillayasoc.com.ar": "Daniela",
+  "moriana.rey@mansillayasoc.com.ar": "Moriana",
+  "paula.lopez@mansillayasoc.com.ar": "Paula",
+  "mavillegas@mansillayasoc.com.ar": "Milagros",
+  "alejo.povina@mansillayasoc.com.ar": "Alejo Cuotero",
+  "alejo.mansilla@mansillayasoc.com.ar": "Alejo Supervisor",
+  "r.arrambide@mansillayasoc.com.ar": "Ramon",
+  "gonzalo@mansillayasoc.com.ar": "Gonzalo",
+  "jmansilla@mansillayasoc.com.ar": "Javier"
+};
+const ALIAS_PERSONA = {
+  "alejo": "Alejo Cuotero",
+  "alejo povina": "Alejo Cuotero",
+  "alejo cuotero": "Alejo Cuotero",
+  "alejo mansilla": "Alejo Supervisor",
+  "alejo supervisor": "Alejo Supervisor"
+};
+
+function nombreCanonico(nombre){
+  const n=normalizarTexto(nombre);
+  return ALIAS_PERSONA[n] || String(nombre||"").trim();
+}
+function personasCoinciden(a,b){
+  return normalizarTexto(nombreCanonico(a))===normalizarTexto(nombreCanonico(b));
+}
+function rolFijoPorCorreo(){
+  return ROLES_FIJOS_POR_EMAIL[normalizarTexto(usuarioActual?.email)] || "";
+}
+
+function esSupervisor(){ return (rolFijoPorCorreo() || perfilActual)==="supervisor"; }
+function esSenior(){ return (rolFijoPorCorreo() || perfilActual)==="senior"; }
+function esAsesor(){ return (rolFijoPorCorreo() || perfilActual)==="asesor"; }
+function puedeVerAgendaGestores(){ return esSenior() || esSupervisor(); }
+
+// SOS POR EQUIPO:
+// Un SOS solo puede ser visto por los seniors que pertenecen al MISMO equipo
+// que el gestor que lo envió. Nunca se muestra a un senior de otro equipo.
+const EMAIL_SENIOR_POR_NOMBRE = {
+  "Rocio": "rocio.lopez@mansillayasoc.com.ar",
+  "Antonela": "antonela.lopez@mansillayasoc.com.ar",
+  "Pilar": "pilar.solano@mansillayasoc.com.ar",
+  "Daniela": "daniela.cortez@mansillayasoc.com.ar",
+  "Moriana": "moriana.rey@mansillayasoc.com.ar"
+};
+
+function obtenerEmailsSeniorDelEquipoDeGestor(gestor){
+  const canon=nombreCanonico(gestor);
+  for(const [equipo,datos] of Object.entries(equipos)){
+    const esGestor=(datos.gestores||[]).some(g=>personasCoinciden(g,canon));
+    if(esGestor){
+      return (datos.seniors||[])
+        .map(s=>EMAIL_SENIOR_POR_NOMBRE[nombreCanonico(s)]||"")
+        .filter(Boolean)
+        .map(normalizarTexto);
+    }
+  }
+  return [];
+}
+
+// Compatibilidad con SOS antiguos que guardaban seniorEmail como un único correo.
+const SENIOR_SOS_POR_GESTOR = {};
+Object.entries(equipos).forEach(([equipo,datos])=>{
+  (datos.gestores||[]).forEach(gestor=>{
+    const emails=(datos.seniors||[])
+      .map(s=>EMAIL_SENIOR_POR_NOMBRE[nombreCanonico(s)]||"")
+      .filter(Boolean);
+    if(emails.length) SENIOR_SOS_POR_GESTOR[nombreCanonico(gestor)]=emails[0];
+  });
+});
+
+function puedeVerSOS(u){
+  if(!u || !esSenior()) return false;
+  const emailActual=normalizarTexto(usuarioActual?.email);
+  if(!emailActual) return false;
+
+  const gestor=u.gestor || u.remitente || u.gestorNombre || "";
+  const emailsEquipo=obtenerEmailsSeniorDelEquipoDeGestor(gestor);
+
+  // CUOTEROS: siempre llega a TODAS las seniors del equipo,
+  // incluso si el SOS fue creado con una versión anterior del sistema
+  // que guardaba un solo seniorEmail.
+  const equipoGestor=Object.entries(equipos).find(([equipo,datos]) =>
+    (datos.gestores||[]).some(g=>personasCoinciden(g,gestor))
+  )?.[0] || "";
+  if(normalizarTexto(equipoGestor)==="cuoteros") return emailsEquipo.includes(emailActual);
+
+  // SOS nuevos: se valida contra TODOS los seniors del equipo del gestor.
+  const emailsGuardados=Array.isArray(u.seniorEmails)
+    ? u.seniorEmails.map(normalizarTexto).filter(Boolean)
+    : [];
+  if(emailsGuardados.length) return emailsGuardados.includes(emailActual);
+
+  // SOS antiguos de equipos con un único senior: se respeta el destinatario guardado.
+  const emailObjetivo=normalizarTexto(u.seniorEmail || "");
+  if(emailObjetivo) return emailActual===emailObjetivo;
+
+  // SOS antiguos que no guardaron destinatario: se calcula por equipo.
+  return emailsEquipo.includes(emailActual);
+}
+
+function estaActiva(c){
+  return normalizarTexto(c?.estado) !== "finalizada" &&
+         normalizarTexto(c?.estado) !== "finalizado" &&
+         normalizarTexto(c?.estado) !== "cerrada" &&
+         normalizarTexto(c?.estado) !== "cerrado";
+}
+
+function esValorSinAsignar(v){
+  const n=normalizarTexto(v);
+  return !n || [
+    "sin asignar","sin_asignar","sinasignar","sin asignacion","sin_asignacion",
+    "unassigned","none","null","undefined","nadie","ninguno","no asignado","no_asignado"
+  ].includes(n);
+}
+
+function estaSinAsignar(c){
+  const gestor=obtenerGestorDeConversacion(c);
+  const email=obtenerEmailGestor(c);
+  return esValorSinAsignar(gestor) && esValorSinAsignar(email);
+}
+
+function puedeVerPorEquipo(c){
+  if(esSupervisor()) return true;
+
+  let equipo=obtenerEquipoDeConversacion(c);
+
+  if(!equipo){
+    const gestor=obtenerGestorDeConversacion(c);
+    if(gestor){
+      const e=obtenerEquipoDeGestor(gestor);
+      if(e.length) equipo=e[0];
+    }
+  }
+
+  if(!equipo){
+    const email=normalizarTexto(obtenerEmailGestor(c));
+    if(email){
+      const nombrePorEmail=emailsPorNombre[email];
+      if(nombrePorEmail){
+        const e=obtenerEquipoDePersona(nombrePorEmail);
+        if(e.length) equipo=e[0];
+      }
+    }
+  }
+
+  if(!equipo) return false;
+
+  const misEquipos=obtenerEquipoDePersona(nombreActual);
+  return misEquipos.some(e=>normalizarTexto(e)===normalizarTexto(equipo));
+}
+
+function conversacionEsMia(c){
+  const gestor=normalizarTexto(obtenerGestorDeConversacion(c));
+  const email=normalizarTexto(obtenerEmailGestor(c));
+  return personasCoinciden(gestor,nombreActual) ||
+         email===normalizarTexto(usuarioActual?.email);
+}
+
+function puedeGestionarConversacion(c){
+  if(!c) return false;
+  if(esSupervisor()) return true;
+  if(esSenior()){
+    if(estaSinAsignar(c)) return true;
+    return conversacionEsMia(c) || puedeVerPorEquipo(c);
+  }
+  if(esAsesor()){
+    // Un gestor puede trabajar sus propios chats, los de su equipo y los nuevos sin asignar.
+    return estaSinAsignar(c) || conversacionEsMia(c) || puedeVerPorEquipo(c);
+  }
+  return false;
+}
+
+function conversacionesActivas(){
+  return Object.entries(conversaciones)
+    .map(([id,c])=>({...c,_id:id}))
+    .filter(estaActiva);
+}
+
+function conversacionesFinalizadas(){
+  return Object.entries(conversaciones)
+    .map(([id,c])=>({...c,_id:id}))
+    .filter(c=>!estaActiva(c));
+}
+
+function aplicarFiltroLista(lista){
+  const q=normalizarTexto($("listSearch")?.value);
+  if(!q) return lista;
+  return lista.filter(c=>{
+    const d=obtenerDatosCliente(c);
+    return [d.nombre,d.dni,d.telefono,obtenerGestorDeConversacion(c),obtenerEquipoDeConversacion(c)]
+      .some(v=>normalizarTexto(v).includes(q));
+  });
+}
+
+function mostrarNombreCliente(c){
+  const d=obtenerDatosCliente(c);
+  if(d.nombre && d.dni) return `${d.nombre} · DNI ${d.dni}`;
+  if(d.nombre) return d.nombre;
+  if(d.dni) return `DNI ${d.dni}`;
+  return "Cliente sin identificar";
+}
+
+function crearCardCliente(c,finalizada=false){
+  const div=document.createElement("div");
+  div.className="card"+(c._id===conversacionSeleccionada?" selected":"");
+  const d=obtenerDatosCliente(c);
+  const gestor=obtenerGestorDeConversacion(c);
+  const equipo=obtenerEquipoDeConversacion(c);
+  const ultima=obtenerUltimoMensaje(c);
+  const interno=contarMensajesInternos(c);
+
+  div.innerHTML=`
+    <div class="card-row">
+      <div class="card-title ${ultima?.noLeido ? "unread":""}">${escapeHtml(mostrarNombreCliente(c))}</div>
+      ${equipo?`<span class="team-tag">${escapeHtml(equipo)}</span>`:""}
+    </div>
+    <div class="card-sub" style="font-weight:800;color:#2457a6">🪪 DNI: ${escapeHtml(d.dni || "No informado")}</div>
+    ${d.telefono?`<div class="card-sub">📱 ${escapeHtml(d.telefono)}</div>`:""}
+    ${gestor?`<div class="card-sub">👤 ${escapeHtml(gestor)}</div>`:""}
+    ${finalizada?`<div class="card-sub">📚 Finalizada ${formatFecha(c.fechaFinalizacion)}</div>`:""}
+    ${interno?`<div class="card-sub">🔒 ${interno} indicación/es interna/s</div>`:""}
+    ${ultimoMensajeEsDelCliente(c)?`<div class="card-sub" style="color:#b42318;font-weight:800">🔔 Nuevo mensaje del cliente · ${formatFecha(ultima?.fecha)}</div>`:""}
+    ${contarMensajesNoLeidosCliente(c)>0?`<div class="card-sub" style="color:#176b4d;font-weight:800">● ${contarMensajesNoLeidosCliente(c)} mensaje/s sin leer</div>`:""}
+    ${(c.acuerdo||c.acuerdos||c.compromiso)?`<div class="card-sub" style="color:#176b3a;font-weight:700">🤝 Acuerdo: ${escapeHtml(String(c.acuerdo||c.acuerdos||c.compromiso).slice(0,110))}${String(c.acuerdo||c.acuerdos||c.compromiso).length>110?"…":""}</div>`:""}
+  `;
+  div.onclick=()=>abrirConversacion(c._id,finalizada);
+  return div;
+}
+
+function crearCardGestor(nombre){
+  const div=document.createElement("div");
+  div.className="card";
+  const activos=conversacionesActivas().filter(c=>{
+    if(normalizarTexto(obtenerGestorDeConversacion(c))!==normalizarTexto(nombre)) return false;
+    return esSupervisor() || puedeVerPorEquipo(c);
+  });
+  const p=buscarPresenciaPorNombre(nombre);
+  div.innerHTML=`
+    <div class="card-row">
+      <div class="card-title">${escapeHtml(nombre)}</div>
+      <span class="presence-dot ${p?.estado==="activo"?"active":p?.estado==="break"?"break":p?.estado==="rest"?"rest":p?.estado==="finalizado"?"finished":""}"></span>
+    </div>
+    <div class="card-sub">${escapeHtml(obtenerEquipoDeGestor(nombre).join(", ")||"Sin equipo")}</div>
+    <div class="card-sub">💬 ${activos.length} conversación/es activas</div>
+    <div class="card-sub">${p?.estado?`Estado: ${escapeHtml(etiquetaPresencia(p.estado))}`:"Sin jornada"}</div>
+  `;
+  div.onclick=()=>abrirChatsDeGestor(nombre);
+  return div;
+}
+
+function obtenerUltimoMensaje(c){
+  const m=c?.mensajes||{};
+  const arr=Object.entries(m).map(([id,x])=>({...x,_id:id}));
+  arr.sort((a,b)=>(a.fecha||0)-(b.fecha||0));
+  return arr[arr.length-1]||null;
+}
+
+function contarMensajesInternos(c){
+  const m=c?.mensajes||{};
+  return Object.values(m).filter(x=>x?.tipo==="interno").length;
+}
+
+function ultimoMensajeEsDelCliente(c){
+  const u=obtenerUltimoMensaje(c);
+  return !!u && mensajeEsDelCliente(u);
+}
+function fechaUltimoMensaje(c){
+  return Number(obtenerUltimoMensaje(c)?.fecha||c?.fechaCreacion||0);
+}
+function contarMensajesNoLeidosCliente(c){
+  return Object.values(c?.mensajes||{}).filter(m=>mensajeEsDelCliente(m)&&m?.noLeido===true).length;
+}
+
+function renderizarPrincipal(){
+  const items=$("items");
+  items.innerHTML="";
+  let lista=conversacionesActivas();
+
+  if(esSupervisor()){
+    const gestores=obtenerTodosLosGestores();
+    $("sectionTitle").textContent="Gestores";
+    gestores.forEach(g=>items.appendChild(crearCardGestor(g)));
+    return;
+  }
+
+  lista=lista.filter(c=>{
+    if(esSenior()) return !estaSinAsignar(c) && (conversacionEsMia(c) || puedeVerPorEquipo(c));
+    if(esAsesor()) return !estaSinAsignar(c) && conversacionEsMia(c);
+    return false;
+  });
+  lista=aplicarFiltroLista(lista);
+  lista.sort((a,b)=>fechaUltimoMensaje(b)-fechaUltimoMensaje(a));
+
+  $("sectionTitle").textContent="Mis conversaciones activas";
+
+  if(!lista.length){
+    items.innerHTML=`<div class="empty">No tenés conversaciones activas asignadas.</div>`;
+    return;
+  }
+  lista.forEach(c=>items.appendChild(crearCardCliente(c,false)));
+}
+
+function renderizarAgentes(){
+  const items=$("items");
+  items.innerHTML="";
+  let gestores=[];
+
+  if(esSupervisor()){
+    gestores=obtenerTodosLosGestores();
+  }else{
+    const misEquipos=obtenerEquipoDePersona(nombreActual);
+    misEquipos.forEach(equipo=>{
+      (equipos[equipo]?.gestores||[]).forEach(g=>{
+        if(!gestores.includes(g)) gestores.push(g);
+      });
+    });
+  }
+
+  gestores.sort((a,b)=>a.localeCompare(b,"es"));
+  $("sectionTitle").textContent="Gestores";
+
+  if(!gestores.length){
+    items.innerHTML=`<div class="empty">No hay gestores para mostrar.</div>`;
+    return;
+  }
+  gestores.forEach(nombre=>items.appendChild(crearCardGestor(nombre)));
+}
+
+function abrirChatsDeGestor(nombre){
+  gestorSeleccionado=nombre;
+  $("sectionTitle").textContent=`Conversaciones de ${nombre}`;
+  const items=$("items");
+  items.innerHTML="";
+  const back=document.createElement("button");
+  back.className="back";
+  back.textContent="← Volver a agentes";
+  back.onclick=()=>mostrarVista("agentes");
+  items.appendChild(back);
+
+  let lista=conversacionesActivas().filter(c=>{
+    const gestor=obtenerGestorDeConversacion(c);
+    const email=normalizarTexto(obtenerEmailGestor(c));
+    const emailEsperado=normalizarTexto(emailDeNombre(nombre));
+    const coincide=personasCoinciden(gestor,nombre) || (email && emailEsperado && email===emailEsperado);
+    if(!coincide) return false;
+    return esSupervisor() || puedeVerPorEquipo(c) || personasCoinciden(obtenerGestorDeConversacion(c),nombre);
+  });
+
+  lista=aplicarFiltroLista(lista);
+  lista.sort((a,b)=>fechaUltimoMensaje(b)-fechaUltimoMensaje(a));
+
+  if(!lista.length){
+    items.insertAdjacentHTML("beforeend",`<div class="empty">Este gestor no tiene conversaciones activas.</div>`);
+    return;
+  }
+  lista.forEach(c=>items.appendChild(crearCardCliente(c,false)));
+}
+
+function renderizarSinAsignar(){
+  if(!esSenior() && !esSupervisor() && !esAsesor()){ mostrarVista("principal"); return; }
+  const items=$("items");
+  items.innerHTML="";
+  // Seniors, supervisores y gestores ven TODAS las conversaciones sin asignar.
+  let lista=conversacionesActivas().filter(estaSinAsignar);
+  if(!esSenior() && !esSupervisor() && !esAsesor()){
+    items.innerHTML=`<div class="empty">No tenés permisos para ver conversaciones sin asignar.</div>`;
+    return;
+  }
+
+  lista=aplicarFiltroLista(lista);
+  lista.sort((a,b)=>fechaUltimoMensaje(b)-fechaUltimoMensaje(a));
+  $("sectionTitle").textContent="Conversaciones sin asignar";
+
+  if(!lista.length){
+    items.innerHTML=`<div class="empty">No hay conversaciones sin asignar.</div>`;
+    return;
+  }
+  lista.forEach(c=>items.appendChild(crearCardCliente(c,false)));
+}
+
+function renderizarHistorial(){
+  const items=$("items");
+  items.innerHTML="";
+  let lista=conversacionesFinalizadas();
+  lista=aplicarFiltroLista(lista);
+  lista.sort((a,b)=>(b.fechaFinalizacion||b.fechaCreacion||0)-(a.fechaFinalizacion||a.fechaCreacion||0));
+  $("sectionTitle").textContent="Historial — todas las gestiones finalizadas";
+
+  if(!lista.length){
+    items.innerHTML=`<div class="empty">📚 No hay gestiones finalizadas.<div style="margin-top:8px;font-size:11px">Probá buscar por DNI, nombre o teléfono.</div></div>`;
+    return;
+  }
+  lista.forEach(c=>items.appendChild(crearCardCliente(c,true)));
+}
+
+function renderizarSOS(){
+  if(!esSenior()){ mostrarVista("principal"); return; }
+  $("sectionTitle").textContent="SOS urgentes";
+  const items=$("items"); items.innerHTML="";
+  const pendientes=[];
+  const mapa=new Map();
+  Object.entries(urgencias||{}).forEach(([id,u])=>{ if(normalizarTexto(u?.estado)==="pendiente" && puedeVerSOS(u)) mapa.set(id,{...u,_id:id}); });
+  Object.entries(conversaciones||{}).forEach(([id,c])=>{
+    for(const m of Object.values(c?.mensajes||{})){
+      if(m?.sos===true||m?.urgente===true){
+        const candidato={_id:id,gestor:m.remitente||obtenerGestorDeConversacion(c)||"Gestor",cliente:mostrarNombreCliente({...c,_id:id}),dni:obtenerDatosCliente(c).dni||"",fecha:m.fecha||Date.now(),estado:"pendiente"};
+        // Solo usamos el SOS guardado dentro del chat como respaldo si NO existe
+        // un registro en /urgencias. Si existe y fue atendido, no debe reaparecer.
+        if(!urgencias[id] && puedeVerSOS(candidato,c)) mapa.set(id,candidato);
+        break;
+      }
+    }
+  });
+  pendientes.push(...mapa.values());
+  pendientes.sort((a,b)=>(b.fecha||0)-(a.fecha||0));
+  if(!pendientes.length){ items.innerHTML='<div class="empty">✅ No hay SOS pendientes.</div>'; return; }
+  pendientes.forEach(u=>{
+    const div=document.createElement("div"); div.className="card";
+    div.innerHTML=`<div class="card-title" style="color:#b42318">🚨 SOS URGENTE</div><div class="card-sub"><b>🪪 DNI: ${escapeHtml(u.dni||"No informado")} · 👤 Gestor: ${escapeHtml(u.gestor||"Gestor")}</b></div><div class="card-sub">${escapeHtml(u.cliente||"Cliente")} · ${formatFecha(u.fecha)}</div>`;
+    div.onclick=()=>abrirSOS(u._id); items.appendChild(div);
+  });
+}
+
+function mostrarVista(vista){
+  // Seguridad de interfaz: un asesor nunca puede abrir la Agenda de gestores.
+  if(vista==="agenda" && !puedeVerAgendaGestores()){
+    vistaActual="principal";
+    return mostrarVista("principal");
+  }
+  // Los asesores también pueden ver y gestionar las conversaciones nuevas sin asignar.
+  if(vista==="sinAsignar" && !esSenior() && !esSupervisor() && !esAsesor()){
+    vistaActual="principal";
+    return mostrarVista("principal");
+  }
+  // Los SOS son privados del senior correspondiente al equipo del gestor.
+  if(vista==="sos" && !esSenior()){
+    vistaActual="principal";
+    return mostrarVista("principal");
+  }
+
+  vistaActual=vista;
+  gestorSeleccionado=null;
+  document.querySelectorAll(".nav button").forEach(b=>b.classList.remove("active"));
+  const mapa={principal:"navPrincipal",agentes:"navAgentes",sos:"navSOS",sinAsignar:"navSinAsignar",historial:"navHistorial",agenda:"navAgenda",vencimientos:"navVencimientos"};
+  $(mapa[vista])?.classList.add("active");
+
+  $("listSearch").value="";
+  $("items").innerHTML="";
+
+  if(vista==="agenda"){
+    renderizarAgenda();
+    return;
+  }
+  if(vista==="vencimientos"){
+    renderizarVencimientos();
+    return;
+  }
+  if(vista==="principal") renderizarPrincipal();
+  if(vista==="agentes") renderizarAgentes();
+  if(vista==="sos") renderizarSOS();
+  if(vista==="sinAsignar") renderizarSinAsignar();
+  if(vista==="historial") renderizarHistorial();
+}
+
+function refrescarVistaActual(){
+  if(vistaActual==="principal") renderizarPrincipal();
+  else if(vistaActual==="agentes") renderizarAgentes();
+  else if(vistaActual==="sinAsignar") renderizarSinAsignar();
+  else if(vistaActual==="historial") renderizarHistorial();
+  else if(vistaActual==="agenda") renderizarAgenda();
+  else if(vistaActual==="vencimientos") renderizarVencimientos();
+}
+
+function limpiarBusqueda(){
+  $("listSearch").value="";
+  refrescarVistaActual();
+}
+
+function actualizarContadores(){
+  const activas=conversacionesActivas();
+  const finalizadas=conversacionesFinalizadas();
+  let principal=0,agentes=0,sinAsignar=0;
+
+  if(esSupervisor()){
+    principal=obtenerTodosLosGestores().length;
+    agentes=activas.length;
+    sinAsignar=activas.filter(estaSinAsignar).length;
+  }else if(esSenior()){
+    principal=activas.filter(c=>conversacionEsMia(c)).length;
+    agentes=activas.filter(c=>!estaSinAsignar(c)&&puedeVerPorEquipo(c)).length;
+    sinAsignar=activas.filter(estaSinAsignar).length;
+  }else{
+    principal=activas.filter(c=>conversacionEsMia(c) || estaSinAsignar(c)).length;
+    agentes=activas.filter(c=>!estaSinAsignar(c)&&puedeVerPorEquipo(c)).length;
+    sinAsignar=activas.filter(estaSinAsignar).length;
+  }
+
+  $("badgePrincipal").textContent=principal;
+  $("badgeAgentes").textContent=agentes;
+  $("badgeSinAsignar").textContent=sinAsignar;
+  $("badgeHistorial").textContent=finalizadas.length;
+  const sosPendientes=new Set();
+  Object.entries(urgencias||{}).forEach(([id,u])=>{
+    if(normalizarTexto(u?.estado)==="pendiente" && puedeVerSOS(u,conversaciones[id])) sosPendientes.add(id);
+  });
+  Object.entries(conversaciones||{}).forEach(([id,c])=>{
+    for(const m of Object.values(c?.mensajes||{})){
+      if(!urgencias[id] && (m?.sos===true||m?.urgente===true)){
+        const candidato={_id:id,gestor:m.remitente||obtenerGestorDeConversacion(c)||"",estado:"pendiente"};
+        if(puedeVerSOS(candidato,c)) sosPendientes.add(id);
+        break;
+      }
+    }
+  });
+  $("badgeSOS").textContent=String(sosPendientes.size);
+  $("navSOS").classList.toggle("hidden",sosPendientes.size===0);
+  $("navSOS").classList.toggle("sos-active",sosPendientes.size>0);
+
+  $("navSinAsignar").classList.remove("hidden");
+  $("navAgenda").classList.toggle("hidden",!puedeVerAgendaGestores());
+  $("navVencimientos").classList.toggle("hidden",false);
+}
+
+function renderChatVacio(){
+  $("chatTitle").textContent="Seleccioná una conversación";
+  $("chatSubtitle").textContent="Las conversaciones aparecerán aquí.";
+  $("messages").innerHTML=`<div class="empty">💬 Seleccioná un chat para comenzar.</div>`;
+  $("clientPanel").innerHTML=`<h3>Ficha del cliente</h3><div class="empty">Seleccioná una conversación.</div>`;
+  $("composer").classList.add("hidden");
+  $("internalComposer").classList.add("hidden");
+  $("chatActions").innerHTML="";
+  $("typingIndicator").textContent="";
+}
+
+async function marcarMensajesClienteComoLeidos(id){
+  if(!id || !conversaciones[id]) return;
+  const mensajes=conversaciones[id]?.mensajes||{};
+  const cambios={};
+  Object.entries(mensajes).forEach(([mid,m])=>{
+    if(m && mensajeEsDelCliente(m) && m.noLeido===true){
+      cambios[`conversaciones/${id}/mensajes/${mid}/noLeido`]=false;
+    }
+  });
+  if(!Object.keys(cambios).length) return;
+  try{ await update(ref(db),cambios); }catch(e){ console.warn("No se pudieron marcar los mensajes como leídos",e); }
+}
+
+async function abrirConversacion(id,finalizada=false){
+  conversacionSeleccionada=id;
+  const c=conversaciones[id];
+  if(!c) return;
+
+  if(!finalizada && !puedeGestionarConversacion(c)){
+    alert("No tenés permisos para gestionar esta conversación.");
+    return;
+  }
+
+  const d=obtenerDatosCliente(c);
+  $("chatTitle").textContent=mostrarNombreCliente(c);
+  $("chatSubtitle").textContent=`${d.dni?`DNI ${d.dni}`:""}${d.telefono?` · ${d.telefono}`:""}${finalizada?" · FINALIZADA":""}`;
+
+  const gestionar=!finalizada && puedeGestionarConversacion(c);
+
+  const urgenciaPendiente=normalizarTexto(urgencias[id]?.estado)==="pendiente";
+  $("chatActions").innerHTML=`
+    ${esSenior()||esSupervisor()?`<button class="btn blue" onclick="abrirModalAsignacion('${id}')">Asignar / transferir</button>`:""}
+    ${`<button class="btn expediente-button" onclick="abrirExpediente()">📁 Ver expediente</button>`}
+    ${`<button class="btn blue" onclick="abrirIA()">✨ Ayuda IA</button>`}
+    ${esAsesor() && gestionar?`<button class="btn red sos-button" onclick="pedirAyudaSenior()">🚨 SOS URGENTE · Hablar con senior</button>`:""}
+    ${urgenciaPendiente && (esSenior()||esSupervisor())?`<button class="btn green" onclick="cerrarSOS('${id}')">✓ Marcar SOS atendido</button>`:""}
+    ${gestionar?`<button class="btn" onclick="abrirIndicacionInterna()">🔒 Indicación</button>`:""}
+    ${gestionar?`<button class="btn red" onclick="finalizarConversacion()">Finalizar</button>`:""}
+  `;
+
+  $("composer").classList.toggle("hidden",!gestionar);
+  $("internalComposer").classList.add("hidden");
+
+  renderizarMensajes(c);
+  renderizarFicha(c,finalizada);
+
+  // Al abrir el chat, los mensajes nuevos del cliente quedan leídos.
+  if(!finalizada && gestionar) await marcarMensajesClienteComoLeidos(id);
+
+  escucharTyping(id);
+}
+
+function renderizarFicha(c,finalizada){
+  const d=obtenerDatosCliente(c);
+  const equipo=obtenerEquipoDeConversacion(c);
+  const gestor=obtenerGestorDeConversacion(c);
+  const estado=finalizada?"Finalizada":(c.estado||"Activa");
+  const acuerdo=c.acuerdo || c.acuerdos || c.compromiso || c.observacionAcuerdo || c.acuerdoCliente || c.compromisoCliente || c.observacionesAcuerdo || c.observacion || "";
+  const puedeEditar=!finalizada && puedeGestionarConversacion(c);
+
+  const html=`
+    <h2>📁 Expediente del cliente</h2>
+    ${info("Nombre",d.nombre || "No informado")}
+    ${info("DNI",d.dni || "No informado")}
+    ${info("Teléfono",d.telefono || "No informado")}
+    ${info("Fecha",d.fecha || "No informada")}
+    ${info("Motivo",d.motivo || "No informado")}
+    ${info("Equipo",equipo || "Sin asignar")}
+    ${info("Gestor",gestor || "Sin asignar")}
+    ${info("Estado",estado)}
+    <div class="expediente-acuerdo">
+      <div class="info-label">🤝 Acuerdo / compromiso con el cliente</div>
+      ${puedeEditar ? `<textarea id="acuerdoCliente" rows="5" placeholder="Escribí qué se acordó con el cliente, monto, fecha de pago, compromiso, próxima acción, etc.">${escapeHtml(acuerdo)}</textarea>
+      <button class="btn blue" style="width:100%;margin-top:6px" onclick="guardarAcuerdoCliente()">💾 Guardar acuerdo</button>` : `<div class="info-value agreement-readonly">${escapeHtml(acuerdo || "No hay un acuerdo registrado.").replace(/\n/g,"<br>")}</div>`}
+    </div>
+    ${finalizada?info("Finalizada",formatFecha(c.fechaFinalizacion)):""}
+    ${c.finalizadoPor?info("Finalizó",c.finalizadoPor):""}
+    <div class="modal-actions"><button class="cancel" onclick="cerrarExpediente()">Cerrar</button></div>
+  `;
+  $("clientPanel").innerHTML=html;
+  $("expedienteContent").innerHTML=html;
+}
+
+function abrirExpediente(){
+  if(!conversacionSeleccionada || !conversaciones[conversacionSeleccionada]) return;
+  $("expedienteModal").classList.remove("hidden");
+}
+function cerrarExpediente(){
+  $("expedienteModal").classList.add("hidden");
+}
+
+async function guardarAcuerdoCliente(){
+  if(!conversacionSeleccionada) return;
+  const c=conversaciones[conversacionSeleccionada];
+  if(!c || !puedeGestionarConversacion(c) || !estaActiva(c)) return;
+  const texto=$("acuerdoCliente")?.value.trim() || "";
+  try{
+    await update(ref(db,`conversaciones/${conversacionSeleccionada}`),{
+      acuerdo:texto,
+      acuerdoActualizado:Date.now(),
+      acuerdoActualizadoPor:nombreActual,
+      acuerdoActualizadoPorEmail:usuarioActual?.email||""
+    });
+  }catch(err){
+    console.error(err);
+    alert("No se pudo guardar el acuerdo. Revisá los permisos de Firebase.");
+  }
+}
+
+function info(label,value){
+  if(value===undefined||value===null||String(value)==="") return "";
+  return `<div class="info-box"><div class="info-label">${escapeHtml(label)}</div><div class="info-value">${escapeHtml(value)}</div></div>`;
+}
+
+function renderizarMensajes(c){
+  const box=$("messages");
+  box.innerHTML="";
+  const mensajes=Object.entries(c?.mensajes||{})
+    .map(([id,m])=>({...m,_id:id}))
+    .sort((a,b)=>(a.fecha||0)-(b.fecha||0));
+
+  if(!mensajes.length){
+    box.innerHTML=`<div class="empty">Todavía no hay mensajes.</div>`;
+    return;
+  }
+
+  mensajes.forEach(m=>{
+    if((m?.sos===true || m?.urgente===true) && normalizarTexto(urgencias?.[conversacionSeleccionada]?.estado)==="atendido") return;
+    const tipo=m.tipo||"texto";
+    const div=document.createElement("div");
+
+    if(tipo==="interno"){
+      div.className="msg internal";
+      div.innerHTML=`
+        <div><span class="msg-author">🔒 ${escapeHtml(m.remitente||"Interno")}</span></div>
+        <div>${escapeHtml(m.texto||"")}</div>
+        <div class="msg-meta">${formatFecha(m.fecha)} · Solo equipo</div>
+      `;
+    }else if(tipo==="imagen"){
+      div.className=`msg ${normalizarTexto(m.remitente)===normalizarTexto(nombreActual)?"agent":"client"}`;
+      div.innerHTML=`
+        <div class="msg-author">${escapeHtml(m.remitente||"Cliente")}</div>
+        <a href="${escapeHtml(m.url||"#")}" target="_blank" rel="noopener">
+          <img src="${escapeHtml(m.url||"")}" style="max-width:260px;max-height:260px;border-radius:9px;display:block;margin-top:6px">
+        </a>
+        <div class="msg-meta">${formatFecha(m.fecha)}</div>
+      `;
+    }else{
+      const propio=normalizarTexto(m.remitente)===normalizarTexto(nombreActual) ||
+                   normalizarTexto(m.remitente)===normalizarTexto(usuarioActual?.email);
+      div.className=`msg ${propio?"agent":"client"}`;
+      div.innerHTML=`
+        <div class="msg-author">${escapeHtml(m.remitente||"Cliente")}</div>
+        <div>${escapeHtml(m.texto||"").replace(/\n/g,"<br>")}</div>
+        <div class="msg-meta">${formatFecha(m.fecha)}</div>
+      `;
+    }
+
+    box.appendChild(div);
+  });
+
+  box.scrollTop=box.scrollHeight;
+}
+
+async function pedirAyudaSenior(){
+  if(!conversacionSeleccionada) return;
+  const c=conversaciones[conversacionSeleccionada];
+  if(!c || !esAsesor() || !estaActiva(c) || !(conversacionEsMia(c) || puedeVerPorEquipo(c))) return;
+
+  const ahora=Date.now();
+  const d=obtenerDatosCliente(c);
+  const equipo=obtenerEquipoDeConversacion(c)||obtenerEquipoDePersona(nombreActual)[0]||"";
+  const id=conversacionSeleccionada;
+  const payload={
+    conversacionId:id, cliente:mostrarNombreCliente(c), dni:d.dni||"",
+    gestor:nombreActual, gestorEmail:usuarioActual?.email||"", equipo,
+    seniorEmail:SENIOR_SOS_POR_GESTOR[nombreCanonico(nombreActual)]||"",
+    seniorEmails:obtenerEmailsSeniorDelEquipoDeGestor(nombreActual),
+    estado:"pendiente", fecha:ahora,
+    mensaje:`${nombreActual} solicita hablar con un senior de forma URGENTE.`
   };
 
+  try{
+    // Primero grabamos el SOS dentro del chat. Así el aviso sigue funcionando
+    // aunque las reglas de Firebase todavía no permitan escribir /urgencias.
+    await push(ref(db,`conversaciones/${id}/mensajes`),{
+      tipo:"interno",
+      texto:`🚨 SOS URGENTE — DNI: ${d.dni||"No informado"} · Gestor: ${nombreActual} · Solicita hablar con un senior.`,
+      remitente:nombreActual, remitenteEmail:usuarioActual?.email||"", fecha:ahora,
+      sos:true, urgente:true
+    });
 
-  const app =
-    initializeApp(firebaseConfig);
+    try{ await set(ref(db,`urgencias/${id}`),payload); }
+    catch(e){ console.warn("No se pudo escribir /urgencias; se conserva el SOS dentro del chat.",e); }
 
-  const auth =
-    getAuth(app);
-
-  const db =
-    getDatabase(app);
-
-
-  /* =====================================================
-     VARIABLES
-  ===================================================== */
-
-  let currentUser = null;
-
-  let currentProfile = null;
-
-  let conversations = {};
-
-  let selectedConversationId = null;
-
-  let currentFilter = "activas";
-
-  let searchText = "";
-
-  let timerInterval = null;
-
-
-  /* =====================================================
-     ELEMENTOS
-  ===================================================== */
-
-  const loginScreen =
-    document.getElementById("loginScreen");
-
-  const appScreen =
-    document.getElementById("app");
-
-  const loginForm =
-    document.getElementById("loginForm");
-
-  const loginError =
-    document.getElementById("loginError");
-
-  const logoutBtn =
-    document.getElementById("logoutBtn");
-
-  const currentUserName =
-    document.getElementById("currentUserName");
-
-  const conversationList =
-    document.getElementById("conversationList");
-
-  const searchInput =
-    document.getElementById("searchInput");
-
-  const messagesContainer =
-    document.getElementById("messages");
-
-  const messageInput =
-    document.getElementById("messageInput");
-
-  const sendBtn =
-    document.getElementById("sendBtn");
-
-  const clientName =
-    document.getElementById("clientName");
-
-  const clientSub =
-    document.getElementById("clientSub");
-
-  const mainTimer =
-    document.getElementById("mainTimer");
-
-  const detailsContent =
-    document.getElementById("detailsContent");
-
-  const takeBtn =
-    document.getElementById("takeBtn");
-
-  const transferBtn =
-    document.getElementById("transferBtn");
-
-  const finishBtn =
-    document.getElementById("finishBtn");
-
-
-  /* =====================================================
-     UTILIDADES
-  ===================================================== */
-
-  function normalize(value) {
-
-    return String(value || "")
-      .trim()
-      .toLowerCase();
-
+    urgencias[id]=payload;
+    renderizarPanelSOS();
+    alert("🚨 SOS ENVIADO. El senior verá el aviso en rojo y dentro del chat.");
+  }catch(err){
+    console.error(err);
+    alert("No se pudo enviar el SOS. Firebase no permitió guardar el aviso dentro del chat.");
   }
-
-
-  function escapeHtml(value) {
-
-    return String(value ?? "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
-
-  }
-
-
-  function formatTime(seconds) {
-
-    seconds =
-      Math.max(
-        0,
-        Math.floor(seconds)
-      );
-
-    const h =
-      Math.floor(
-        seconds / 3600
-      );
-
-    const m =
-      Math.floor(
-        (seconds % 3600) / 60
-      );
-
-    const s =
-      seconds % 60;
-
-    return (
-      String(h).padStart(2, "0") +
-      ":" +
-      String(m).padStart(2, "0") +
-      ":" +
-      String(s).padStart(2, "0")
-    );
-
-  }
-
-
-  function getCurrentTeam() {
-
-    if (!currentProfile) {
-      return "";
-    }
-
-    return normalize(
-      currentProfile.equipo ||
-      currentProfile.team ||
-      currentProfile.grupo ||
-      ""
-    );
-
-  }
-
-
-  function isSenior() {
-
-    if (!currentProfile) {
-      return false;
-    }
-
-    const role =
-      normalize(
-        currentProfile.rol ||
-        currentProfile.role ||
-        currentProfile.perfil ||
-        ""
-      );
-
-    return (
-      role.includes("senior") ||
-      role.includes("supervisor") ||
-      role.includes("admin")
-    );
-
-  }
-
-
-  function getConversationTeam(
-    conversation
-  ) {
-
-    return normalize(
-      conversation?.equipo ||
-      conversation?.team ||
-      conversation?.grupo ||
-      ""
-    );
-
-  }
-
-
-  function getConversationAssignee(
-    conversation
-  ) {
-
-    return normalize(
-      conversation?.asignadoA ||
-      conversation?.assignedTo ||
-      conversation?.gestor ||
-      conversation?.asesor ||
-      ""
-    );
-
-  }
-
-
-  function isUnassigned(
-    conversation
-  ) {
-
-    return !getConversationAssignee(
-      conversation
-    );
-
-  }
-
-
-  function getStatus(
-    conversation
-  ) {
-
-    return normalize(
-      conversation?.estado ||
-      conversation?.status ||
-      "activa"
-    );
-
-  }
-
-
-  /* =====================================================
-     PERMISOS
-  ===================================================== */
-
-  function canSeeConversation(
-    conversation
-  ) {
-
-    if (!conversation) {
-      return false;
-    }
-
-
-    if (isSenior()) {
-
-      const currentTeam =
-        getCurrentTeam();
-
-      const conversationTeam =
-        getConversationTeam(
-          conversation
-        );
-
-      if (!currentTeam) {
-        return true;
-      }
-
-      return (
-        !conversationTeam ||
-        conversationTeam === currentTeam
-      );
-
-    }
-
-
-    // Los gestores NO ven chats sin asignar.
-
-    if (
-      isUnassigned(
-        conversation
-      )
-    ) {
-
-      return false;
-
-    }
-
-
-    const currentTeam =
-      getCurrentTeam();
-
-    const conversationTeam =
-      getConversationTeam(
-        conversation
-      );
-
-
-    // Solo su equipo.
-
-    if (
-      currentTeam &&
-      conversationTeam &&
-      currentTeam !== conversationTeam
-    ) {
-
-      return false;
-
-    }
-
-
-    // Pueden entrar a chats de compañeros
-    // del mismo equipo.
-
-    return true;
-
-  }
-
-
-  /* =====================================================
-     LOGIN
-  ===================================================== */
-
-  loginForm.addEventListener(
-    "submit",
-    async function(event) {
-
-      event.preventDefault();
-
-      loginError.style.display =
-        "none";
-
-      const email =
-        document
-          .getElementById("email")
-          .value
-          .trim();
-
-      const password =
-        document
-          .getElementById("password")
-          .value;
-
-
-      try {
-
-        await signInWithEmailAndPassword(
-          auth,
-          email,
-          password
-        );
-
-      } catch (error) {
-
-        console.error(
-          "Error de login:",
-          error
-        );
-
-        loginError.textContent =
-          obtenerMensajeError(
-            error
-          );
-
-        loginError.style.display =
-          "block";
-
-      }
-
-    }
-  );
-
-
-  function obtenerMensajeError(
-    error
-  ) {
-
-    switch (error.code) {
-
-      case "auth/invalid-credential":
-        return "Correo o contraseña incorrectos.";
-
-      case "auth/user-not-found":
-        return "No existe un usuario con ese correo.";
-
-      case "auth/wrong-password":
-        return "La contraseña es incorrecta.";
-
-      case "auth/too-many-requests":
-        return "Demasiados intentos. Esperá unos minutos.";
-
-      case "auth/api-key-not-valid":
-        return "La configuración de Firebase no es válida.";
-
-      default:
-        return "No se pudo iniciar sesión.";
-
-    }
-
-  }
-
-
-  /* =====================================================
-     AUTH
-  ===================================================== */
-
-  onAuthStateChanged(
-    auth,
-    async function(user) {
-
-      if (!user) {
-
-        currentUser = null;
-
-        currentProfile = null;
-
-        loginScreen.style.display =
-          "flex";
-
-        appScreen.style.display =
-          "none";
-
-        return;
-
-      }
-
-
-      currentUser =
-        user;
-
-
-      try {
-
-        await loadCurrentProfile();
-
-
-        loginScreen.style.display =
-          "none";
-
-        appScreen.style.display =
-          "block";
-
-
-        currentUserName.textContent =
-          currentProfile?.nombre ||
-          currentProfile?.name ||
-          user.email;
-
-
-        startConversations();
-
-      } catch (error) {
-
-        console.error(
-          error
-        );
-
-      }
-
-    }
-  );
-
-
-  /* =====================================================
-     PERFIL
-  ===================================================== */
-
-  async function loadCurrentProfile() {
-
-    currentProfile =
-      null;
-
-
-    const directRef =
-      ref(
-        db,
-        `usuarios/${currentUser.uid}`
-      );
-
-
-    const directSnapshot =
-      await get(
-        directRef
-      );
-
-
-    if (
-      directSnapshot.exists()
-    ) {
-
-      currentProfile =
-        directSnapshot.val();
-
-      return;
-
-    }
-
-
-    const usersRef =
-      ref(
-        db,
-        "usuarios"
-      );
-
-
-    const usersSnapshot =
-      await get(
-        usersRef
-      );
-
-
-    if (
-      usersSnapshot.exists()
-    ) {
-
-      const users =
-        usersSnapshot.val();
-
-
-      for (
-        const [uid, data]
-        of Object.entries(users)
-      ) {
-
-        const email =
-          normalize(
-            data.email ||
-            data.correo
-          );
-
-
-        if (
-          email ===
-          normalize(
-            currentUser.email
-          )
-        ) {
-
-          currentProfile = {
-            ...data,
-            uid
-          };
-
-          return;
-
+}
+let urgencias={};
+let primerCargaUrgencias=true;
+let ultimoSOSIds=new Set();
+
+function escucharUrgencias(){
+  onValue(ref(db,"urgencias"),snap=>{
+    const data=snap.val()||{};
+    const pendientes=new Set(Object.entries(data).filter(([id,u])=>normalizarTexto(u?.estado)==="pendiente" && puedeVerSOS(u,conversaciones[id])).map(([id])=>id));
+    if(!primerCargaUrgencias && esSenior()){
+      for(const id of pendientes){
+        const u=data[id];
+        if(puedeVerSOS(u) && !ultimoSOSIds.has(id)){
+          sonidoNuevoChat();
+          break;
         }
-
       }
-
     }
-
-
-    currentProfile = {
-
-      uid:
-        currentUser.uid,
-
-      email:
-        currentUser.email,
-
-      nombre:
-        currentUser.email,
-
-      rol:
-        "gestor",
-
-      equipo:
-        ""
-
-    };
-
-  }
-
-
-  /* =====================================================
-     CONVERSACIONES
-  ===================================================== */
-
-  function startConversations() {
-
-    const conversationsRef =
-      ref(
-        db,
-        "conversaciones"
-      );
-
-
-    onValue(
-      conversationsRef,
-      function(snapshot) {
-
-        conversations =
-          snapshot.exists()
-            ? snapshot.val()
-            : {};
-
-
-        renderConversationList();
-
-
-        if (
-          selectedConversationId
-        ) {
-
-          const conversation =
-            conversations[
-              selectedConversationId
-            ];
-
-
-          if (conversation) {
-
-            renderChatHeader(
-              conversation
-            );
-
-            renderDetails(
-              conversation
-            );
-
-          }
-
-        }
-
-      },
-      function(error) {
-
-        console.error(
-          "Error en conversaciones:",
-          error
-        );
-
-        conversationList.innerHTML =
-          `
-            <div class="loading">
-              No se pudieron cargar las conversaciones.
-            </div>
-          `;
-
-      }
-    );
-
-  }
-
-
-  /* =====================================================
-     FILTROS
-  ===================================================== */
-
-  document
-    .querySelectorAll(".filter-btn")
-    .forEach(
-      function(button) {
-
-        button.addEventListener(
-          "click",
-          function() {
-
-            document
-              .querySelectorAll(
-                ".filter-btn"
-              )
-              .forEach(
-                function(btn) {
-
-                  btn.classList.remove(
-                    "active"
-                  );
-
-                }
-              );
-
-
-            button.classList.add(
-              "active"
-            );
-
-
-            currentFilter =
-              button.dataset.filter;
-
-
-            renderConversationList();
-
-          }
-        );
-
-      }
-    );
-
-
-  searchInput.addEventListener(
-    "input",
-    function() {
-
-      searchText =
-        normalize(
-          searchInput.value
-        );
-
-      renderConversationList();
-
-    }
-  );
-
-
-  /* =====================================================
-     LISTA
-  ===================================================== */
-
-  function renderConversationList() {
-
-    let list =
-      Object.entries(
-        conversations
-      );
-
-
-    list =
-      list.filter(
-        function([id, conversation]) {
-
-          return canSeeConversation(
-            conversation
-          );
-
-        }
-      );
-
-
-    list =
-      list.filter(
-        function([id, conversation]) {
-
-          const status =
-            getStatus(
-              conversation
-            );
-
-
-          if (
-            currentFilter ===
-            "finalizadas"
-          ) {
-
-            return (
-              status === "finalizada" ||
-              status === "finalizado" ||
-              status === "cerrada" ||
-              status === "cerrado"
-            );
-
-          }
-
-
-          if (
-            currentFilter ===
-            "pendientes"
-          ) {
-
-            return (
-              status === "pendiente" ||
-              status === "pending"
-            );
-
-          }
-
-
-          return !(
-            status === "finalizada" ||
-            status === "finalizado" ||
-            status === "cerrada" ||
-            status === "cerrado"
-          );
-
-        }
-      );
-
-
-    if (searchText) {
-
-      list =
-        list.filter(
-          function([id, conversation]) {
-
-            const text =
-              normalize(
-                [
-                  conversation.nombreCliente,
-                  conversation.cliente,
-                  conversation.telefono,
-                  conversation.email,
-                  conversation.asunto,
-                  conversation.ultimoMensaje
-                ].join(" ")
-              );
-
-
-            return text.includes(
-              searchText
-            );
-
-          }
-        );
-
-    }
-
-
-    list.sort(
-      function([idA, a], [idB, b]) {
-
-        const aTime =
-          Number(
-            a.ultimoMensajeAt ||
-            a.updatedAt ||
-            a.createdAt ||
-            0
-          );
-
-
-        const bTime =
-          Number(
-            b.ultimoMensajeAt ||
-            b.updatedAt ||
-            b.createdAt ||
-            0
-          );
-
-
-        return bTime - aTime;
-
-      }
-    );
-
-
-    if (!list.length) {
-
-      conversationList.innerHTML =
-        `
-          <div class="loading">
-            No hay conversaciones para mostrar.
-          </div>
-        `;
-
-      return;
-
-    }
-
-
-    conversationList.innerHTML =
-      list
-        .map(
-          function([id, conversation]) {
-
-            return renderConversationCard(
-              id,
-              conversation
-            );
-
-          }
-        )
-        .join("");
-
-  }
-
-
-  function renderConversationCard(
-    id,
-    conversation
-  ) {
-
-    const name =
-      conversation.nombreCliente ||
-      conversation.cliente ||
-      conversation.nombre ||
-      conversation.telefono ||
-      "Cliente";
-
-
-    const preview =
-      conversation.ultimoMensaje ||
-      "Sin mensajes";
-
-
-    const status =
-      getStatus(
-        conversation
-      );
-
-
-    let badgeClass =
-      "badge-active";
-
-    let badgeText =
-      "Activa";
-
-
-    if (
-      status === "pendiente" ||
-      status === "pending"
-    ) {
-
-      badgeClass =
-        "badge-pending";
-
-      badgeText =
-        "Pendiente";
-
-    }
-
-
-    if (
-      status === "finalizada" ||
-      status === "finalizado" ||
-      status === "cerrada" ||
-      status === "cerrado"
-    ) {
-
-      badgeClass =
-        "badge-finished";
-
-      badgeText =
-        "Finalizada";
-
-    }
-
-
-    const team =
-      conversation.equipo ||
-      conversation.team ||
-      "";
-
-
-    const selected =
-      id === selectedConversationId
-        ? "selected"
-        : "";
-
-
-    return `
-
-      <div
-        class="conversation-card ${selected}"
-        data-id="${escapeHtml(id)}"
-      >
-
-        <div class="conversation-top">
-
-          <div class="conversation-name">
-            ${escapeHtml(name)}
-          </div>
-
-          <div class="conversation-time">
-            ${formatConversationTime(
-              conversation
-            )}
-          </div>
-
-        </div>
-
-
-        <div class="conversation-preview">
-          ${escapeHtml(preview)}
-        </div>
-
-
-        <div class="conversation-meta">
-
-          <div>
-
-            <span class="badge ${badgeClass}">
-              ${badgeText}
-            </span>
-
-            ${
-              team
-                ? `
-                  <span class="badge badge-team">
-                    ${escapeHtml(team)}
-                  </span>
-                `
-                : ""
-            }
-
-          </div>
-
-
-          <span
-            class="waiting-timer"
-            data-timer-id="${escapeHtml(id)}"
-          >
-            ${formatTime(
-              getWaitingSeconds(
-                conversation
-              )
-            )}
-          </span>
-
-        </div>
-
-      </div>
-
-    `;
-
-  }
-
-
-  conversationList.addEventListener(
-    "click",
-    function(event) {
-
-      const card =
-        event.target.closest(
-          ".conversation-card"
-        );
-
-
-      if (!card) {
-        return;
-      }
-
-
-      openConversation(
-        card.dataset.id
-      );
-
-    }
-  );
-
-
-  function formatConversationTime(
-    conversation
-  ) {
-
-    const timestamp =
-      Number(
-        conversation.ultimoMensajeAt ||
-        conversation.updatedAt ||
-        conversation.createdAt ||
-        0
-      );
-
-
-    if (!timestamp) {
-      return "";
-    }
-
-
-    return new Date(
-      timestamp
-    ).toLocaleTimeString(
-      "es-AR",
-      {
-        hour: "2-digit",
-        minute: "2-digit"
-      }
-    );
-
-  }
-
-
-  /* =====================================================
-     ABRIR CHAT
-  ===================================================== */
-
-  async function openConversation(
-    id
-  ) {
-
-    const conversation =
-      conversations[id];
-
-
-    if (!conversation) {
-      return;
-    }
-
-
-    if (
-      !canSeeConversation(
-        conversation
-      )
-    ) {
-
-      alert(
-        "No tenés permiso para ver esta conversación."
-      );
-
-      return;
-
-    }
-
-
-    selectedConversationId =
-      id;
-
-
-    renderConversationList();
-
-
-    renderChatHeader(
-      conversation
-    );
-
-
-    renderDetails(
-      conversation
-    );
-
-
-    loadMessages(id);
-
-  }
-
-
-  /* =====================================================
-     HEADER
-  ===================================================== */
-
-  function renderChatHeader(
-    conversation
-  ) {
-
-    const name =
-      conversation.nombreCliente ||
-      conversation.cliente ||
-      conversation.nombre ||
-      conversation.telefono ||
-      "Cliente";
-
-
-    const phone =
-      conversation.telefono ||
-      "Sin teléfono";
-
-
-    clientName.textContent =
-      name;
-
-
-    clientSub.textContent =
-      phone;
-
-
-    const status =
-      getStatus(
-        conversation
-      );
-
-
-    const finished =
-      status === "finalizada" ||
-      status === "finalizado" ||
-      status === "cerrada" ||
-      status === "cerrado";
-
-
-    const unassigned =
-      isUnassigned(
-        conversation
-      );
-
-
-    takeBtn.style.display =
-      (
-        isSenior() &&
-        unassigned &&
-        !finished
-      )
-        ? "inline-block"
-        : "none";
-
-
-    transferBtn.style.display =
-      (
-        !unassigned &&
-        !finished
-      )
-        ? "inline-block"
-        : "none";
-
-
-    finishBtn.style.display =
-      !finished
-        ? "inline-block"
-        : "none";
-
-
-    messageInput.disabled =
-      finished;
-
-
-    sendBtn.disabled =
-      finished;
-
-
-    updateMainTimer();
-
-  }
-
-
-  /* =====================================================
-     MENSAJES
-  ===================================================== */
-
-  function loadMessages(
-    conversationId
-  ) {
-
-    messagesContainer.innerHTML =
-      `
-        <div class="loading">
-          Cargando mensajes...
-        </div>
+    urgencias=data;
+    ultimoSOSIds=pendientes;
+    primerCargaUrgencias=false;
+    renderizarPanelSOS();
+    if(conversacionSeleccionada && conversaciones[conversacionSeleccionada]){
+      const c=conversaciones[conversacionSeleccionada];
+      const esFin=!estaActiva(c);
+      const d=obtenerDatosCliente(c);
+      $("chatActions").innerHTML=`
+        ${esSenior()||esSupervisor()?`<button class="btn blue" onclick="abrirModalAsignacion('${conversacionSeleccionada}')">Asignar / transferir</button>`:""}
+        ${esAsesor() && !esFin && puedeGestionarConversacion(c)?`<button class="btn red sos-button" onclick="pedirAyudaSenior()">🚨 SOS URGENTE · Hablar con senior</button>`:""}
+        ${normalizarTexto(urgencias[conversacionSeleccionada]?.estado)==="pendiente" && puedeVerSOS(urgencias[conversacionSeleccionada],conversaciones[conversacionSeleccionada])?`<button class="btn green" onclick="cerrarSOS('${conversacionSeleccionada}')">✓ Marcar SOS atendido</button>`:""}
+        ${!esFin && puedeGestionarConversacion(c)?`<button class="btn" onclick="abrirIndicacionInterna()">🔒 Indicación</button>`:""}
+        ${!esFin && puedeGestionarConversacion(c)?`<button class="btn red" onclick="finalizarConversacion()">Finalizar</button>`:""}
       `;
-
-
-    const messagesRef =
-      ref(
-        db,
-        `historial/${conversationId}`
-      );
-
-
-    onValue(
-      messagesRef,
-      function(snapshot) {
-
-        const messages =
-          snapshot.exists()
-            ? snapshot.val()
-            : {};
-
-
-        renderMessages(
-          messages
-        );
-
-
-        updateConversationMetadataFromMessages(
-          conversationId,
-          messages
-        );
-
-      },
-      function(error) {
-
-        console.error(
-          "Error en historial:",
-          error
-        );
-
-        messagesContainer.innerHTML =
-          `
-            <div class="empty-chat">
-              No se pudieron cargar los mensajes.
-            </div>
-          `;
-
-      }
-    );
-
-  }
-
-
-  function renderMessages(
-    messages
-  ) {
-
-    const entries =
-      Object.entries(
-        messages || {}
-      ).sort(
-        function([, a], [, b]) {
-
-          return (
-            getMessageTimestamp(a) -
-            getMessageTimestamp(b)
-          );
-
-        }
-      );
-
-
-    if (!entries.length) {
-
-      messagesContainer.innerHTML =
-        `
-          <div class="empty-chat">
-            No hay mensajes todavía.
-          </div>
-        `;
-
-      return;
-
     }
+  });
+}
 
-
-    messagesContainer.innerHTML =
-      entries
-        .map(
-          function([id, message]) {
-
-            return renderMessage(
-              message
-            );
-
-          }
-        )
-        .join("");
-
-
-    messagesContainer.scrollTop =
-      messagesContainer.scrollHeight;
-
+function renderizarPanelSOS(){
+  const panel=$("sosPanel"), list=$("sosList"), nav=$("navSOS"), badge=$("badgeSOS");
+  if(!panel || !list) return;
+  const superior=esSenior();
+  if(!superior){
+    panel.classList.add("hidden");
+    nav?.classList.add("hidden");
+    return;
   }
 
+  const mapa=new Map();
+  Object.entries(urgencias||{}).forEach(([id,u])=>{
+    if(normalizarTexto(u?.estado)==="pendiente" && puedeVerSOS(u)) mapa.set(id,{...u,_id:id});
+  });
 
-  function getMessageTimestamp(
-    message
-  ) {
+  // Respaldo fuerte: busca SOS también dentro de TODOS los chats cargados.
+  Object.entries(conversaciones||{}).forEach(([id,c])=>{
+    for(const m of Object.values(c?.mensajes||{})){
+      if(m?.sos===true || m?.urgente===true){
+        const actual=mapa.get(id)||{};
+        const candidato={...actual,_id:id,gestor:actual.gestor||m.remitente||obtenerGestorDeConversacion(c)||"Gestor",
+          cliente:actual.cliente||mostrarNombreCliente({...c,_id:id}),dni:actual.dni||obtenerDatosCliente(c).dni||"",
+          fecha:actual.fecha||m.fecha||Date.now(),estado:"pendiente"};
+        // Si Firebase ya tiene un registro de urgencia, ese registro manda.
+        // Evita que un SOS atendido vuelva a aparecer por el mensaje histórico.
+        if(!urgencias[id] && puedeVerSOS(candidato)) mapa.set(id,candidato);
+        break;
+      }
+    }
+  });
 
-    return Number(
-      message.timestamp ||
-      message.createdAt ||
-      message.fecha ||
-      message.hora ||
-      0
-    );
+  const pendientes=[...mapa.values()].sort((a,b)=>(b.fecha||0)-(a.fecha||0));
+  badge.textContent=String(pendientes.length);
+  nav.classList.toggle("hidden",pendientes.length===0);
+  nav.classList.toggle("sos-active",pendientes.length>0);
+  panel.classList.toggle("hidden",pendientes.length===0);
+  list.innerHTML=pendientes.length ? pendientes.map(u=>`
+    <button class="sos-item" onclick="abrirSOS('${escapeHtml(u._id)}')">
+      <div class="sos-item-title">🚨🚨 SOS URGENTE 🚨🚨</div>
+      <div><b>🪪 DNI: ${escapeHtml(u.dni||"No informado")} · 👤 Gestor: ${escapeHtml(u.gestor||"Gestor")}</b></div>
+      <div>${escapeHtml(u.cliente||"Cliente")} · necesita hablar con un senior</div>
+      <small>${formatFecha(u.fecha)}</small>
+    </button>`).join("") : "";
 
+}
+
+function abrirSOS(id){
+  const u=urgencias[id];
+  const c=conversaciones[id];
+  if(!u || !puedeVerSOS(u,c)) return;
+
+  if(c){
+    mostrarVista("principal");
+    setTimeout(()=>abrirConversacion(id,false),0);
+  }
+}
+
+async function cerrarSOS(id){
+  if(!esSenior()&&!esSupervisor()) return;
+  await update(ref(db,`urgencias/${id}`),{
+    estado:"atendido",
+    atendidoPor:nombreActual,
+    atendidoPorEmail:usuarioActual?.email||"",
+    atendidoFecha:Date.now()
+  });
+}
+
+function abrirIndicacionInterna(){
+  $("internalComposer").classList.remove("hidden");
+  $("internalText").focus();
+}
+
+async function marcarSOSAtendidoSiCorresponde(id){
+  if(!id || (!esSenior() && !esSupervisor())) return;
+  const u=urgencias?.[id];
+  if(!u || normalizarTexto(u.estado)!=="pendiente") return;
+  if(esSenior() && !puedeVerSOS(u, conversaciones[id])) return;
+  try{
+    await update(ref(db,`urgencias/${id}`),{
+      estado:"atendido",
+      atendidoPor:nombreActual,
+      atendidoPorEmail:usuarioActual?.email||"",
+      atendidoFecha:Date.now()
+    });
+  }catch(err){
+    console.warn("No se pudo cerrar automáticamente el SOS",err);
+  }
+}
+
+async function enviarMensajeInterno(){
+  if(!conversacionSeleccionada) return;
+  if(!esSenior()&&!esSupervisor()) return;
+  const texto=$("internalText").value.trim();
+  if(!texto) return;
+
+  const r=ref(db,`conversaciones/${conversacionSeleccionada}/mensajes`);
+  await push(r,{
+    tipo:"interno",
+    texto,
+    remitente:nombreActual,
+    remitenteEmail:usuarioActual?.email||"",
+    fecha:Date.now()
+  });
+
+  await marcarSOSAtendidoSiCorresponde(conversacionSeleccionada);
+  $("internalText").value="";
+  $("internalComposer").classList.add("hidden");
+}
+
+async function enviarMensaje(){
+  if(!conversacionSeleccionada) return;
+  const c=conversaciones[conversacionSeleccionada];
+  if(!c || !puedeGestionarConversacion(c)) return;
+
+  const texto=$("messageText").value.trim();
+  if(!texto) return;
+
+  await push(ref(db,`conversaciones/${conversacionSeleccionada}/mensajes`),{
+    tipo:"texto",
+    texto,
+    remitente:nombreActual,
+    remitenteEmail:usuarioActual?.email||"",
+    fecha:Date.now()
+  });
+
+  await marcarSOSAtendidoSiCorresponde(conversacionSeleccionada);
+  $("messageText").value="";
+  detenerTyping();
+}
+
+$("imageInput").addEventListener("change",async e=>{
+  const file=e.target.files?.[0];
+  if(!file||!conversacionSeleccionada) return;
+
+  const c=conversaciones[conversacionSeleccionada];
+  if(!c||!puedeGestionarConversacion(c)) return;
+
+  try{
+    const path=`conversaciones/${conversacionSeleccionada}/${Date.now()}_${file.name}`;
+    const sr=storageRef(storage,path);
+    await uploadBytes(sr,file);
+    const url=await getDownloadURL(sr);
+
+    await push(ref(db,`conversaciones/${conversacionSeleccionada}/mensajes`),{
+      tipo:"imagen",
+      url,
+      nombreArchivo:file.name,
+      remitente:nombreActual,
+      remitenteEmail:usuarioActual?.email||"",
+      fecha:Date.now()
+    });
+    await marcarSOSAtendidoSiCorresponde(conversacionSeleccionada);
+  }catch(err){
+    console.error(err);
+    alert("No se pudo enviar la imagen. Revisá la configuración de Firebase Storage.");
+  }finally{
+    e.target.value="";
+  }
+});
+
+function manejarEscritura(){
+  if(!conversacionSeleccionada||!usuarioActual) return;
+
+  const base=`conversaciones/${conversacionSeleccionada}/escribiendo/${usuarioActual.uid}`;
+  set(ref(db,base),{
+    nombre:nombreActual,
+    fecha:Date.now()
+  }).catch(()=>{});
+
+  clearTimeout(typingTimer);
+  typingTimer=setTimeout(detenerTyping,3000);
+}
+
+function detenerTyping(){
+  clearTimeout(typingTimer);
+  if(!conversacionSeleccionada||!usuarioActual) return;
+  set(ref(db,`conversaciones/${conversacionSeleccionada}/escribiendo/${usuarioActual.uid}`),null).catch(()=>{});
+}
+
+function escucharTyping(id){
+  $("typingIndicator").textContent="";
+  if(listenerTyping) listenerTyping();
+
+  listenerTyping=onValue(ref(db,`conversaciones/${id}/escribiendo`),snap=>{
+    const data=snap.val()||{};
+    const nombres=Object.values(data)
+      .filter(x=>normalizarTexto(x?.nombre)!==normalizarTexto(nombreActual))
+      .filter(x=>Date.now()-(x?.fecha||0)<5000)
+      .map(x=>x.nombre);
+
+    if(!nombres.length){
+      $("typingIndicator").textContent="";
+    }else if(nombres.length===1){
+      $("typingIndicator").textContent=`✍️ ${nombres[0]} está escribiendo...`;
+    }else{
+      $("typingIndicator").textContent=`✍️ ${nombres.join(", ")} están escribiendo...`;
+    }
+  },()=>{});
+}
+
+async function finalizarConversacion(){
+  if(!conversacionSeleccionada) return;
+  const c=conversaciones[conversacionSeleccionada];
+  if(!c||!puedeGestionarConversacion(c)) return;
+
+  if(!confirm("¿Querés finalizar esta conversación?")) return;
+
+  await update(ref(db,`conversaciones/${conversacionSeleccionada}`),{
+    estado:"finalizada",
+    fechaFinalizacion:Date.now(),
+    finalizadoPor:nombreActual,
+    finalizadoPorEmail:usuarioActual?.email||"",
+    motivoFinalizacion:"Finalizada desde Centro de Atención"
+  });
+
+  renderChatVacio();
+  conversacionSeleccionada=null;
+}
+
+function personasAsignablesDelEquipo(equipo){
+  const datos=equipos[equipo]||{};
+  const seniors=datos.seniors||[];
+  const gestores=datos.gestores||[];
+  const out=[];
+  [...seniors,...gestores].forEach(nombre=>{
+    if(nombre && !out.some(x=>personasCoinciden(x,nombre))) out.push(nombre);
+  });
+  return out;
+}
+
+function abrirModalAsignacion(id){
+  const c=conversaciones[id];
+  if(!c || !puedeGestionarConversacion(c)) return;
+  // Un asesor puede tomar para sí un chat sin asignar. Seniors y supervisores pueden transferirlo a cualquier senior o gestor.
+  if(esAsesor() && !estaSinAsignar(c) && !conversacionEsMia(c)) return;
+  asignacionConversacion=id;
+  $("assignmentModal").classList.remove("hidden");
+
+  let equiposPermitidos=Object.keys(equipos);
+  if(esAsesor()){
+    equiposPermitidos=obtenerEquipoDePersona(nombreActual);
+    if(!equiposPermitidos.length) equiposPermitidos=Object.keys(equipos);
+  }
+  $("assignTeam").innerHTML=equiposPermitidos.map(e=>`<option value="${escapeHtml(e)}">${escapeHtml(e)}</option>`).join("");
+
+  const actual=obtenerEquipoDeConversacion(c);
+  if(actual && equiposPermitidos.includes(actual)) $("assignTeam").value=actual;
+  cargarGestoresModal();
+
+  // Si es un asesor y el chat está sin asignar, dejar seleccionado al propio asesor.
+  if(esAsesor() && estaSinAsignar(c)){
+    const lista=personasAsignablesDelEquipo($("assignTeam").value);
+    const propio=lista.find(x=>personasCoinciden(x,nombreActual));
+    if(propio) $("assignGestor").value=propio;
+  }
+}
+
+function cargarGestoresModal(){
+  const equipo=$("assignTeam").value;
+  let lista=personasAsignablesDelEquipo(equipo);
+
+  // Un asesor solamente puede autoasignarse; no puede tomar la conversación para otra persona.
+  if(esAsesor()){
+    lista=lista.filter(x=>personasCoinciden(x,nombreActual));
   }
 
+  $("assignGestor").innerHTML=`${esAsesor()?"":"<option value=\"\">Sin asignar</option>"}`+
+    lista.map(g=>`<option value="${escapeHtml(g)}">${escapeHtml(g)}</option>`).join("");
 
-  function renderMessage(
-    message
-  ) {
+  const c=conversaciones[asignacionConversacion];
+  const actual=obtenerGestorDeConversacion(c);
+  if(actual && lista.some(g=>personasCoinciden(g,actual))) $("assignGestor").value=actual;
+}
 
-    const sender =
-      normalize(
-        message.remitente ||
-        message.sender ||
-        message.autor ||
-        message.tipo ||
-        ""
-      );
+async function guardarAsignacion(){
+  if(!asignacionConversacion) return;
+  const c=conversaciones[asignacionConversacion];
+  if(!c || !puedeGestionarConversacion(c)) return;
 
+  const equipo=$("assignTeam").value;
+  const gestor=$("assignGestor").value;
 
-    const isClient =
-      sender.includes("cliente") ||
-      sender.includes("client") ||
-      sender.includes("usuario") ||
-      sender === "inbound" ||
-      sender === "customer";
+  // Un asesor solo puede autoasignarse una conversación sin asignar.
+  if(esAsesor() && (!estaSinAsignar(c) || !personasCoinciden(gestor,nombreActual))){
+    alert("Como asesor/a, solo podés autoasignarte una conversación sin asignar.");
+    return;
+  }
 
+  if(!gestor){
+    if(!esSenior() && !esSupervisor()) return;
+    await update(ref(db,`conversaciones/${asignacionConversacion}`),{
+      equipo:null,nombreEquipo:null,team:null,equipoAsignado:null,
+      gestor:null,gestorAsignado:null,asignadoA:null,asesor:null,
+      usuarioAsignado:null,nombreGestor:null,
+      gestorEmail:null,asignadoEmail:null,emailGestor:null,asesorEmail:null,
+      iaDerivada:true,
+      iaEstado:"derivada"
+    });
+  }else{
+    const email=emailDeNombre(gestor);
+    await update(ref(db,`conversaciones/${asignacionConversacion}`),{
+      equipo,
+      nombreEquipo:equipo,
+      team:equipo,
+      equipoAsignado:equipo,
+      gestor,
+      gestorAsignado:gestor,
+      asignadoA:gestor,
+      asesor:gestor,
+      usuarioAsignado:gestor,
+      nombreGestor:gestor,
+      gestorEmail:email,
+      asignadoEmail:email,
+      emailGestor:email,
+      asesorEmail:email,
+      iaActiva:false,
+      iaEstado:"tomada",
+      iaDerivada:false,
+      asignadaFecha:Date.now(),
+      asignadaPor:nombreActual,
+      asignadaPorEmail:usuarioActual?.email||""
+    });
+  }
 
-    const type =
-      isClient
-        ? "client"
-        : "team";
+  cerrarModalAsignacion();
+  setTimeout(()=>refrescarVistaActual(),100);
+}
 
+function emailDeNombre(nombre){
+  const e=Object.entries(emailsPorNombre).find(([mail,n])=>normalizarTexto(n)===normalizarTexto(nombre));
+  return e?.[0]||"";
+}
 
-    const text =
-      message.texto ||
-      message.mensaje ||
-      message.text ||
-      message.contenido ||
-      "";
+function cerrarModalAsignacion(){
+  asignacionConversacion=null;
+  $("assignmentModal").classList.add("hidden");
+}
 
+function etiquetaPresencia(e){
+  return ({sin:"Sin jornada",activo:"Activo",break:"Break",rest:"Descanso",finalizado:"Jornada finalizada"})[e]||e;
+}
 
-    const author =
-      message.nombre ||
-      message.autorNombre ||
-      message.senderName ||
-      (
-        isClient
-          ? "Cliente"
-          : "Equipo"
-      );
+function buscarPresenciaPorNombre(nombre){
+  for(const [uid,p] of Object.entries(presencias||{})){
+    if(normalizarTexto(p?.nombre)===normalizarTexto(nombre)) return p;
+  }
+  return null;
+}
 
+async function actualizarPresencia(estado){
+  if(!usuarioActual) return;
+  const data={
+    nombre:nombreActual,
+    email:usuarioActual.email||"",
+    estado,
+    fecha:Date.now()
+  };
+  try{
+    await set(ref(db,`presencia/${usuarioActual.uid}`),data);
+  }catch(err){
+    console.warn("No se pudo actualizar presencia",err);
+  }
+  pintarPresencia(data);
+}
 
-    const timestamp =
-      getMessageTimestamp(
-        message
-      );
+function pintarPresencia(p){
+  const dot=$("presenceDot");
+  dot.className="presence-dot";
+  if(p?.estado==="activo") dot.classList.add("active");
+  if(p?.estado==="break") dot.classList.add("break");
+  if(p?.estado==="rest") dot.classList.add("rest");
+  if(p?.estado==="finalizado") dot.classList.add("finished");
+  $("presenceText").textContent=etiquetaPresencia(p?.estado||"sin");
+  $("presenceSelect").value=p?.estado||"sin";
+}
 
+$("presenceSelect").addEventListener("change",()=>actualizarPresencia($("presenceSelect").value));
 
-    const time =
-      timestamp
-        ? new Date(
-            timestamp
-          ).toLocaleTimeString(
-            "es-AR",
-            {
-              hour: "2-digit",
-              minute: "2-digit"
-            }
-          )
-        : "";
+const frasesMotivadoras=[
+  "💚 Hoy puede ser un gran día para hacer la diferencia.",
+  "✨ Un buen equipo transforma los días difíciles en logros.",
+  "🌱 Paso a paso también se llega muy lejos.",
+  "💪 Tu trabajo importa más de lo que imaginás.",
+  "🚀 Cada gestión cuenta. Cada esfuerzo también.",
+  "🔥 Vamos que hoy sale."
+];
+function greeting(){
+  const h=new Date().getHours();
+  const saludo=h>=5&&h<12?"¡Buen día":h>=12&&h<19?"¡Buenas tardes":"¡Buenas noches";
+  $("greeting").textContent=`${saludo}, ${nombreCorto(nombreActual)}! 👋`;
+  const indice=Math.floor(Date.now()/86400000)%frasesMotivadoras.length;
+  $("motivational").textContent=frasesMotivadoras[indice];
+}
 
+function sonidoNuevoChat(){
+  if(!sonidoPermitido) return;
+  try{
+    const ctx=new (window.AudioContext||window.webkitAudioContext)();
+    const osc=ctx.createOscillator();
+    const gain=ctx.createGain();
+    osc.type="sine";
+    osc.frequency.value=880;
+    gain.gain.setValueAtTime(.001,ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(.15,ctx.currentTime+.02);
+    gain.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.5);
+    osc.connect(gain);gain.connect(ctx.destination);
+    osc.start();osc.stop(ctx.currentTime+.52);
+  }catch(e){}
+}
 
-    return `
+document.addEventListener("click",()=>{sonidoPermitido=true},{once:true});
 
-      <div class="message ${type}">
+// ================= IA AUTOMATICA / PRIMERA LINEA =================
+// La IA automática responde únicamente consultas simples y deriva al equipo
+// cualquier caso que requiera revisión humana. No modifica montos, deudas ni convenios.
+const IA_AUTOMATICA_HABILITADA = true;
+const IA_AUTOMATICA_NOMBRE = "Asistente virtual";
 
-        <div class="message-bubble">
+function emailEsPersonal(email){
+  const e=normalizarTexto(email);
+  return !!e && Object.prototype.hasOwnProperty.call(emailsPorNombre,e);
+}
 
-          <div class="message-author">
-            ${escapeHtml(author)}
-          </div>
+function mensajeEsDelCliente(m){
+  if(!m || normalizarTexto(m.tipo)==="interno") return false;
+  const email=normalizarTexto(m.remitenteEmail);
+  if(emailEsPersonal(email)) return false;
+  const rem=normalizarTexto(m.remitente);
+  if(rem && Object.values(emailsPorNombre).some(n=>normalizarTexto(n)===rem)) return false;
+  if(rem && ["asistente virtual","ia","sistema","bot"].includes(rem)) return false;
+  return true;
+}
 
-          <div>
-            ${escapeHtml(text)}
-          </div>
+function clasificarConsultaIA(texto){
+  const n=normalizarTexto(texto);
+  if(!n) return "silencio";
 
-          <div class="message-time">
-            ${time}
-          </div>
+  // Casos que SIEMPRE pasan a una persona.
+  const derivar=[
+    "amenaza","denuncia","abogado","abogada","carta documento","defensa del consumidor",
+    "reclamo","reclamar","pague y figura","pague y aparece","pago no imputado","pago no figura",
+    "transferi","transferí","transferencia no figura","comprobante","convenio","refinanciacion",
+    "refinanciación","plan de pago","cuotas","cuota","descuento","quita","embargo",
+    "judicial","demanda","intimacion","intimación","libre deuda","cancelar deuda","desconozco",
+    "no soy","fraude","estafa","suplantacion","suplantación","datos personales","derecho",
+    "corresponde","error en mi deuda","monto incorrecto"
+  ];
+  if(derivar.some(x=>n.includes(x))) return "derivar";
 
+  if(/\b(hola|buen dia|buen día|buenas|buenas tardes|buenas noches)\b/.test(n) && n.length<90) return "saludo";
+  if(n.includes("horario") || n.includes("atienden") || n.includes("atencion") || n.includes("atención")) return "horarios";
+  if(n.includes("como contacto") || n.includes("cómo contacto") || n.includes("telefono") || n.includes("teléfono") || n.includes("whatsapp") || n.includes("contacto")) return "contacto";
+  if(n.includes("document") || n.includes("papel") || n.includes("enviar") || n.includes("mandar archivo") || n.includes("adjuntar")) return "documentacion";
+  if(n.includes("donde pago") || n.includes("dónde pago") || n.includes("medios de pago") || n.includes("medio de pago") || n.includes("como pago") || n.includes("cómo pago")) return "medios_pago";
+  return "derivar";
+}
+
+function respuestaAutomaticaIA(tipo){
+  const hora=new Date().getHours();
+  const saludo=hora<12?"Buen día":hora<19?"Buenas tardes":"Buenas noches";
+  const base=`${saludo}. Soy el asistente virtual del Centro de Atención. `;
+  const respuestas={
+    saludo:base+"¿En qué podemos ayudarte? Si tu consulta requiere revisar tu expediente, te voy a derivar con un asesor.",
+    horarios:base+"Nuestro equipo de atención revisará tu consulta. Si necesitás información específica de tu gestión, te voy a derivar con un asesor.",
+    contacto:base+"Estás conversando por este canal de atención. Si necesitás una gestión específica sobre tu caso, te voy a derivar con un asesor.",
+    documentacion:base+"Podés enviar la documentación por este mismo canal. Si necesitamos verificarla o incorporarla a tu expediente, te voy a derivar con un asesor.",
+    medios_pago:base+"Los medios de pago pueden depender de la situación de tu cuenta. Para indicarte una opción correcta y evitar información incorrecta, te voy a derivar con un asesor."
+  };
+  return respuestas[tipo]||null;
+}
+
+async function procesarIAAutomatica(id,c){
+  if(!IA_AUTOMATICA_HABILITADA || !id || !c || !estaActiva(c)) return;
+  // La IA solo interviene en conversaciones sin asignar. Una vez tomada por un asesor, se retira.
+  if(!estaSinAsignar(c)) return;
+  const arr=Object.entries(c.mensajes||{}).map(([mid,m])=>({...m,_id:mid})).sort((a,b)=>(a.fecha||0)-(b.fecha||0));
+  const ultimo=arr[arr.length-1];
+  if(!mensajeEsDelCliente(ultimo)) return;
+  // Evita duplicar respuestas ante múltiples eventos de Firebase.
+  if(ultimo.iaProcesado===true || ultimo.iaRespuestaGenerada===true) return;
+  if(c.iaUltimoMensajeProcesado===ultimo._id) return;
+
+  const tipo=clasificarConsultaIA(ultimo.texto||"");
+  if(tipo==="silencio") return;
+
+  const ahora=Date.now();
+  let texto="";
+  let deriva=false;
+  if(tipo==="derivar") {
+    deriva=true;
+    texto="Gracias por tu mensaje. Para darte una respuesta correcta sobre tu caso, voy a derivar esta conversación con un asesor del Centro de Atención. Por favor, aguardá un momento.";
+  } else {
+    texto=respuestaAutomaticaIA(tipo);
+  }
+  if(!texto) return;
+
+  const r=ref(db,`conversaciones/${id}/mensajes`);
+  await push(r,{
+    tipo:"texto",
+    texto,
+    remitente:IA_AUTOMATICA_NOMBRE,
+    remitenteEmail:"",
+    fecha:ahora,
+    generadoPorIA:true,
+    iaTipo:tipo
+  });
+
+  // Marcamos el mensaje del cliente para que Firebase no dispare otra respuesta.
+  await update(ref(db,`conversaciones/${id}/mensajes/${ultimo._id}`),{iaProcesado:true,iaProcesadoFecha:ahora});
+  await update(ref(db,`conversaciones/${id}`),{
+    iaActiva:true,
+    iaUltimoMensajeProcesado:ultimo._id,
+    iaUltimaRespuesta:ahora,
+    iaDerivada:deriva,
+    iaEstado:deriva?"derivada":"atendiendo"
+  });
+}
+
+function procesarIAAutomaticaParaTodas(data){
+  if(!IA_AUTOMATICA_HABILITADA) return;
+  Object.entries(data||{}).forEach(([id,c])=>{
+    if(c && estaActiva(c) && estaSinAsignar(c)) {
+      procesarIAAutomatica(id,c).catch(err=>console.warn("IA automática:",err));
+    }
+  });
+}
+
+let ultimosMensajesSnapshot={};
+
+function escucharConversaciones(){
+  onValue(ref(db,"conversaciones"),snap=>{
+    const data=snap.val()||{};
+    const nuevos=new Set(Object.keys(data));
+
+    let hayNovedad=false;
+    for(const id of nuevos){
+      const c=data[id];
+      if(!c || !estaActiva(c)) continue;
+      const ultimo=obtenerUltimoMensaje(c);
+      const firma=ultimo?`${ultimo._id||""}|${ultimo.fecha||0}|${ultimo.texto||""}`:"";
+      const anterior=ultimosMensajesSnapshot[id]||"";
+      if(!primerCargaConversaciones && firma && firma!==anterior && mensajeEsDelCliente(ultimo)) hayNovedad=true;
+      ultimosMensajesSnapshot[id]=firma;
+      if(!ultimoSnapshotIds.has(id)) hayNovedad=true;
+    }
+    if(hayNovedad) sonidoNuevoChat();
+
+    // Elimina firmas de conversaciones que ya no existen.
+    Object.keys(ultimosMensajesSnapshot).forEach(id=>{ if(!nuevos.has(id)) delete ultimosMensajesSnapshot[id]; });
+
+    conversaciones=data;
+    // La IA funciona como primera línea para chats todavía sin asignar.
+    procesarIAAutomaticaParaTodas(data);
+    ultimoSnapshotIds=nuevos;
+    primerCargaConversaciones=false;
+
+    actualizarContadores();
+    renderizarPanelSOS();
+    refrescarVistaActual();
+
+    if(conversacionSeleccionada && conversaciones[conversacionSeleccionada]){
+      const c=conversaciones[conversacionSeleccionada];
+      renderizarMensajes(c);
+      renderizarFicha(c,!estaActiva(c));
+    }
+  });
+}
+
+function escucharPresencias(){
+  onValue(ref(db,"presencia"),snap=>{
+    presencias=snap.val()||{};
+    refrescarVistaActual();
+  });
+}
+
+/* ---------- AGENDA DE GESTORES ---------- */
+
+let agendaMes=new Date().getMonth();
+let agendaAnio=new Date().getFullYear();
+
+function puedeAdministrarAgenda(){
+  return esSenior()||esSupervisor();
+}
+
+function gestoresVisibles(){
+  if(esSupervisor()) return obtenerTodosLosGestores();
+  const setNombres=new Set();
+  obtenerEquipoDePersona(nombreActual).forEach(e=>(equipos[e]?.gestores||[]).forEach(g=>setNombres.add(g)));
+  return [...setNombres];
+}
+
+function renderizarAgenda(){
+  if(!puedeVerAgendaGestores()){ mostrarVista("principal"); return; }
+  $("sectionTitle").textContent="Agenda de gestores";
+  $("listSearch").style.display="none";
+  $("items").innerHTML=`
+    <div class="calendar-wrap">
+      <div class="calendar-toolbar">
+        <h2>📅 Agenda de gestores</h2>
+        <div class="calendar-controls">
+          <button onclick="cambiarMesAgenda(-1)">‹</button>
+          <strong id="agendaMesTitulo"></strong>
+          <button onclick="cambiarMesAgenda(1)">›</button>
+          ${puedeAdministrarAgenda()?`<button class="btn green" onclick="abrirModalEvento()">+ Evento</button>`:""}
         </div>
-
       </div>
+      <div id="agendaCalendar"></div>
+    </div>
+  `;
+  dibujarCalendarioAgenda();
+}
 
-    `;
+function cambiarMesAgenda(delta){
+  agendaMes+=delta;
+  if(agendaMes<0){agendaMes=11;agendaAnio--}
+  if(agendaMes>11){agendaMes=0;agendaAnio++}
+  dibujarCalendarioAgenda();
+}
 
+function dibujarCalendarioAgenda(){
+  const root=$("agendaCalendar");
+  if(!root) return;
+  const nombresMes=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+  $("agendaMesTitulo").textContent=`${nombresMes[agendaMes]} ${agendaAnio}`;
+
+  const first=new Date(agendaAnio,agendaMes,1);
+  const last=new Date(agendaAnio,agendaMes+1,0);
+  let start=first.getDay();
+  start=(start+6)%7;
+  const total=Math.ceil((start+last.getDate())/7)*7;
+
+  let h=`<div class="calendar-grid">
+    ${["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"].map(x=>`<div class="day-name">${x}</div>`).join("")}`;
+
+  for(let i=0;i<total;i++){
+    const day=i-start+1;
+    const date=new Date(agendaAnio,agendaMes,day);
+    const other=date.getMonth()!==agendaMes;
+    const iso=date.toISOString().slice(0,10);
+    h+=`<div class="day ${other?"other":""}">
+      <div class="day-number">${date.getDate()}</div>
+      ${Object.values(eventosAgenda).filter(e=>e?.fecha===iso && gestorPermitidoCalendario(e.gestor))
+        .sort((a,b)=>(a.horaInicio||"").localeCompare(b.horaInicio||""))
+        .map(e=>`<div class="event" onclick="editarEvento('${escapeHtml(e.id)}')">
+          <b>${escapeHtml(e.horaInicio||"")}</b> ${escapeHtml(e.gestor||"")}<br>
+          ${escapeHtml(e.tipo||"Actividad")}
+        </div>`).join("")}
+    </div>`;
   }
 
+  h+="</div>";
+  root.innerHTML=h;
+}
 
-  /* =====================================================
-     TIMER
-  ===================================================== */
+function gestorPermitidoCalendario(gestor){
+  return gestoresVisibles().some(g=>normalizarTexto(g)===normalizarTexto(gestor));
+}
 
-  function getWaitingStart(
-    conversation
-  ) {
+function abrirModalEvento(id=null){
+  if(!puedeAdministrarAgenda()) return;
+  eventoEditando=id;
+  $("eventModal").classList.remove("hidden");
+  $("eventModalTitle").textContent=id?"Editar evento":"Nuevo evento";
 
-    if (!conversation) {
-      return 0;
-    }
+  $("eventGestor").innerHTML=gestoresVisibles().map(g=>`<option value="${escapeHtml(g)}">${escapeHtml(g)}</option>`).join("");
 
+  const e=id?eventosAgenda[id]:null;
+  $("eventDate").value=e?.fecha||hoyISO();
+  $("eventStart").value=e?.horaInicio||"09:00";
+  $("eventEnd").value=e?.horaFin||"10:00";
+  $("eventGestor").value=e?.gestor||gestoresVisibles()[0]||"";
+  $("eventType").value=e?.tipo||"";
+  $("eventNote").value=e?.observacion||"";
+}
 
-    const clientAt =
-      Number(
-        conversation.ultimoMensajeClienteAt ||
-        0
-      );
+function editarEvento(id){abrirModalEvento(id)}
+function cerrarModalEvento(){$("eventModal").classList.add("hidden");eventoEditando=null}
 
-
-    const responseAt =
-      Number(
-        conversation.ultimaRespuestaAt ||
-        0
-      );
-
-
-    if (!clientAt) {
-      return 0;
-    }
-
-
-    if (
-      responseAt &&
-      responseAt >= clientAt
-    ) {
-
-      return 0;
-
-    }
-
-
-    return clientAt;
-
+async function guardarEventoAgenda(){
+  const data={
+    fecha:$("eventDate").value,
+    horaInicio:$("eventStart").value,
+    horaFin:$("eventEnd").value,
+    gestor:$("eventGestor").value,
+    tipo:$("eventType").value.trim(),
+    observacion:$("eventNote").value.trim(),
+    creadoPor:nombreActual,
+    creadoPorEmail:usuarioActual?.email||"",
+    actualizado:Date.now()
+  };
+  if(!data.fecha||!data.gestor||!data.tipo){
+    alert("Completá fecha, gestor y actividad.");
+    return;
   }
-
-
-  function getWaitingSeconds(
-    conversation
-  ) {
-
-    const start =
-      getWaitingStart(
-        conversation
-      );
-
-
-    if (!start) {
-      return 0;
-    }
-
-
-    return Math.floor(
-      (
-        Date.now() -
-        start
-      ) / 1000
-    );
-
-  }
-
-
-  function updateMainTimer() {
-
-    if (!selectedConversationId) {
-
-      mainTimer.textContent =
-        "00:00:00";
-
-      return;
-
-    }
-
-
-    const conversation =
-      conversations[
-        selectedConversationId
-      ];
-
-
-    if (!conversation) {
-
-      mainTimer.textContent =
-        "00:00:00";
-
-      return;
-
-    }
-
-
-    mainTimer.textContent =
-      formatTime(
-        getWaitingSeconds(
-          conversation
-        )
-      );
-
-
-    const detailTimer =
-      document.getElementById(
-        "detailTimer"
-      );
-
-
-    if (detailTimer) {
-
-      detailTimer.textContent =
-        formatTime(
-          getWaitingSeconds(
-            conversation
-          )
-        );
-
-    }
-
-  }
-
-
-  function updateTimers() {
-
-    updateMainTimer();
-
-
-    document
-      .querySelectorAll(
-        "[data-timer-id]"
-      )
-      .forEach(
-        function(element) {
-
-          const id =
-            element.dataset.timerId;
-
-
-          const conversation =
-            conversations[id];
-
-
-          if (!conversation) {
-            return;
-          }
-
-
-          element.textContent =
-            formatTime(
-              getWaitingSeconds(
-                conversation
-              )
-            );
-
-        }
-      );
-
-  }
-
-
-  timerInterval =
-    setInterval(
-      updateTimers,
-      1000
-    );
-
-
-  /* =====================================================
-     METADATA DEL TIMER
-     
-     ESTA PARTE MANTIENE EL TIMER ACTUALIZADO:
-     cada nuevo mensaje del cliente cambia
-     ultimoMensajeClienteAt.
-  ===================================================== */
-
-  async function updateConversationMetadataFromMessages(
-    conversationId,
-    messages
-  ) {
-
-    const conversation =
-      conversations[
-        conversationId
-      ];
-
-
-    if (!conversation) {
-      return;
-    }
-
-
-    let latestClient =
-      0;
-
-    let latestTeam =
-      0;
-
-
-    Object.values(
-      messages || {}
-    ).forEach(
-      function(message) {
-
-        const timestamp =
-          getMessageTimestamp(
-            message
-          );
-
-
-        if (!timestamp) {
-          return;
-        }
-
-
-        const sender =
-          normalize(
-            message.remitente ||
-            message.sender ||
-            message.autor ||
-            message.tipo ||
-            ""
-          );
-
-
-        const isClient =
-          sender.includes("cliente") ||
-          sender.includes("client") ||
-          sender.includes("usuario") ||
-          sender === "inbound" ||
-          sender === "customer";
-
-
-        if (isClient) {
-
-          if (
-            timestamp >
-            latestClient
-          ) {
-
-            latestClient =
-              timestamp;
-
-          }
-
-        } else {
-
-          if (
-            timestamp >
-            latestTeam
-          ) {
-
-            latestTeam =
-              timestamp;
-
-          }
-
-        }
-
-      }
-    );
-
-
-    const updates = {};
-
-
-    if (
-      latestClient &&
-      Number(
-        conversation.ultimoMensajeClienteAt ||
-        0
-      ) !== latestClient
-    ) {
-
-      updates.ultimoMensajeClienteAt =
-        latestClient;
-
-    }
-
-
-    if (
-      latestTeam &&
-      Number(
-        conversation.ultimaRespuestaAt ||
-        0
-      ) !== latestTeam
-    ) {
-
-      updates.ultimaRespuestaAt =
-        latestTeam;
-
-    }
-
-
-    if (
-      Object.keys(updates).length
-    ) {
-
-      try {
-
-        await update(
-          ref(
-            db,
-            `conversaciones/${conversationId}`
-          ),
-          updates
-        );
-
-      } catch (error) {
-
-        console.error(
-          "Error actualizando metadata:",
-          error
-        );
-
-      }
-
-    }
-
-  }
-
-
-  /* =====================================================
-     ENVIAR MENSAJE
-  ===================================================== */
-
-  sendBtn.addEventListener(
-    "click",
-    sendMessage
-  );
-
-
-  messageInput.addEventListener(
-    "keydown",
-    function(event) {
-
-      if (
-        event.key === "Enter" &&
-        !event.shiftKey
-      ) {
-
-        event.preventDefault();
-
-        sendMessage();
-
-      }
-
-    }
-  );
-
-
-  async function sendMessage() {
-
-    if (!selectedConversationId) {
-      return;
-    }
-
-
-    const text =
-      messageInput.value.trim();
-
-
-    if (!text) {
-      return;
-    }
-
-
-    const now =
-      Date.now();
-
-
-    try {
-
-      const messageRef =
-        push(
-          ref(
-            db,
-            `historial/${selectedConversationId}`
-          )
-        );
-
-
-      await set(
-        messageRef,
-        {
-
-          texto:
-            text,
-
-          mensaje:
-            text,
-
-          remitente:
-            "equipo",
-
-          sender:
-            "team",
-
-          autor:
-            currentUser.email,
-
-          autorNombre:
-            currentProfile?.nombre ||
-            currentUser.email,
-
-          timestamp:
-            now,
-
-          createdAt:
-            now
-
-        }
-      );
-
-
-      await update(
-        ref(
-          db,
-          `conversaciones/${selectedConversationId}`
-        ),
-        {
-
-          ultimoMensaje:
-            text,
-
-          ultimoMensajeAt:
-            now,
-
-          ultimaRespuestaAt:
-            now,
-
-          ultimoMensajeEquipoAt:
-            now,
-
-          actualizadoEn:
-            now
-
-        }
-      );
-
-
-      messageInput.value =
-        "";
-
-
-    } catch (error) {
-
-      console.error(
-        "Error enviando mensaje:",
-        error
-      );
-
-      alert(
-        "No se pudo enviar el mensaje."
-      );
-
-    }
-
-  }
-
-
-  /* =====================================================
-     TOMAR CHAT
-  ===================================================== */
-
-  takeBtn.addEventListener(
-    "click",
-    async function() {
-
-      if (!selectedConversationId) {
-        return;
-      }
-
-
-      if (!isSenior()) {
-        return;
-      }
-
-
-      try {
-
-        await update(
-          ref(
-            db,
-            `conversaciones/${selectedConversationId}`
-          ),
-          {
-
-            asignadoA:
-              currentUser.email,
-
-            assignedTo:
-              currentUser.email,
-
-            gestor:
-              currentUser.email,
-
-            asignadoNombre:
-              currentProfile?.nombre ||
-              currentUser.email,
-
-            actualizadoEn:
-              Date.now()
-
-          }
-        );
-
-
-        alert(
-          "Chat tomado correctamente."
-        );
-
-
-      } catch (error) {
-
-        console.error(
-          error
-        );
-
-        alert(
-          "No se pudo tomar el chat."
-        );
-
-      }
-
-    }
-  );
-
-
-  /* =====================================================
-     TRANSFERIR
-  ===================================================== */
-
-  transferBtn.addEventListener(
-    "click",
-    async function() {
-
-      if (!selectedConversationId) {
-        return;
-      }
-
-
-      const team =
-        getCurrentTeam();
-
-
-      if (!team) {
-
-        alert(
-          "Tu usuario no tiene un equipo configurado."
-        );
-
-        return;
-
-      }
-
-
-      const usersSnapshot =
-        await get(
-          ref(
-            db,
-            "usuarios"
-          )
-        );
-
-
-      if (
-        !usersSnapshot.exists()
-      ) {
-
-        alert(
-          "No se encontraron usuarios."
-        );
-
-        return;
-
-      }
-
-
-      const users =
-        usersSnapshot.val();
-
-
-      const available = [];
-
-
-      Object.values(
-        users
-      ).forEach(
-        function(user) {
-
-          const userTeam =
-            normalize(
-              user.equipo ||
-              user.team ||
-              user.grupo ||
-              ""
-            );
-
-
-          const role =
-            normalize(
-              user.rol ||
-              user.role ||
-              ""
-            );
-
-
-          const email =
-            user.email ||
-            user.correo ||
-            "";
-
-
-          if (
-            userTeam === team &&
-            email &&
-            !role.includes(
-              "senior"
-            ) &&
-            !role.includes(
-              "supervisor"
-            )
-          ) {
-
-            available.push({
-              email,
-              nombre:
-                user.nombre ||
-                email
-            });
-
-          }
-
-        }
-      );
-
-
-      if (!available.length) {
-
-        alert(
-          "No hay gestores disponibles en tu equipo."
-        );
-
-        return;
-
-      }
-
-
-      const options =
-        available
-          .map(
-            function(user, index) {
-
-              return (
-                `${index + 1}. ` +
-                `${user.nombre} - ` +
-                `${user.email}`
-              );
-
-            }
-          )
-          .join("\n");
-
-
-      const answer =
-        prompt(
-          "Elegí el gestor:\n\n" +
-          options
-        );
-
-
-      if (!answer) {
-        return;
-      }
-
-
-      const index =
-        Number(answer) - 1;
-
-
-      if (
-        !Number.isInteger(index) ||
-        !available[index]
-      ) {
-
-        alert(
-          "Selección inválida."
-        );
-
-        return;
-
-      }
-
-
-      const selected =
-        available[index];
-
-
-      try {
-
-        await update(
-          ref(
-            db,
-            `conversaciones/${selectedConversationId}`
-          ),
-          {
-
-            asignadoA:
-              selected.email,
-
-            assignedTo:
-              selected.email,
-
-            gestor:
-              selected.email,
-
-            asignadoNombre:
-              selected.nombre,
-
-            actualizadoEn:
-              Date.now()
-
-          }
-        );
-
-
-        alert(
-          "Chat transferido correctamente."
-        );
-
-
-      } catch (error) {
-
-        console.error(
-          error
-        );
-
-        alert(
-          "No se pudo transferir el chat."
-        );
-
-      }
-
-    }
-  );
-
-
-  /* =====================================================
-     FINALIZAR
-  ===================================================== */
-
-  finishBtn.addEventListener(
-    "click",
-    async function() {
-
-      if (!selectedConversationId) {
-        return;
-      }
-
-
-      if (
-        !confirm(
-          "¿Querés finalizar esta conversación?"
-        )
-      ) {
-
-        return;
-
-      }
-
-
-      try {
-
-        await update(
-          ref(
-            db,
-            `conversaciones/${selectedConversationId}`
-          ),
-          {
-
-            estado:
-              "finalizada",
-
-            status:
-              "finalizada",
-
-            finalizadaEn:
-              Date.now(),
-
-            finalizadaPor:
-              currentUser.email,
-
-            actualizadoEn:
-              Date.now()
-
-          }
-        );
-
-
-      } catch (error) {
-
-        console.error(
-          error
-        );
-
-        alert(
-          "No se pudo finalizar la conversación."
-        );
-
-      }
-
-    }
-  );
-
-
-  /* =====================================================
-     DETALLES
-  ===================================================== */
-
-  function renderDetails(
-    conversation
-  ) {
-
-    const name =
-      conversation.nombreCliente ||
-      conversation.cliente ||
-      conversation.nombre ||
-      "Sin nombre";
-
-
-    const phone =
-      conversation.telefono ||
-      "Sin teléfono";
-
-
-    const email =
-      conversation.email ||
-      conversation.correo ||
-      "Sin correo";
-
-
-    const team =
-      conversation.equipo ||
-      conversation.team ||
-      "Sin equipo";
-
-
-    const assigned =
-      conversation.asignadoNombre ||
-      conversation.asignadoA ||
-      conversation.assignedTo ||
-      "Sin asignar";
-
-
-    const status =
-      conversation.estado ||
-      conversation.status ||
-      "activa";
-
-
-    detailsContent.innerHTML = `
-
-      <div class="detail-section">
-
-        <div class="detail-title">
-          Cliente
+  const r=eventoEditando?ref(db,`agendaGestores/${eventoEditando}`):push(ref(db,"agendaGestores"));
+  await set(r,data);
+  cerrarModalEvento();
+}
+
+function escucharAgenda(){
+  onValue(ref(db,"agendaGestores"),snap=>{
+    eventosAgenda=snap.val()||{};
+    if(vistaActual==="agenda") dibujarCalendarioAgenda();
+  });
+}
+
+/* ---------- VENCIMIENTOS CLIENTES ---------- */
+
+let vencMes=new Date().getMonth();
+let vencAnio=new Date().getFullYear();
+
+function equiposCalendarioVencimientos(){
+  if(esSupervisor()) return Object.keys(equipos);
+  return obtenerEquipoDePersona(nombreActual);
+}
+
+function puedeAdministrarVencimientos(){
+  return esSenior()||esSupervisor();
+}
+
+function renderizarVencimientos(){
+  $("sectionTitle").textContent="Vencimientos de clientes";
+  $("listSearch").style.display="none";
+  $("items").innerHTML=`
+    <div class="calendar-wrap">
+      <div class="calendar-toolbar">
+        <h2>📆 Vencimientos de clientes</h2>
+        <div class="calendar-controls">
+          <select id="vencTeamFilter" onchange="dibujarCalendarioVencimientos()">
+            ${equiposCalendarioVencimientos().map(e=>`<option value="${escapeHtml(e)}">${escapeHtml(e)}</option>`).join("")}
+          </select>
+          <button onclick="cambiarMesVenc(-1)">‹</button>
+          <strong id="vencMesTitulo"></strong>
+          <button onclick="cambiarMesVenc(1)">›</button>
+          ${puedeAdministrarVencimientos()?`<button class="btn green" onclick="abrirModalVencimiento()">+ Vencimiento</button>`:""}
         </div>
-
-        <div class="detail-value">
-          ${escapeHtml(name)}
-        </div>
-
       </div>
+      <div class="small" style="margin-bottom:10px">🟢 pendiente · 🟡 próximo · 🔴 vencido</div>
+      <div id="vencCalendar"></div>
+    </div>
+  `;
+  dibujarCalendarioVencimientos();
+}
 
+function cambiarMesVenc(delta){
+  vencMes+=delta;
+  if(vencMes<0){vencMes=11;vencAnio--}
+  if(vencMes>11){vencMes=0;vencAnio++}
+  dibujarCalendarioVencimientos();
+}
 
-      <div class="detail-section">
+function claseVencimiento(e){
+  if(e.estado==="vencido") return "red";
+  const hoy=new Date();hoy.setHours(0,0,0,0);
+  const d=new Date(e.fecha+"T00:00:00");
+  const dias=Math.ceil((d-hoy)/86400000);
+  if(dias<=3) return "red";
+  if(dias<=7) return "client";
+  return "";
+}
 
-        <div class="detail-title">
-          Teléfono
-        </div>
+function dibujarCalendarioVencimientos(){
+  const root=$("vencCalendar");
+  if(!root) return;
 
-        <div class="detail-value">
-          ${escapeHtml(phone)}
-        </div>
+  const nombresMes=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+  $("vencMesTitulo").textContent=`${nombresMes[vencMes]} ${vencAnio}`;
 
-      </div>
+  const equipo=$("vencTeamFilter")?.value || equiposCalendarioVencimientos()[0] || "";
+  const first=new Date(vencAnio,vencMes,1);
+  const last=new Date(vencAnio,vencMes+1,0);
+  let start=(first.getDay()+6)%7;
+  const total=Math.ceil((start+last.getDate())/7)*7;
 
+  let h=`<div class="calendar-grid">
+    ${["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"].map(x=>`<div class="day-name">${x}</div>`).join("")}`;
 
-      <div class="detail-section">
+  for(let i=0;i<total;i++){
+    const day=i-start+1;
+    const date=new Date(vencAnio,vencMes,day);
+    const other=date.getMonth()!==vencMes;
+    const iso=date.toISOString().slice(0,10);
 
-        <div class="detail-title">
-          Email
-        </div>
+    const eventos=Object.values(vencimientos).filter(e=>{
+      return e?.fecha===iso &&
+        normalizarTexto(e?.equipo)===normalizarTexto(equipo) &&
+        equiposCalendarioVencimientos().some(x=>normalizarTexto(x)===normalizarTexto(e?.equipo));
+    });
 
-        <div class="detail-value">
-          ${escapeHtml(email)}
-        </div>
+    h+=`<div class="day ${other?"other":""}">
+      <div class="day-number">${date.getDate()}</div>
+      ${eventos.map(e=>`<div class="event ${claseVencimiento(e)}" onclick="editarVencimiento('${escapeHtml(e.id)}')">
+        <b>${escapeHtml(e.nombre||("DNI "+e.dni))}</b><br>
+        ${e.dni?`DNI ${escapeHtml(e.dni)}<br>`:""}
+        ${e.gestor?`👤 ${escapeHtml(e.gestor)}`:""}
+      </div>`).join("")}
+    </div>`;
+  }
+  h+="</div>";
+  root.innerHTML=h;
+}
 
-      </div>
+function cargarGestoresVencimiento(){
+  const equipo=$("dueTeam").value;
+  const lista=equipos[equipo]?.gestores||[];
+  $("dueGestor").innerHTML=`<option value="">Sin gestor</option>`+
+    lista.map(g=>`<option value="${escapeHtml(g)}">${escapeHtml(g)}</option>`).join("");
+}
 
+function abrirModalVencimiento(id=null){
+  if(!puedeAdministrarVencimientos()) return;
+  vencimientoEditando=id;
+  $("dueModal").classList.remove("hidden");
+  $("dueModalTitle").textContent=id?"Editar vencimiento":"Nuevo vencimiento";
 
-      <div class="detail-section">
+  const equiposPermitidos=equiposCalendarioVencimientos();
+  $("dueTeam").innerHTML=equiposPermitidos.map(e=>`<option value="${escapeHtml(e)}">${escapeHtml(e)}</option>`).join("");
 
-        <div class="detail-title">
-          Estado
-        </div>
+  const v=id?vencimientos[id]:null;
+  $("dueName").value=v?.nombre||"";
+  $("dueDni").value=v?.dni||"";
+  $("duePhone").value=v?.telefono||"";
+  $("dueDate").value=v?.fecha||hoyISO();
+  $("dueTime").value=v?.hora||"";
+  $("dueTeam").value=v?.equipo||equiposPermitidos[0]||"";
+  cargarGestoresVencimiento();
+  $("dueGestor").value=v?.gestor||"";
+  $("dueAmount").value=v?.monto||"";
+  $("dueStatus").value=v?.estado||"pendiente";
+  $("dueNote").value=v?.observacion||"";
+}
 
-        <div class="detail-value">
-          ${escapeHtml(status)}
-        </div>
+function editarVencimiento(id){abrirModalVencimiento(id)}
+function cerrarModalVencimiento(){$("dueModal").classList.add("hidden");vencimientoEditando=null}
 
-      </div>
+async function guardarVencimiento(){
+  const data={
+    nombre:$("dueName").value.trim(),
+    dni:$("dueDni").value.trim(),
+    telefono:$("duePhone").value.trim(),
+    fecha:$("dueDate").value,
+    hora:$("dueTime").value,
+    equipo:$("dueTeam").value,
+    gestor:$("dueGestor").value,
+    monto:$("dueAmount").value.trim(),
+    estado:$("dueStatus").value,
+    observacion:$("dueNote").value.trim(),
+    creadoPor:nombreActual,
+    creadoPorEmail:usuarioActual?.email||"",
+    actualizado:Date.now()
+  };
 
-
-      <div class="detail-section">
-
-        <div class="detail-title">
-          Equipo
-        </div>
-
-        <div class="detail-value">
-          ${escapeHtml(team)}
-        </div>
-
-      </div>
-
-
-      <div class="detail-section">
-
-        <div class="detail-title">
-          Asignado a
-        </div>
-
-        <div class="detail-value">
-          ${escapeHtml(assigned)}
-        </div>
-
-      </div>
-
-
-      <div class="detail-section">
-
-        <div class="detail-title">
-          Tiempo esperando
-        </div>
-
-        <div
-          id="detailTimer"
-          class="detail-timer"
-        >
-          ${formatTime(
-            getWaitingSeconds(
-              conversation
-            )
-          )}
-        </div>
-
-      </div>
-
-    `;
-
+  if(!data.fecha||!data.equipo||( !data.dni && !data.nombre )){
+    alert("Completá al menos nombre o DNI, fecha y equipo.");
+    return;
   }
 
+  const r=vencimientoEditando?ref(db,`vencimientosClientes/${vencimientoEditando}`):push(ref(db,"vencimientosClientes"));
+  await set(r,data);
+  cerrarModalVencimiento();
+}
 
-  /* =====================================================
-     LOGOUT
-  ===================================================== */
+function escucharVencimientos(){
+  onValue(ref(db,"vencimientosClientes"),snap=>{
+    const data=snap.val()||{};
+    vencimientos={};
+    Object.entries(data).forEach(([id,v])=>vencimientos[id]={...v,id});
+    if(vistaActual==="vencimientos") dibujarCalendarioVencimientos();
+  });
+}
 
-  logoutBtn.addEventListener(
-    "click",
-    async function() {
+/* ---------- LOGIN / USUARIO ---------- */
 
-      await signOut(auth);
+async function resolverUsuarioPorEmail(user){
+  const email=normalizarTexto(user.email);
+  let nombre=IDENTIDAD_FIJA_POR_EMAIL[email]||emailsPorNombre[email]||user.displayName||"";
+  let perfil=ROLES_FIJOS_POR_EMAIL[email]||"";
 
+  try{
+    const snap=await get(ref(db,"usuarios"));
+    usuariosDB=snap.val()||{};
+    for(const [key,u] of Object.entries(usuariosDB)){
+      const ue=normalizarTexto(u?.email||key);
+      if(ue===email){
+        if(!IDENTIDAD_FIJA_POR_EMAIL[email]) nombre=u.nombre||u.displayName||nombre;
+        if(!ROLES_FIJOS_POR_EMAIL[email]) perfil=u.perfil||u.rol||perfil;
+        break;
+      }
     }
-  );
+  }catch(e){
+    console.warn("No se pudo leer usuarios:",e);
+  }
 
+  if(IDENTIDAD_FIJA_POR_EMAIL[email]) nombre=IDENTIDAD_FIJA_POR_EMAIL[email];
+  if(ROLES_FIJOS_POR_EMAIL[email]) perfil=ROLES_FIJOS_POR_EMAIL[email];
+  if(!perfil) perfil=perfiles[nombre]||"";
 
-  console.log(
-    "Centro de Atención iniciado."
-  );
+  return {nombre,perfil};
+}
+
+$("loginBtn").addEventListener("click",async()=>{
+  const email=$("loginEmail").value.trim();
+  const pass=$("loginPassword").value;
+
+  $("loginError").classList.add("hidden");
+
+  if(!email||!pass){
+    $("loginError").textContent="Ingresá tu correo y contraseña.";
+    $("loginError").classList.remove("hidden");
+    return;
+  }
+
+  try{
+    await signInWithEmailAndPassword(auth,email,pass);
+  }catch(err){
+    console.error(err);
+    const code=err?.code||"";
+    const mensajes={
+      "auth/invalid-credential":"El correo o la contraseña no son correctos.",
+      "auth/user-not-found":"No existe una cuenta con ese correo.",
+      "auth/wrong-password":"La contraseña no es correcta.",
+      "auth/invalid-email":"El correo no tiene un formato válido.",
+      "auth/user-disabled":"Esta cuenta está deshabilitada.",
+      "auth/too-many-requests":"Hubo demasiados intentos. Probá nuevamente más tarde.",
+      "auth/network-request-failed":"No hay conexión con Firebase."
+    };
+    $("loginError").textContent=mensajes[code]||"No se pudo iniciar sesión.";
+    $("loginError").classList.remove("hidden");
+  }
+});
+
+$("loginPassword").addEventListener("keydown",e=>{
+  if(e.key==="Enter") $("loginBtn").click();
+});
+
+onAuthStateChanged(auth,async user=>{
+  if(!user){
+    usuarioActual=null;
+    $("loginScreen").classList.remove("hidden");
+    $("app").classList.add("hidden");
+    return;
+  }
+
+  usuarioActual=user;
+  // Identidad/rol por correo antes de consultar /usuarios.
+  const correoFijo=normalizarTexto(user.email);
+  if(IDENTIDAD_FIJA_POR_EMAIL[correoFijo]) nombreActual=IDENTIDAD_FIJA_POR_EMAIL[correoFijo];
+  if(ROLES_FIJOS_POR_EMAIL[correoFijo]) perfilActual=ROLES_FIJOS_POR_EMAIL[correoFijo];
+  const infoUser=await resolverUsuarioPorEmail(user);
+  nombreActual=infoUser.nombre;
+  perfilActual=normalizarTexto(infoUser.perfil);
+  // Las cuentas conocidas tienen rol fijo por correo: evita que un registro viejo
+  // de /usuarios vuelva a mostrar funciones que no corresponden.
+  const rolFijo=rolFijoPorCorreo();
+  if(rolFijo) perfilActual=rolFijo;
+  if(emailsPorNombre[normalizarTexto(user.email)]) nombreActual=emailsPorNombre[normalizarTexto(user.email)];
+
+  if(!nombreActual||!perfilActual){
+    await signOut(auth);
+    $("loginError").textContent="La cuenta ingresó, pero todavía no está configurada en el Centro de Atención. Revisá el correo y el perfil asignado.";
+    $("loginError").classList.remove("hidden");
+    return;
+  }
+
+  $("loginScreen").classList.add("hidden");
+  $("app").classList.remove("hidden");
+
+  $("currentUserName").textContent=nombreActual;
+  $("currentUserRole").textContent=
+    perfilActual==="supervisor"?"Supervisor":
+    perfilActual==="senior"?"Senior":perfilActual==="asesor"?"Gestor":"Supervisor";
+
+  greeting();
+  // Ocultamiento físico de funciones según rol. Agenda queda para seniors/supervisores; Sin asignar queda disponible para todos los gestores.
+  const esGestionSuperior=esSenior()||esSupervisor();
+  $("navAgenda").classList.toggle("hidden",!esGestionSuperior);
+  $("navSinAsignar").classList.remove("hidden");
+  // SOS: solamente el senior correspondiente al equipo puede verlo.
+  $("navSOS").classList.toggle("hidden",!esSenior());
+  renderizarPanelSOS();
+
+  try{
+    const snap=await get(ref(db,`presencia/${user.uid}`));
+    if(snap.exists()) pintarPresencia(snap.val());
+  }catch(e){}
+
+  try{
+    await onDisconnect(ref(db,`presencia/${user.uid}`)).update({
+      estado:"sin",
+      nombre:nombreActual,
+      email:user.email||"",
+      fecha:Date.now()
+    });
+  }catch(e){}
+
+  escucharConversaciones();
+  escucharPresencias();
+  escucharAgenda();
+  escucharVencimientos();
+  escucharUrgencias();
+
+  mostrarVista("principal");
+});
+
+async function cerrarSesion(){
+  detenerTyping();
+  if(usuarioActual){
+    try{
+      await update(ref(db,`presencia/${usuarioActual.uid}`),{
+        estado:"sin",
+        fecha:Date.now()
+      });
+    }catch(e){}
+  }
+  await signOut(auth);
+}
+
+window.mostrarVista=mostrarVista;
+window.refrescarVistaActual=refrescarVistaActual;
+window.limpiarBusqueda=limpiarBusqueda;
+window.abrirConversacion=abrirConversacion;
+window.marcarMensajesClienteComoLeidos=marcarMensajesClienteComoLeidos;
+window.abrirChatsDeGestor=abrirChatsDeGestor;
+window.abrirIndicacionInterna=abrirIndicacionInterna;
+window.pedirAyudaSenior=pedirAyudaSenior;
+window.abrirSOS=abrirSOS;
+window.cerrarSOS=cerrarSOS;
+window.guardarAcuerdoCliente=guardarAcuerdoCliente;
+const IA_BACKEND_URL = ""; // Pegá aquí la URL de tu backend seguro cuando lo creemos.
+
+async function ejecutarIAReal(accion){
+  if(!IA_BACKEND_URL) return null;
+  const c=conversaciones[conversacionSeleccionada];
+  if(!c) return null;
+  const mensajes=contextoIA().map(m=>({rol:m.remitente||"usuario",texto:m.texto||""}));
+  const resp=await fetch(IA_BACKEND_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({accion,mensajes,cliente:obtenerDatosCliente(c),usuario:nombreActual})});
+  if(!resp.ok) throw new Error("El servidor de IA respondió con error "+resp.status);
+  const data=await resp.json();
+  return data.texto||data.output||data.result||"";
+}
+
+function abrirIA(){
+  if(!conversacionSeleccionada){ alert("Primero seleccioná una conversación."); return; }
+  $("aiModal").classList.remove("hidden");
+  $("aiResult").textContent=IA_BACKEND_URL
+    ? "IA conectada. Elegí una opción."
+    : "La IA generativa todavía no está conectada al servidor. Las opciones disponibles abajo son solo una ayuda local y no reemplazan a una IA real.";
+}
+function cerrarIA(){ $("aiModal").classList.add("hidden"); }
+function contextoIA(){
+  const c=conversaciones[conversacionSeleccionada];
+  if(!c) return [];
+  return Object.values(c.mensajes||{}).filter(m=>m && m.texto).slice(-20);
+}
+function textoClienteIA(){
+  const ms=contextoIA().filter(m=>normalizarTexto(m.tipo)!=="interno");
+  return ms.filter(m=>normalizarTexto(m.remitente)!==normalizarTexto(nombreActual)).map(m=>m.texto||"").join(" ").trim();
+}
+async function iaSugerirRespuesta(){
+  try{ const real=await ejecutarIAReal("sugerir_respuesta"); if(real){ $("aiResult").textContent=real; return; } }catch(e){ $("aiResult").textContent="No se pudo conectar con la IA: "+e.message; return; }
+  const t=textoClienteIA();
+  let r="Hola. Gracias por comunicarte con nosotros. Voy a revisar tu situación y te informo las alternativas disponibles.";
+  const n=normalizarTexto(t);
+  if(n.includes("deuda")||n.includes("monto")) r="Hola. Claro, podemos revisar el estado de tu deuda y las alternativas disponibles. Dame un momento para verificar la información de tu expediente.";
+  else if(n.includes("pago")||n.includes("pague")||n.includes("transfer")) r="Hola. Para poder verificar correctamente el pago, necesito revisar la información registrada en el expediente. En cuanto la confirme, te indico cómo queda imputado.";
+  else if(n.includes("cuota")||n.includes("convenio")||n.includes("plan")) r="Hola. Podemos revisar las alternativas de financiación disponibles para tu situación. Voy a verificar el expediente y te informo las opciones.";
+  $("aiResult").textContent=r;
+}
+async function iaResumir(){
+  try{ const real=await ejecutarIAReal("resumir"); if(real){ $("aiResult").textContent=real; return; } }catch(e){ $("aiResult").textContent="No se pudo conectar con la IA: "+e.message; return; }
+  const ms=contextoIA();
+  if(!ms.length){ $("aiResult").textContent="No hay mensajes suficientes para resumir."; return; }
+  const ult=ms.slice(-5).map(m=>`${m.remitente||"Usuario"}: ${m.texto}`).join("\n");
+  $("aiResult").textContent="Resumen preliminar:\n"+ult;
+}
+async function iaAnalizar(){
+  try{ const real=await ejecutarIAReal("analizar"); if(real){ $("aiResult").textContent=real; return; } }catch(e){ $("aiResult").textContent="No se pudo conectar con la IA: "+e.message; return; }
+  const t=textoClienteIA(); const n=normalizarTexto(t); const hallazgos=[];
+  if(n.includes("deuda")||n.includes("monto")) hallazgos.push("• Consulta relacionada con deuda/monto.");
+  if(n.includes("pago")||n.includes("transfer")) hallazgos.push("• Menciona un pago o transferencia; conviene verificar imputación.");
+  if(n.includes("cuota")||n.includes("convenio")||n.includes("plan")) hallazgos.push("• Consulta sobre cuotas/convenio.");
+  if(n.includes("reclamo")||n.includes("queja")||n.includes("denuncia")) hallazgos.push("• Hay lenguaje de reclamo; revisar antes de responder.");
+  if(!hallazgos.length) hallazgos.push("• No se detectó una categoría específica con las palabras disponibles.");
+  $("aiResult").textContent="Análisis preliminar:\n"+hallazgos.join("\n");
+}
+async function iaNota(){
+  try{ const real=await ejecutarIAReal("nota_interna"); if(real){ $("aiResult").textContent=real; return; } }catch(e){ $("aiResult").textContent="No se pudo conectar con la IA: "+e.message; return; }
+  const c=conversaciones[conversacionSeleccionada]; const d=obtenerDatosCliente(c||{});
+  $("aiResult").textContent=`Nota interna sugerida:\nCliente ${mostrarNombreCliente({...c,_id:conversacionSeleccionada})}. DNI: ${d.dni||"no informado"}. Revisar conversación y dejar asentada la gestión realizada.`;
+}
+
+window.enviarMensajeInterno=enviarMensajeInterno;
+window.enviarMensaje=enviarMensaje;
+window.finalizarConversacion=finalizarConversacion;
+window.abrirModalAsignacion=abrirModalAsignacion;
+window.cargarGestoresModal=cargarGestoresModal;
+window.guardarAsignacion=guardarAsignacion;
+window.abrirExpediente=abrirExpediente;
+window.cerrarExpediente=cerrarExpediente;
+window.cerrarModalAsignacion=cerrarModalAsignacion;
+window.cerrarSesion=cerrarSesion;
+window.cambiarMesAgenda=cambiarMesAgenda;
+window.abrirModalEvento=abrirModalEvento;
+window.editarEvento=editarEvento;
+window.cerrarModalEvento=cerrarModalEvento;
+window.guardarEventoAgenda=guardarEventoAgenda;
+window.cambiarMesVenc=cambiarMesVenc;
+window.cargarGestoresVencimiento=cargarGestoresVencimiento;
+window.abrirModalVencimiento=abrirModalVencimiento;
+window.editarVencimiento=editarVencimiento;
+window.cerrarModalVencimiento=cerrarModalVencimiento;
+window.guardarVencimiento=guardarVencimiento;
+// Las funciones de IA se usan desde botones HTML (onclick), por eso deben quedar expuestas en window.
+window.abrirIA=abrirIA;
+window.cerrarIA=cerrarIA;
+window.iaSugerirRespuesta=iaSugerirRespuesta;
+window.iaResumir=iaResumir;
+window.iaAnalizar=iaAnalizar;
+window.iaNota=iaNota;
 
 </script>
 
+<div id="aiModal" class="modal-bg hidden">
+  <div class="modal">
+    <h2>✨ Asistente IA</h2>
+    <div class="small">Analiza la conversación seleccionada y te ayuda a preparar la gestión.</div>
+    <div class="ai-box">
+      <div class="ai-actions">
+        <button onclick="iaSugerirRespuesta()">💬 Sugerir respuesta</button>
+        <button onclick="iaResumir()">🧠 Resumir conversación</button>
+        <button onclick="iaAnalizar()">🔎 Analizar caso</button>
+        <button onclick="iaNota()">📝 Nota interna</button>
+      </div>
+      <div id="aiResult" class="ai-result">Elegí una opción.</div>
+      <div class="ai-note">La IA real se conecta mediante un backend seguro. No se coloca una clave de API dentro de esta página. Hasta conectar ese backend, las opciones muestran una ayuda local de emergencia.</div>
+    </div>
+    <div class="modal-actions"><button class="cancel" onclick="cerrarIA()">Cerrar</button></div>
+  </div>
+</div>
 </body>
 </html>
