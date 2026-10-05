@@ -807,6 +807,42 @@ function esSenior(){ return (rolFijoPorCorreo() || perfilActual)==="senior"; }
 function esAsesor(){ return (rolFijoPorCorreo() || perfilActual)==="asesor"; }
 function puedeVerAgendaGestores(){ return esSenior() || esSupervisor(); }
 
+// Cada SOS tiene un senior destinatario ÚNICO.
+// Esto evita que un senior de otro equipo vea el SOS aunque comparta otro equipo.
+const SENIOR_SOS_POR_GESTOR = {
+  "Paula": "pilar.solano@mansillayasoc.com.ar",
+  "Giuliana": "pilar.solano@mansillayasoc.com.ar",
+  "Candela": "pilar.solano@mansillayasoc.com.ar",
+  "Francesca": "pilar.solano@mansillayasoc.com.ar",
+  "Belen": "pilar.solano@mansillayasoc.com.ar",
+  "Maria Paz": "daniela.cortez@mansillayasoc.com.ar",
+  "Agustina": "daniela.cortez@mansillayasoc.com.ar",
+  "Pablo": "daniela.cortez@mansillayasoc.com.ar",
+  "Florencia": "daniela.cortez@mansillayasoc.com.ar",
+  "Ana": "antonela.lopez@mansillayasoc.com.ar",
+  "Delfina": "antonela.lopez@mansillayasoc.com.ar",
+  "Marcela": "antonela.lopez@mansillayasoc.com.ar",
+  "Valentina": "antonela.lopez@mansillayasoc.com.ar",
+  "Julieta": "antonela.lopez@mansillayasoc.com.ar",
+  "Natalia": "moriana.rey@mansillayasoc.com.ar",
+  "Maica": "moriana.rey@mansillayasoc.com.ar",
+  "Alejandra": "moriana.rey@mansillayasoc.com.ar",
+  "Keila": "moriana.rey@mansillayasoc.com.ar",
+  "Gustavo": "moriana.rey@mansillayasoc.com.ar",
+  "Alejo Cuotero": "rocio.lopez@mansillayasoc.com.ar",
+  "Gregorio": "rocio.lopez@mansillayasoc.com.ar"
+};
+function puedeVerSOS(u){
+  if(!u || !esSenior()) return false;
+  const emailActual=normalizarTexto(usuarioActual?.email);
+  const emailObjetivo=normalizarTexto(u.seniorEmail || "");
+  if(emailObjetivo) return emailActual===emailObjetivo;
+  const gestor=u.gestor || u.remitente || u.gestorNombre || "";
+  const canon=nombreCanonico(gestor);
+  const objetivo=SENIOR_SOS_POR_GESTOR[canon] || SENIOR_SOS_POR_GESTOR[gestor] || "";
+  return objetivo ? emailActual===normalizarTexto(objetivo) : false;
+}
+
 function estaActiva(c){
   return normalizarTexto(c?.estado) !== "finalizada" &&
          normalizarTexto(c?.estado) !== "finalizado" &&
@@ -1079,16 +1115,19 @@ function renderizarHistorial(){
 }
 
 function renderizarSOS(){
-  if(!esSenior()&&!esSupervisor()){ mostrarVista("principal"); return; }
+  if(!esSenior()){ mostrarVista("principal"); return; }
   $("sectionTitle").textContent="SOS urgentes";
   const items=$("items"); items.innerHTML="";
   const pendientes=[];
   const mapa=new Map();
-  Object.entries(urgencias||{}).forEach(([id,u])=>{ if(normalizarTexto(u?.estado)==="pendiente") mapa.set(id,{...u,_id:id}); });
+  Object.entries(urgencias||{}).forEach(([id,u])=>{ if(normalizarTexto(u?.estado)==="pendiente" && puedeVerSOS(u)) mapa.set(id,{...u,_id:id}); });
   Object.entries(conversaciones||{}).forEach(([id,c])=>{
     for(const m of Object.values(c?.mensajes||{})){
       if(m?.sos===true||m?.urgente===true){
-        if(!mapa.has(id)) mapa.set(id,{_id:id,gestor:m.remitente||obtenerGestorDeConversacion(c)||"Gestor",cliente:mostrarNombreCliente({...c,_id:id}),dni:obtenerDatosCliente(c).dni||"",fecha:m.fecha||Date.now(),estado:"pendiente"});
+        if(!mapa.has(id)){
+          const candidato={_id:id,gestor:m.remitente||obtenerGestorDeConversacion(c)||"Gestor",cliente:mostrarNombreCliente({...c,_id:id}),dni:obtenerDatosCliente(c).dni||"",fecha:m.fecha||Date.now(),estado:"pendiente"};
+          if(puedeVerSOS(candidato)) mapa.set(id,candidato);
+        }
         break;
       }
     }
@@ -1111,6 +1150,11 @@ function mostrarVista(vista){
   }
   // Solo senior/supervisor pueden ver Sin asignar.
   if(vista==="sinAsignar" && !esSenior() && !esSupervisor()){
+    vistaActual="principal";
+    return mostrarVista("principal");
+  }
+  // Los SOS son privados del senior correspondiente al equipo del gestor.
+  if(vista==="sos" && !esSenior()){
     vistaActual="principal";
     return mostrarVista("principal");
   }
@@ -1175,10 +1219,18 @@ function actualizarContadores(){
   $("badgeAgentes").textContent=agentes;
   $("badgeSinAsignar").textContent=sinAsignar;
   $("badgeHistorial").textContent=finalizadas.length;
-  const sosPendientes=new Set(Object.entries(urgencias||{}).filter(([,u])=>normalizarTexto(u?.estado)==="pendiente").map(([id])=>id));
-  Object.entries(conversaciones||{}).forEach(([id,c])=>{ if(Object.values(c?.mensajes||{}).some(m=>m?.sos===true||m?.urgente===true)) sosPendientes.add(id); });
+  const sosPendientes=new Set(Object.entries(urgencias||{}).filter(([id,u])=>normalizarTexto(u?.estado)==="pendiente" && puedeVerSOS(u)).map(([id])=>id));
+  Object.entries(conversaciones||{}).forEach(([id,c])=>{
+    for(const m of Object.values(c?.mensajes||{})){
+      if(m?.sos===true||m?.urgente===true){
+        const candidato={_id:id,gestor:m.remitente||obtenerGestorDeConversacion(c)||"",estado:"pendiente"};
+        if(puedeVerSOS(candidato)) sosPendientes.add(id);
+        break;
+      }
+    }
+  });
   $("badgeSOS").textContent=String(sosPendientes.size);
-  $("navSOS").classList.toggle("hidden",!esSenior()&&!esSupervisor());
+  $("navSOS").classList.toggle("hidden",!esSenior());
   $("navSOS").classList.toggle("sos-active",sosPendientes.size>0);
 
   $("navSinAsignar").classList.toggle("hidden",!esSenior()&&!esSupervisor());
@@ -1355,6 +1407,7 @@ async function pedirAyudaSenior(){
   const payload={
     conversacionId:id, cliente:mostrarNombreCliente(c), dni:d.dni||"",
     gestor:nombreActual, gestorEmail:usuarioActual?.email||"", equipo,
+    seniorEmail:SENIOR_SOS_POR_GESTOR[nombreCanonico(nombreActual)]||"",
     estado:"pendiente", fecha:ahora,
     mensaje:`${nombreActual} solicita hablar con un senior de forma URGENTE.`
   };
@@ -1388,9 +1441,10 @@ function escucharUrgencias(){
   onValue(ref(db,"urgencias"),snap=>{
     const data=snap.val()||{};
     const pendientes=new Set(Object.entries(data).filter(([,u])=>normalizarTexto(u?.estado)==="pendiente").map(([id])=>id));
-    if(!primerCargaUrgencias && (esSenior()||esSupervisor())){
+    if(!primerCargaUrgencias && esSenior()){
       for(const id of pendientes){
-        if(!ultimoSOSIds.has(id)){
+        const u=data[id];
+        if(puedeVerSOS(u) && !ultimoSOSIds.has(id)){
           sonidoNuevoChat();
           break;
         }
@@ -1418,7 +1472,7 @@ function escucharUrgencias(){
 function renderizarPanelSOS(){
   const panel=$("sosPanel"), list=$("sosList"), nav=$("navSOS"), badge=$("badgeSOS");
   if(!panel || !list) return;
-  const superior=esSenior()||esSupervisor();
+  const superior=esSenior();
   if(!superior){
     panel.classList.add("hidden");
     nav?.classList.add("hidden");
@@ -1427,7 +1481,7 @@ function renderizarPanelSOS(){
 
   const mapa=new Map();
   Object.entries(urgencias||{}).forEach(([id,u])=>{
-    if(normalizarTexto(u?.estado)==="pendiente") mapa.set(id,{...u,_id:id});
+    if(normalizarTexto(u?.estado)==="pendiente" && puedeVerSOS(u)) mapa.set(id,{...u,_id:id});
   });
 
   // Respaldo fuerte: busca SOS también dentro de TODOS los chats cargados.
@@ -1435,9 +1489,10 @@ function renderizarPanelSOS(){
     for(const m of Object.values(c?.mensajes||{})){
       if(m?.sos===true || m?.urgente===true){
         const actual=mapa.get(id)||{};
-        mapa.set(id,{...actual,_id:id,gestor:actual.gestor||m.remitente||obtenerGestorDeConversacion(c)||"Gestor",
+        const candidato={...actual,_id:id,gestor:actual.gestor||m.remitente||obtenerGestorDeConversacion(c)||"Gestor",
           cliente:actual.cliente||mostrarNombreCliente({...c,_id:id}),dni:actual.dni||obtenerDatosCliente(c).dni||"",
-          fecha:actual.fecha||m.fecha||Date.now(),estado:"pendiente"});
+          fecha:actual.fecha||m.fecha||Date.now(),estado:"pendiente"};
+        if(puedeVerSOS(candidato)) mapa.set(id,candidato);
         break;
       }
     }
@@ -2197,7 +2252,8 @@ onAuthStateChanged(auth,async user=>{
   const esGestionSuperior=esSenior()||esSupervisor();
   $("navAgenda").classList.toggle("hidden",!esGestionSuperior);
   $("navSinAsignar").classList.toggle("hidden",!esGestionSuperior);
-  $("navSOS").classList.toggle("hidden",!esGestionSuperior);
+  // SOS: solamente el senior correspondiente al equipo puede verlo.
+  $("navSOS").classList.toggle("hidden",!esSenior());
   renderizarPanelSOS();
 
   try{
