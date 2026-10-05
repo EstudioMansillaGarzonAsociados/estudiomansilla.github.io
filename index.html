@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -188,6 +189,17 @@
       margin-top: 3px;
     }
 
+    .error-firebase {
+      display: none;
+      margin: 15px;
+      padding: 12px;
+      background: #fff0f0;
+      border: 1px solid #ffbcbc;
+      color: #a00000;
+      border-radius: 10px;
+      font-size: 13px;
+    }
+
     @media (max-width: 500px) {
       .container {
         width: 100%;
@@ -200,189 +212,188 @@
       }
     }
   </style>
+
 </head>
 
 <body>
 
   <div class="container">
 
-    <!-- FORMULARIO -->
+```
+<!-- FORMULARIO -->
 
-    <div class="inicio" id="inicio">
+<div class="inicio" id="inicio">
 
-      <div style="font-size:50px; text-align:center;">
-        💬
-      </div>
+  <div style="font-size:50px; text-align:center;">
+    💬
+  </div>
 
-      <h2>Centro de Atención</h2>
+  <h2>Centro de Atención</h2>
 
-      <p>
-        Hola 👋<br>
-        Para comenzar, completá tus datos.
-      </p>
+  <p>
+    Hola 👋<br>
+    Para comenzar, completá tus datos.
+  </p>
 
-      <div class="campo">
+  <div class="campo">
 
-        <label>
-          Nombre y apellido
-        </label>
+    <label>Nombre y apellido</label>
 
-        <input
-          type="text"
-          id="nombre"
-          placeholder="Ej.: Juan Pérez"
-        >
-
-      </div>
-
-      <div class="campo">
-
-        <label>
-          DNI
-        </label>
-
-        <input
-          type="text"
-          id="dni"
-          placeholder="Ej.: 30123456"
-          inputmode="numeric"
-        >
-
-      </div>
-
-      <div class="campo">
-
-        <label>
-          Teléfono
-        </label>
-
-        <input
-          type="tel"
-          id="telefono"
-          placeholder="Ej.: 351 1234567"
-        >
-
-      </div>
-
-      <div class="campo">
-
-        <label>
-          Motivo de consulta
-        </label>
-
-        <select id="motivo">
-
-          <option value="">
-            Seleccioná una opción
-          </option>
-
-          <option value="Consulta por deuda">
-            Consulta por deuda
-          </option>
-
-          <option value="Pago">
-            Pago
-          </option>
-
-          <option value="Acuerdo de pago">
-            Acuerdo de pago
-          </option>
-
-          <option value="Consulta general">
-            Consulta general
-          </option>
-
-          <option value="Otro">
-            Otro
-          </option>
-
-        </select>
-
-      </div>
-
-      <div
-        class="error"
-        id="error"
-      >
-        Completá todos los campos para continuar.
-      </div>
-
-      <button
-        class="boton"
-        onclick="comenzarChat()"
-      >
-        👤 Comenzar chat
-      </button>
-
-    </div>
-
-
-    <!-- CHAT -->
-
-    <div
-      class="chat"
-      id="chat"
+    <input
+      type="text"
+      id="nombre"
+      placeholder="Ej.: Juan Pérez"
     >
 
-      <div class="chat-header">
+  </div>
 
-        <button
-          class="volver"
-          onclick="volverInicio()"
-        >
-          ←
-        </button>
+  <div class="campo">
 
-        <div>
+    <label>DNI</label>
 
-          <div class="nombre-cliente">
-            Asesor de Estudio Mansilla
-          </div>
+    <input
+      type="text"
+      id="dni"
+      placeholder="Ej.: 30123456"
+      inputmode="numeric"
+    >
 
-          <div class="estado">
-            ● En línea
-          </div>
+  </div>
 
-          <div
-            class="info-chat"
-            id="infoChat"
-          >
-          </div>
+  <div class="campo">
 
-        </div>
+    <label>Teléfono</label>
 
+    <input
+      type="tel"
+      id="telefono"
+      placeholder="Ej.: 351 1234567"
+    >
+
+  </div>
+
+  <div class="campo">
+
+    <label>Motivo de consulta</label>
+
+    <select id="motivo">
+
+      <option value="">
+        Seleccioná una opción
+      </option>
+
+      <option value="Consulta por deuda">
+        Consulta por deuda
+      </option>
+
+      <option value="Pago">
+        Pago
+      </option>
+
+      <option value="Acuerdo de pago">
+        Acuerdo de pago
+      </option>
+
+      <option value="Consulta general">
+        Consulta general
+      </option>
+
+      <option value="Otro">
+        Otro
+      </option>
+
+    </select>
+
+  </div>
+
+  <div
+    class="error"
+    id="error"
+  >
+    Completá todos los campos para continuar.
+  </div>
+
+  <div
+    class="error-firebase"
+    id="errorFirebase"
+  >
+    No se pudo conectar con el sistema. Revisá la configuración de Firebase.
+  </div>
+
+  <button
+    class="boton"
+    onclick="comenzarChat()"
+  >
+    👤 Comenzar chat
+  </button>
+
+</div>
+
+
+<!-- CHAT -->
+
+<div
+  class="chat"
+  id="chat"
+>
+
+  <div class="chat-header">
+
+    <button
+      class="volver"
+      onclick="volverInicio()"
+    >
+      ←
+    </button>
+
+    <div>
+
+      <div class="nombre-cliente">
+        Asesor de Estudio Mansilla
       </div>
 
+      <div class="estado">
+        ● En línea
+      </div>
 
       <div
-        class="mensajes"
-        id="mensajes"
-      >
-      </div>
-
-
-      <div class="entrada">
-
-        <input
-          type="text"
-          id="mensajeInput"
-          placeholder="Escribí tu mensaje..."
-          onkeydown="presionarEnter(event)"
-        >
-
-        <button
-          class="enviar"
-          onclick="enviarMensaje()"
-        >
-          ➤
-        </button>
-
-      </div>
+        class="info-chat"
+        id="infoChat"
+      ></div>
 
     </div>
 
   </div>
 
+
+  <div
+    class="mensajes"
+    id="mensajes"
+  ></div>
+
+
+  <div class="entrada">
+
+    <input
+      type="text"
+      id="mensajeInput"
+      placeholder="Escribí tu mensaje..."
+      onkeydown="presionarEnter(event)"
+    >
+
+    <button
+      class="enviar"
+      onclick="enviarMensaje()"
+    >
+      ➤
+    </button>
+
+  </div>
+
+</div>
+```
+
+  </div>
 
   <!-- FIREBASE -->
 
@@ -406,31 +417,44 @@
     ========================= */
 
     const firebaseConfig = {
-
-      apiKey: "AIzaSyC1sOc1OaBwkzz5DXT3GD_OEcFFrkOua8",
-
+      apiKey: "AIzaSyC1sOc1O1aBwkzz5DXT3GD_OEcFFrkOua8",
       authDomain: "estudiomansilla.firebaseapp.com",
-
       databaseURL: "https://estudiomansilla-default-rtdb.firebaseio.com",
-
       projectId: "estudiomansilla",
-
       storageBucket: "estudiomansilla.firebasestorage.app",
-
       messagingSenderId: "482010073100",
-
       appId: "1:482010073100:web:d5cb61259de293b1420629",
-
       measurementId: "G-8710S26Z8L"
-
     };
 
 
-    const app =
-      initializeApp(firebaseConfig);
+    /* =========================
+       INICIALIZAR FIREBASE
+    ========================= */
 
-    const db =
-      getDatabase(app);
+    let app;
+    let db;
+
+    try {
+
+      app = initializeApp(firebaseConfig);
+
+      db = getDatabase(app);
+
+      console.log("Firebase conectado correctamente.");
+
+    } catch (error) {
+
+      console.error(
+        "Error al iniciar Firebase:",
+        error
+      );
+
+      document.getElementById(
+        "errorFirebase"
+      ).style.display = "block";
+
+    }
 
 
     /* =========================
@@ -443,16 +467,7 @@
       );
 
 
-    /*
-      Si el cliente ya tiene una
-      conversación en esta sesión,
-      usamos la misma.
-
-      Si es un cliente nuevo,
-      creamos una conversación nueva.
-    */
-
-    if (!conversacionId) {
+    if (!conversacionId && db) {
 
       const nuevaConversacionRef =
         push(
@@ -483,37 +498,47 @@
        REFERENCIA DE MENSAJES
     ========================= */
 
-    const mensajesRef =
-      ref(
-        db,
-        "conversaciones/" +
-        conversacionId +
-        "/mensajes"
-      );
+    let mensajesRef = null;
+
+    if (db && conversacionId) {
+
+      mensajesRef =
+        ref(
+          db,
+          "conversaciones/" +
+          conversacionId +
+          "/mensajes"
+        );
+
+    }
 
 
     /* =========================
        MOSTRAR MENSAJES
     ========================= */
 
-    onChildAdded(
-      mensajesRef,
-      (snapshot) => {
+    if (mensajesRef) {
 
-        const mensaje =
-          snapshot.val();
+      onChildAdded(
+        mensajesRef,
+        (snapshot) => {
 
-        if (!mensaje) {
-          return;
+          const mensaje =
+            snapshot.val();
+
+          if (!mensaje) {
+            return;
+          }
+
+          mostrarMensaje(
+            mensaje.texto,
+            mensaje.remitente
+          );
+
         }
+      );
 
-        mostrarMensaje(
-          mensaje.texto,
-          mensaje.remitente
-        );
-
-      }
-    );
+    }
 
 
     /* =========================
@@ -528,34 +553,33 @@
             "nombre"
           ).value.trim();
 
-
         const dni =
           document.getElementById(
             "dni"
           ).value.trim();
-
 
         const telefono =
           document.getElementById(
             "telefono"
           ).value.trim();
 
-
         const motivo =
           document.getElementById(
             "motivo"
           ).value;
-
 
         const error =
           document.getElementById(
             "error"
           );
 
+        const errorFirebase =
+          document.getElementById(
+            "errorFirebase"
+          );
 
-        /*
-          VALIDACIÓN
-        */
+
+        /* VALIDACIÓN */
 
         if (
           nombre === "" ||
@@ -576,110 +600,120 @@
           "none";
 
 
-        /*
-          GUARDAMOS LOS DATOS
-          DEL CLIENTE
-        */
+        /* VERIFICAR FIREBASE */
 
-        await set(
-          ref(
-            db,
-            "conversaciones/" +
-            conversacionId +
-            "/datosCliente"
-          ),
-          {
+        if (!db || !mensajesRef) {
 
-            nombre: nombre,
+          errorFirebase.style.display =
+            "block";
 
-            dni: dni,
+          return;
 
-            telefono: telefono,
-
-            motivo: motivo,
-
-            fecha: Date.now()
-
-          }
-        );
+        }
 
 
-        /*
-          ESTADO INICIAL
-        */
+        try {
 
-        await set(
-          ref(
-            db,
-            "conversaciones/" +
-            conversacionId +
-            "/estado"
-          ),
-          "pendiente"
-        );
+          /* DATOS DEL CLIENTE */
 
+          await set(
+            ref(
+              db,
+              "conversaciones/" +
+              conversacionId +
+              "/datosCliente"
+            ),
+            {
 
-        /*
-          FECHA DE CREACIÓN
-        */
+              nombre: nombre,
+              dni: dni,
+              telefono: telefono,
+              motivo: motivo,
+              fecha: Date.now()
 
-        await set(
-          ref(
-            db,
-            "conversaciones/" +
-            conversacionId +
-            "/fechaCreacion"
-          ),
-          Date.now()
-        );
+            }
+          );
 
 
-        /*
-          MOSTRAR NOMBRE
-        */
+          /* ESTADO INICIAL */
 
-        document.getElementById(
-          "infoChat"
-        ).textContent =
-          nombre;
-
-
-        /*
-          OCULTAR FORMULARIO
-        */
-
-        document.getElementById(
-          "inicio"
-        ).style.display =
-          "none";
+          await set(
+            ref(
+              db,
+              "conversaciones/" +
+              conversacionId +
+              "/estado"
+            ),
+            "pendiente"
+          );
 
 
-        /*
-          MOSTRAR CHAT
-        */
+          /* FECHA DE CREACIÓN */
 
-        document.getElementById(
-          "chat"
-        ).style.display =
-          "flex";
-
-
-        /*
-          CARGAR HISTORIAL
-        */
-
-        document.getElementById(
-          "mensajes"
-        ).innerHTML = "";
+          await set(
+            ref(
+              db,
+              "conversaciones/" +
+              conversacionId +
+              "/fechaCreacion"
+            ),
+            Date.now()
+          );
 
 
-        /*
-          FOCUS
-        */
+          /* MOSTRAR NOMBRE */
 
-        document.getElementById(
-          "mensajeInput"
-        ).focus();
+          document.getElementById(
+            "infoChat"
+          ).textContent =
+            nombre;
+
+
+          /* OCULTAR FORMULARIO */
+
+          document.getElementById(
+            "inicio"
+          ).style.display =
+            "none";
+
+
+          /* MOSTRAR CHAT */
+
+          document.getElementById(
+            "chat"
+          ).style.display =
+            "flex";
+
+
+          /* LIMPIAR MENSAJES */
+
+          document.getElementById(
+            "mensajes"
+          ).innerHTML = "";
+
+
+          /* FOCUS */
+
+          document.getElementById(
+            "mensajeInput"
+          ).focus();
+
+
+        } catch (error) {
+
+          console.error(
+            "Error al guardar la conversación:",
+            error
+          );
+
+          errorFirebase.textContent =
+            "No se pudo guardar la conversación: " +
+            error.message;
+
+          errorFirebase.style.display =
+            "block";
+
+        }
 
       };
 
@@ -696,7 +730,6 @@
         ).style.display =
           "none";
 
-
         document.getElementById(
           "inicio"
         ).style.display =
@@ -710,46 +743,54 @@
     ========================= */
 
     window.enviarMensaje =
-      function() {
+      async function() {
 
         const input =
           document.getElementById(
             "mensajeInput"
           );
 
-
         const texto =
           input.value.trim();
 
-
         if (
-          texto === ""
+          texto === "" ||
+          !mensajesRef
         ) {
 
           return;
 
         }
 
+        try {
 
-        push(
-          mensajesRef,
-          {
+          await push(
+            mensajesRef,
+            {
 
-            texto: texto,
+              texto: texto,
+              remitente: "cliente",
+              fecha: Date.now()
 
-            remitente: "cliente",
+            }
+          );
 
-            fecha: Date.now()
+          input.value = "";
 
-          }
-        );
+          input.focus();
 
+        } catch (error) {
 
-        input.value =
-          "";
+          console.error(
+            "Error al enviar mensaje:",
+            error
+          );
 
+          alert(
+            "No se pudo enviar el mensaje."
+          );
 
-        input.focus();
+        }
 
       };
 
@@ -786,17 +827,14 @@
           "mensajes"
         );
 
-
       const div =
         document.createElement(
           "div"
         );
 
-
       div.classList.add(
         "mensaje"
       );
-
 
       if (
         remitente === "cliente"
@@ -814,15 +852,12 @@
 
       }
 
-
       div.textContent =
         texto;
-
 
       contenedor.appendChild(
         div
       );
-
 
       contenedor.scrollTop =
         contenedor.scrollHeight;
