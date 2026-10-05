@@ -884,8 +884,18 @@ function estaActiva(c){
          normalizarTexto(c?.estado) !== "cerrado";
 }
 
+function esValorSinAsignar(v){
+  const n=normalizarTexto(v);
+  return !n || [
+    "sin asignar","sin_asignar","sinasignar","sin asignacion","sin_asignacion",
+    "unassigned","none","null","undefined","nadie","ninguno","no asignado","no_asignado"
+  ].includes(n);
+}
+
 function estaSinAsignar(c){
-  return !obtenerGestorDeConversacion(c) && !obtenerEmailGestor(c);
+  const gestor=obtenerGestorDeConversacion(c);
+  const email=obtenerEmailGestor(c);
+  return esValorSinAsignar(gestor) && esValorSinAsignar(email);
 }
 
 function puedeVerPorEquipo(c){
@@ -1183,8 +1193,8 @@ function mostrarVista(vista){
     vistaActual="principal";
     return mostrarVista("principal");
   }
-  // Solo senior/supervisor pueden ver Sin asignar.
-  if(vista==="sinAsignar" && !esSenior() && !esSupervisor()){
+  // Los asesores también pueden ver y gestionar las conversaciones nuevas sin asignar.
+  if(vista==="sinAsignar" && !esSenior() && !esSupervisor() && !esAsesor()){
     vistaActual="principal";
     return mostrarVista("principal");
   }
@@ -1261,7 +1271,7 @@ function actualizarContadores(){
   });
   Object.entries(conversaciones||{}).forEach(([id,c])=>{
     for(const m of Object.values(c?.mensajes||{})){
-      if(m?.sos===true||m?.urgente===true){
+      if(!urgencias[id] && (m?.sos===true||m?.urgente===true)){
         const candidato={_id:id,gestor:m.remitente||obtenerGestorDeConversacion(c)||"",estado:"pendiente"};
         if(puedeVerSOS(candidato,c)) sosPendientes.add(id);
         break;
@@ -2382,7 +2392,9 @@ async function ejecutarIAReal(accion){
 function abrirIA(){
   if(!conversacionSeleccionada){ alert("Primero seleccioná una conversación."); return; }
   $("aiModal").classList.remove("hidden");
-  $("aiResult").textContent="Elegí una opción.";
+  $("aiResult").textContent=IA_BACKEND_URL
+    ? "IA conectada. Elegí una opción."
+    : "La IA generativa todavía no está conectada al servidor. Las opciones disponibles abajo son solo una ayuda local y no reemplazan a una IA real.";
 }
 function cerrarIA(){ $("aiModal").classList.add("hidden"); }
 function contextoIA(){
@@ -2448,6 +2460,13 @@ window.abrirModalVencimiento=abrirModalVencimiento;
 window.editarVencimiento=editarVencimiento;
 window.cerrarModalVencimiento=cerrarModalVencimiento;
 window.guardarVencimiento=guardarVencimiento;
+// Las funciones de IA se usan desde botones HTML (onclick), por eso deben quedar expuestas en window.
+window.abrirIA=abrirIA;
+window.cerrarIA=cerrarIA;
+window.iaSugerirRespuesta=iaSugerirRespuesta;
+window.iaResumir=iaResumir;
+window.iaAnalizar=iaAnalizar;
+window.iaNota=iaNota;
 
 </script>
 
