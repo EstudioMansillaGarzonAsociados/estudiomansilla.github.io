@@ -1677,7 +1677,7 @@ import {
 
 
 /* =====================================================
-   CONFIGURACIÓN CORRECTA
+   CONFIGURACIÓN FIREBASE
 ===================================================== */
 
 const firebaseConfig = {
@@ -1701,13 +1701,17 @@ const firebaseConfig = {
 };
 
 
-const app = initializeApp(firebaseConfig);
+const app =
+  initializeApp(firebaseConfig);
 
-const auth = getAuth(app);
+const auth =
+  getAuth(app);
 
-const db = getDatabase(app);
+const db =
+  getDatabase(app);
 
-const storage = getStorage(app);
+const storage =
+  getStorage(app);
 
 
 /* =====================================================
@@ -1966,45 +1970,72 @@ function obtenerEmailGestor(c) {
 
 function obtenerNombreCliente(c) {
 
-  const d = obtenerDatosCliente(c);
+  const d =
+    obtenerDatosCliente(c);
 
-  return d.nombre || c.nombreCliente || c.cliente || "";
+  return (
+    d.nombre ||
+    c.nombreCliente ||
+    c.cliente ||
+    ""
+  );
 
 }
 
 
 function obtenerDniCliente(c) {
 
-  const d = obtenerDatosCliente(c);
+  const d =
+    obtenerDatosCliente(c);
 
-  return d.dni || c.dni || "";
+  return (
+    d.dni ||
+    c.dni ||
+    ""
+  );
 
 }
 
 
 function obtenerTelefonoCliente(c) {
 
-  const d = obtenerDatosCliente(c);
+  const d =
+    obtenerDatosCliente(c);
 
-  return d.telefono || c.telefono || "";
+  return (
+    d.telefono ||
+    c.telefono ||
+    ""
+  );
 
 }
 
 
 function obtenerMotivoCliente(c) {
 
-  const d = obtenerDatosCliente(c);
+  const d =
+    obtenerDatosCliente(c);
 
-  return d.motivo || c.motivo || "";
+  return (
+    d.motivo ||
+    c.motivo ||
+    ""
+  );
 
 }
 
 
 function obtenerFechaCliente(c) {
 
-  const d = obtenerDatosCliente(c);
+  const d =
+    obtenerDatosCliente(c);
 
-  return d.fecha || c.fechaCreacion || c.fecha || null;
+  return (
+    d.fecha ||
+    c.fechaCreacion ||
+    c.fecha ||
+    null
+  );
 
 }
 
@@ -2013,8 +2044,12 @@ function obtenerEquipoDeGestor(nombre) {
 
   for (const equipo in equipos) {
 
-    if (equipos[equipo].gestores.includes(nombre)) {
+    if (
+      equipos[equipo].gestores.includes(nombre)
+    ) {
+
       return equipo;
+
     }
 
   }
@@ -2041,22 +2076,32 @@ function estaSinAsignar(c) {
 }
 
 
+/* =====================================================
+   FINALIZADAS
+===================================================== */
+
 function esFinalizada(c) {
 
   const estado =
     normalizarTexto(c?.estado);
 
   return [
+
     "finalizada",
     "finalizado",
     "cerrada",
     "cerrado",
     "terminada",
     "terminado"
+
   ].includes(estado);
 
 }
 
+
+/* =====================================================
+   MÍAS
+===================================================== */
 
 function conversacionEsMia(c) {
 
@@ -2080,16 +2125,25 @@ function conversacionEsMia(c) {
 
 
   return (
+
     gestor === nombre ||
+
     (
       emailGestor &&
       emailUsuario &&
       emailGestor === emailUsuario
     )
+
   );
 
 }
 
+
+/* =====================================================
+   PERMISOS POR EQUIPO
+   ESTA FUNCIÓN TAMBIÉN BUSCA EL EQUIPO A PARTIR
+   DEL GESTOR CUANDO LA CONVERSACIÓN NO LO TIENE.
+===================================================== */
 
 function puedeVerPorEquipo(c) {
 
@@ -2097,15 +2151,71 @@ function puedeVerPorEquipo(c) {
     return true;
   }
 
-  const equipo =
+
+  /* Primero buscamos el equipo guardado */
+
+  let equipo =
     obtenerEquipoDeConversacion(c);
+
+
+  /* Si no está guardado, buscamos por gestor */
+
+  if (!equipo) {
+
+    const gestor =
+      obtenerGestorDeConversacion(c);
+
+
+    if (gestor) {
+
+      equipo =
+        obtenerEquipoDeGestor(gestor);
+
+    }
+
+  }
+
+
+  /* Si todavía no aparece, buscamos por email */
+
+  if (!equipo) {
+
+    const email =
+      normalizarTexto(
+        obtenerEmailGestor(c)
+      );
+
+
+    if (email) {
+
+      const nombrePorEmail =
+        emailsPorNombre[email];
+
+
+      if (nombrePorEmail) {
+
+        equipo =
+          obtenerEquipoDeGestor(
+            nombrePorEmail
+          );
+
+      }
+
+    }
+
+  }
+
 
   if (!equipo) {
     return false;
   }
 
+
   const misEquipos =
-    obtenerEquipoDePersona(nombreActual);
+    obtenerEquipoDePersona(
+      nombreActual
+    );
+
 
   return misEquipos.some(
     e =>
@@ -2115,6 +2225,10 @@ function puedeVerPorEquipo(c) {
 
 }
 
+
+/* =====================================================
+   PUEDE GESTIONAR
+===================================================== */
 
 function puedeGestionarConversacion(c) {
 
@@ -2131,56 +2245,100 @@ function puedeGestionarConversacion(c) {
 }
 
 
+/* =====================================================
+   ACTIVAS
+===================================================== */
+
 function conversacionesActivas() {
 
   return Object.entries(conversaciones)
-    .filter(([id,c]) => !esFinalizada(c))
-    .map(([id,c]) => ({
-      id,
-      ...c
-    }));
+
+    .filter(
+      ([id,c]) =>
+        !esFinalizada(c)
+    )
+
+    .map(
+      ([id,c]) => ({
+        id,
+        ...c
+      })
+    );
 
 }
 
+
+/* =====================================================
+   FINALIZADAS
+===================================================== */
 
 function conversacionesFinalizadas() {
 
   return Object.entries(conversaciones)
-    .filter(([id,c]) => esFinalizada(c))
-    .map(([id,c]) => ({
-      id,
-      ...c
-    }));
+
+    .filter(
+      ([id,c]) =>
+        esFinalizada(c)
+    )
+
+    .map(
+      ([id,c]) => ({
+        id,
+        ...c
+      })
+    );
 
 }
 
+
+/* =====================================================
+   EQUIPOS
+===================================================== */
 
 function claseEquipo(equipo) {
 
   const n =
     normalizarTexto(equipo);
 
-  if (n === "verde") return "team-verde";
-  if (n === "rojo") return "team-rojo";
-  if (n === "azul") return "team-azul";
-  if (n === "1142") return "team-1142";
-  if (n === "cuoteros") return "team-cuoteros";
+
+  if (n === "verde")
+    return "team-verde";
+
+  if (n === "rojo")
+    return "team-rojo";
+
+  if (n === "azul")
+    return "team-azul";
+
+  if (n === "1142")
+    return "team-1142";
+
+  if (n === "cuoteros")
+    return "team-cuoteros";
+
 
   return "team-sin";
 
 }
 
 
+/* =====================================================
+   FECHAS
+===================================================== */
+
 function formatearHora(timestamp) {
 
-  if (!timestamp) return "";
+  if (!timestamp)
+    return "";
+
 
   const fecha =
     new Date(timestamp);
 
-  if (isNaN(fecha.getTime())) {
+
+  if (isNaN(fecha.getTime()))
     return "";
-  }
+
 
   return fecha.toLocaleTimeString(
     "es-AR",
@@ -2195,14 +2353,17 @@ function formatearHora(timestamp) {
 
 function formatearFecha(timestamp) {
 
-  if (!timestamp) return "—";
+  if (!timestamp)
+    return "—";
+
 
   const fecha =
     new Date(timestamp);
 
-  if (isNaN(fecha.getTime())) {
+
+  if (isNaN(fecha.getTime()))
     return "—";
-  }
+
 
   return fecha.toLocaleString(
     "es-AR",
@@ -2224,25 +2385,47 @@ function formatearFecha(timestamp) {
 
 function actualizarGreeting() {
 
-  if (!nombreActual) return;
+  if (!nombreActual)
+    return;
+
 
   const hora =
     new Date().getHours();
 
+
   let saludo;
 
-  if (hora >= 5 && hora < 12) {
-    saludo = "¡Buen día";
+
+  if (
+    hora >= 5 &&
+    hora < 12
+  ) {
+
+    saludo =
+      "¡Buen día";
+
   }
-  else if (hora >= 12 && hora < 19) {
-    saludo = "¡Buenas tardes";
+
+  else if (
+    hora >= 12 &&
+    hora < 19
+  ) {
+
+    saludo =
+      "¡Buenas tardes";
+
   }
+
   else {
-    saludo = "¡Buenas noches";
+
+    saludo =
+      "¡Buenas noches";
+
   }
 
 
-  document.getElementById("greeting")
+  document
+    .getElementById("greeting")
     .textContent =
       `${saludo}, ${nombreActual}! 👋`;
 
@@ -2261,7 +2444,8 @@ function actualizarGreeting() {
     );
 
 
-  document.getElementById("motivation")
+  document
+    .getElementById("motivation")
     .textContent =
       frasesMotivadoras[
         Math.abs(numeroDia) %
@@ -2273,7 +2457,8 @@ function actualizarGreeting() {
 
 function actualizarReloj() {
 
-  document.getElementById("clock")
+  document
+    .getElementById("clock")
     .textContent =
       new Date().toLocaleTimeString(
         "es-AR",
@@ -2287,9 +2472,16 @@ function actualizarReloj() {
 }
 
 
-setInterval(actualizarReloj,1000);
+setInterval(
+  actualizarReloj,
+  1000
+);
 
-setInterval(actualizarGreeting,60000);
+
+setInterval(
+  actualizarGreeting,
+  60000
+);
 
 
 /* =====================================================
@@ -2325,6 +2517,7 @@ async function iniciarSesion() {
       .getElementById("email")
       .value
       .trim();
+
 
   const password =
     document
@@ -2415,7 +2608,7 @@ async function iniciarSesion() {
     document
       .getElementById("loginError")
       .textContent =
-        mensaje;
+      mensaje;
 
   }
 
@@ -2436,9 +2629,11 @@ onAuthStateChanged(
         .getElementById("loginScreen")
         .style.display = "flex";
 
+
       document
         .getElementById("app")
         .style.display = "none";
+
 
       return;
 
@@ -2473,13 +2668,13 @@ onAuthStateChanged(
     document
       .getElementById("sidebarUser")
       .textContent =
-        nombreActual;
+      nombreActual;
 
 
     document
       .getElementById("sidebarRole")
       .textContent =
-        rolActual;
+      rolActual;
 
 
     actualizarGreeting();
@@ -2518,18 +2713,23 @@ function configurarInterfazPorRol() {
 
   if (esAsesor()) {
 
-    btn.style.display = "none";
+    btn.style.display =
+      "none";
 
   }
 
   else {
 
-    btn.style.display = "flex";
+    btn.style.display =
+      "flex";
 
   }
 
 
-  if (esSenior() || esSupervisor()) {
+  if (
+    esSenior() ||
+    esSupervisor()
+  ) {
 
     urgency.style.display =
       "block";
@@ -2553,7 +2753,11 @@ function configurarInterfazPorRol() {
 function escucharConversaciones() {
 
   onValue(
-    ref(db,"conversaciones"),
+    ref(
+      db,
+      "conversaciones"
+    ),
+
     snapshot => {
 
       conversaciones =
@@ -2597,7 +2801,11 @@ function escucharConversaciones() {
 function escucharPresencias() {
 
   onValue(
-    ref(db,"presencia"),
+    ref(
+      db,
+      "presencia"
+    ),
+
     snapshot => {
 
       const data =
@@ -2608,28 +2816,30 @@ function escucharPresencias() {
 
 
       Object.values(data)
-        .forEach(p => {
+        .forEach(
+          p => {
 
-          if (p?.nombre) {
+            if (p?.nombre) {
 
-            const anterior =
-              presencias[p.nombre];
+              const anterior =
+                presencias[p.nombre];
 
 
-            if (
-              !anterior ||
-              (p.ultimoCambio || 0) >=
-              (anterior.ultimoCambio || 0)
-            ) {
+              if (
+                !anterior ||
+                (p.ultimoCambio || 0) >=
+                (anterior.ultimoCambio || 0)
+              ) {
 
-              presencias[p.nombre] =
-                p;
+                presencias[p.nombre] =
+                  p;
+
+              }
 
             }
 
           }
-
-        });
+        );
 
 
       actualizarPresenciaPropia();
@@ -2644,7 +2854,10 @@ function escucharPresencias() {
 
 function obtenerMiPresencia() {
 
-  return presencias[nombreActual] || null;
+  return (
+    presencias[nombreActual] ||
+    null
+  );
 
 }
 
@@ -2666,8 +2879,10 @@ function actualizarPresenciaPropia() {
     pill.className =
       "presence-pill finalizado";
 
+
     pill.textContent =
       "⚪ Sin jornada";
+
 
     return;
 
@@ -2675,33 +2890,44 @@ function actualizarPresenciaPropia() {
 
 
   const estado =
-    normalizarTexto(p.estado);
+    normalizarTexto(
+      p.estado
+    );
 
 
-  if (estado === "activo") {
+  if (
+    estado === "activo"
+  ) {
 
     pill.className =
       "presence-pill activo";
+
 
     pill.textContent =
       "🟢 Activo";
 
   }
 
-  else if (estado === "break") {
+  else if (
+    estado === "break"
+  ) {
 
     pill.className =
       "presence-pill break";
+
 
     pill.textContent =
       "☕ Break";
 
   }
 
-  else if (estado === "descanso") {
+  else if (
+    estado === "descanso"
+  ) {
 
     pill.className =
       "presence-pill descanso";
+
 
     pill.textContent =
       "🌿 Descanso";
@@ -2713,6 +2939,7 @@ function actualizarPresenciaPropia() {
     pill.className =
       "presence-pill finalizado";
 
+
     pill.textContent =
       "🔴 Jornada finalizada";
 
@@ -2721,6 +2948,10 @@ function actualizarPresenciaPropia() {
 }
 
 
+/* =====================================================
+   PRESENCE MENU
+===================================================== */
+
 window.togglePresenceMenu =
   function() {
 
@@ -2728,7 +2959,9 @@ window.togglePresenceMenu =
       .getElementById(
         "presenceDropdown"
       )
-      .classList.toggle("open");
+      .classList.toggle(
+        "open"
+      );
 
   };
 
@@ -2745,14 +2978,18 @@ document.addEventListener(
 
     if (
       menu &&
-      !menu.contains(event.target)
+      !menu.contains(
+        event.target
+      )
     ) {
 
       document
         .getElementById(
           "presenceDropdown"
         )
-        .classList.remove("open");
+        .classList.remove(
+          "open"
+        );
 
     }
 
@@ -2763,7 +3000,8 @@ document.addEventListener(
 window.cambiarEstado =
   async function(estado) {
 
-    if (!usuarioActual) return;
+    if (!usuarioActual)
+      return;
 
 
     try {
@@ -2773,7 +3011,8 @@ window.cambiarEstado =
 
 
       const actual =
-        obtenerMiPresencia() || {};
+        obtenerMiPresencia() ||
+        {};
 
 
       const cambios = {
@@ -2836,13 +3075,16 @@ window.cambiarEstado =
         .getElementById(
           "presenceDropdown"
         )
-        .classList.remove("open");
+        .classList.remove(
+          "open"
+        );
 
     }
 
     catch(error) {
 
       console.error(error);
+
 
       alert(
         "No se pudo guardar el estado. " +
@@ -2865,7 +3107,9 @@ window.cambiarVista =
       vista === "sinAsignar" &&
       esAsesor()
     ) {
+
       return;
+
     }
 
 
@@ -2877,7 +3121,9 @@ window.cambiarVista =
       .querySelectorAll(".nav-btn")
       .forEach(
         btn =>
-          btn.classList.remove("active")
+          btn.classList.remove(
+            "active"
+          )
       );
 
 
@@ -2904,7 +3150,9 @@ window.cambiarVista =
         .getElementById(
           botones[vista]
         )
-        .classList.add("active");
+        .classList.add(
+          "active"
+        );
 
     }
 
@@ -2923,10 +3171,15 @@ window.cambiarVista =
 
 function renderizarListaSegunModo() {
 
-  if (modoActual === "principal") {
+  if (
+    modoActual ===
+    "principal"
+  ) {
 
     document
-      .getElementById("listTitle")
+      .getElementById(
+        "listTitle"
+      )
       .textContent =
         esSupervisor()
           ? "👥 Gestores"
@@ -2938,13 +3191,16 @@ function renderizarListaSegunModo() {
   }
 
   else if (
-    modoActual === "agentes"
+    modoActual ===
+    "agentes"
   ) {
 
     document
-      .getElementById("listTitle")
+      .getElementById(
+        "listTitle"
+      )
       .textContent =
-        "👥 Agentes";
+      "👥 Agentes";
 
 
     renderizarAgentes();
@@ -2952,16 +3208,20 @@ function renderizarListaSegunModo() {
   }
 
   else if (
-    modoActual === "sinAsignar"
+    modoActual ===
+    "sinAsignar"
   ) {
 
-    if (esAsesor()) return;
+    if (esAsesor())
+      return;
 
 
     document
-      .getElementById("listTitle")
+      .getElementById(
+        "listTitle"
+      )
       .textContent =
-        "📥 Chats sin asignar";
+      "📥 Chats sin asignar";
 
 
     renderizarSinAsignar();
@@ -2969,13 +3229,16 @@ function renderizarListaSegunModo() {
   }
 
   else if (
-    modoActual === "historial"
+    modoActual ===
+    "historial"
   ) {
 
     document
-      .getElementById("listTitle")
+      .getElementById(
+        "listTitle"
+      )
       .textContent =
-        "📚 Historial";
+      "📚 Historial";
 
 
     renderizarHistorial();
@@ -3031,8 +3294,9 @@ function renderizarPrincipal() {
 
   let lista =
     conversacionesActivas()
-      .filter(c =>
-        conversacionEsMia(c)
+      .filter(
+        c =>
+          conversacionEsMia(c)
       );
 
 
@@ -3040,9 +3304,10 @@ function renderizarPrincipal() {
 
     lista =
       conversacionesActivas()
-        .filter(c =>
-          !estaSinAsignar(c) &&
-          puedeVerPorEquipo(c)
+        .filter(
+          c =>
+            !estaSinAsignar(c) &&
+            puedeVerPorEquipo(c)
         );
 
   }
@@ -3085,18 +3350,24 @@ function obtenerTodosLosGestores() {
 
 
   Object.values(equipos)
-    .forEach(equipo => {
+    .forEach(
+      equipo => {
 
-      equipo.gestores
-        .forEach(
-          gestor =>
-            setGestores.add(gestor)
-        );
+        equipo.gestores
+          .forEach(
+            gestor =>
+              setGestores.add(
+                gestor
+              )
+          );
 
-    });
+      }
+    );
 
 
-  return Array.from(setGestores);
+  return Array.from(
+    setGestores
+  );
 
 }
 
@@ -3136,16 +3407,23 @@ function renderizarAgentes() {
     equiposMios.forEach(
       equipo => {
 
-        (equipos[equipo]?.gestores || [])
-          .forEach(
-            g => {
+        (
+          equipos[equipo]?.gestores ||
+          []
+        )
+        .forEach(
+          g => {
 
-              if (!gestores.includes(g)) {
-                gestores.push(g);
-              }
+            if (
+              !gestores.includes(g)
+            ) {
+
+              gestores.push(g);
 
             }
-          );
+
+          }
+        );
 
       }
     );
@@ -3180,18 +3458,27 @@ function renderizarAgentes() {
 }
 
 
+/* =====================================================
+   CARD GESTOR
+===================================================== */
+
 function crearCardGestor(nombre) {
 
   const equipo =
-    obtenerEquipoDeGestor(nombre);
+    obtenerEquipoDeGestor(
+      nombre
+    );
 
 
   const p =
-    presencias[nombre] || {};
+    presencias[nombre] ||
+    {};
 
 
   const estado =
-    normalizarTexto(p.estado);
+    normalizarTexto(
+      p.estado
+    );
 
 
   const activas =
@@ -3206,7 +3493,9 @@ function crearCardGestor(nombre) {
 
 
   const div =
-    document.createElement("div");
+    document.createElement(
+      "div"
+    );
 
 
   div.className =
@@ -3229,7 +3518,9 @@ function crearCardGestor(nombre) {
       </div>
 
       <div class="card-sub">
-        ${escapeHtml(equipo || "Sin equipo")}
+        ${escapeHtml(
+          equipo || "Sin equipo"
+        )}
       </div>
 
       <div class="card-meta">
@@ -3251,7 +3542,10 @@ function crearCardGestor(nombre) {
 
   div.addEventListener(
     "click",
-    () => abrirChatsDeGestor(nombre)
+    () =>
+      abrirChatsDeGestor(
+        nombre
+      )
   );
 
 
@@ -3261,7 +3555,9 @@ function crearCardGestor(nombre) {
   ) {
 
     const button =
-      document.createElement("button");
+      document.createElement(
+        "button"
+      );
 
 
     button.className =
@@ -3282,7 +3578,9 @@ function crearCardGestor(nombre) {
       };
 
 
-    div.appendChild(button);
+    div.appendChild(
+      button
+    );
 
   }
 
@@ -3292,90 +3590,166 @@ function crearCardGestor(nombre) {
 }
 
 
-function textoEstadoPresencia(estado) {
+function textoEstadoPresencia(
+  estado
+) {
 
-  if (estado === "activo")
+  if (
+    estado === "activo"
+  )
     return "🟢 Activo";
 
-  if (estado === "break")
+
+  if (
+    estado === "break"
+  )
     return "☕ Break";
 
-  if (estado === "descanso")
+
+  if (
+    estado === "descanso"
+  )
     return "🌿 Descanso";
+
 
   return "⚪ Sin jornada";
 
 }
 
 
-function abrirChatsDeGestor(nombre) {
+/* =====================================================
+   CHATS DE UN GESTOR
+===================================================== */
+
+function abrirChatsDeGestor(
+  nombre
+) {
 
   const items =
-    document.getElementById("items");
+    document.getElementById(
+      "items"
+    );
+
 
   const titulo =
-    document.getElementById("listTitle");
+    document.getElementById(
+      "listTitle"
+    );
+
 
   titulo.textContent =
     `💬 ${nombre}`;
 
+
   items.innerHTML = "";
 
 
-  /* BOTÓN PARA VOLVER A LA LISTA DE AGENTES */
+  /* BOTÓN VOLVER */
 
   const volver =
-    document.createElement("button");
+    document.createElement(
+      "button"
+    );
 
-  volver.type = "button";
 
-  volver.style.width = "100%";
-  volver.style.border = "0";
-  volver.style.borderRadius = "12px";
-  volver.style.padding = "11px 13px";
-  volver.style.marginBottom = "10px";
-  volver.style.background = "#f0f2f1";
-  volver.style.color = "#35413c";
-  volver.style.fontWeight = "800";
-  volver.style.fontSize = "12px";
-  volver.style.cursor = "pointer";
+  volver.type =
+    "button";
+
+
+  volver.style.width =
+    "100%";
+
+
+  volver.style.border =
+    "0";
+
+
+  volver.style.borderRadius =
+    "12px";
+
+
+  volver.style.padding =
+    "11px 13px";
+
+
+  volver.style.marginBottom =
+    "10px";
+
+
+  volver.style.background =
+    "#f0f2f1";
+
+
+  volver.style.color =
+    "#35413c";
+
+
+  volver.style.fontWeight =
+    "800";
+
+
+  volver.style.fontSize =
+    "12px";
+
+
+  volver.style.cursor =
+    "pointer";
+
+
   volver.textContent =
     "← Volver a agentes";
 
 
-  volver.onclick = function() {
+  volver.onclick =
+    function() {
 
-    /* Volvemos a la vista de agentes */
-
-    modoActual = "agentes";
-
-    document
-      .querySelectorAll(".nav-btn")
-      .forEach(
-        btn =>
-          btn.classList.remove("active")
-      );
-
-    document
-      .getElementById("btnAgentes")
-      .classList.add("active");
-
-    titulo.textContent =
-      "👥 Agentes";
-
-    document
-      .getElementById("searchInput")
-      .value = "";
-
-    renderizarAgentes();
-
-  };
+      modoActual =
+        "agentes";
 
 
-  items.appendChild(volver);
+      document
+        .querySelectorAll(
+          ".nav-btn"
+        )
+        .forEach(
+          btn =>
+            btn.classList.remove(
+              "active"
+            )
+        );
 
 
-  /* BUSCAR LOS CHATS DEL GESTOR */
+      document
+        .getElementById(
+          "btnAgentes"
+        )
+        .classList.add(
+          "active"
+        );
+
+
+      titulo.textContent =
+        "👥 Agentes";
+
+
+      document
+        .getElementById(
+          "searchInput"
+        )
+        .value = "";
+
+
+      renderizarAgentes();
+
+    };
+
+
+  items.appendChild(
+    volver
+  );
+
+
+  /* CHATS DEL GESTOR */
 
   let lista =
     conversacionesActivas()
@@ -3388,7 +3762,7 @@ function abrirChatsDeGestor(nombre) {
       );
 
 
-  /* EL SENIOR SOLO PUEDE VER SU EQUIPO */
+  /* SENIOR SOLO VE SU EQUIPO */
 
   if (
     !esSupervisor() &&
@@ -3404,48 +3778,62 @@ function abrirChatsDeGestor(nombre) {
   }
 
 
-  /* SIN CHATS */
-
   if (!lista.length) {
 
     const vacio =
-      document.createElement("div");
+      document.createElement(
+        "div"
+      );
+
 
     vacio.className =
       "empty";
+
 
     vacio.innerHTML =
       `
         ✨ Este gestor no tiene chats activos.
       `;
 
-    items.appendChild(vacio);
+
+    items.appendChild(
+      vacio
+    );
+
 
     return;
 
   }
 
 
-  /* MOSTRAR CLIENTES */
-
   lista =
-    aplicarFiltroLista(lista);
+    aplicarFiltroLista(
+      lista
+    );
 
 
   if (!lista.length) {
 
     const vacio =
-      document.createElement("div");
+      document.createElement(
+        "div"
+      );
+
 
     vacio.className =
       "empty";
+
 
     vacio.innerHTML =
       `
         🔎 No encontramos gestiones con esa búsqueda.
       `;
 
-    items.appendChild(vacio);
+
+    items.appendChild(
+      vacio
+    );
+
 
     return;
 
@@ -3477,7 +3865,8 @@ function renderizarSinAsignar() {
   items.innerHTML = "";
 
 
-  if (esAsesor()) return;
+  if (esAsesor())
+    return;
 
 
   let lista =
@@ -3489,7 +3878,9 @@ function renderizarSinAsignar() {
 
 
   lista =
-    aplicarFiltroLista(lista);
+    aplicarFiltroLista(
+      lista
+    );
 
 
   if (!lista.length) {
@@ -3533,22 +3924,61 @@ function renderizarHistorial() {
     conversacionesFinalizadas();
 
 
-  if (esSupervisor()) {
+  /* SUPERVISOR:
+     VE TODAS */
 
-    // todos
+  if (
+    esSupervisor()
+  ) {
+
+    /* No filtramos nada */
 
   }
 
-  else if (esSenior()) {
+
+  /* SENIOR:
+     VE LAS DE SU EQUIPO */
+
+  else if (
+    esSenior()
+  ) {
 
     lista =
       lista.filter(
-        c =>
-          puedeVerPorEquipo(c) ||
-          conversacionEsMia(c)
+        c => {
+
+          /* Si es propia */
+
+          if (
+            conversacionEsMia(c)
+          ) {
+
+            return true;
+
+          }
+
+
+          /* Si pertenece al equipo */
+
+          if (
+            puedeVerPorEquipo(c)
+          ) {
+
+            return true;
+
+          }
+
+
+          return false;
+
+        }
       );
 
   }
+
+
+  /* ASESOR:
+     SOLAMENTE LAS PROPIAS */
 
   else {
 
@@ -3562,14 +3992,42 @@ function renderizarHistorial() {
 
 
   lista =
-    aplicarFiltroLista(lista);
+    aplicarFiltroLista(
+      lista
+    );
+
+
+  /* MÁS RECIENTES PRIMERO */
+
+  lista.sort(
+    (a,b) =>
+      (
+        b.fechaFinalizacion ||
+        b.fechaCreacion ||
+        0
+      ) -
+      (
+        a.fechaFinalizacion ||
+        a.fechaCreacion ||
+        0
+      )
+  );
 
 
   if (!lista.length) {
 
     items.innerHTML =
       `<div class="empty">
+
         📚 No hay gestiones finalizadas.
+
+        <div style="
+          margin-top:8px;
+          font-size:11px;
+        ">
+          Probá buscar por DNI o nombre.
+        </div>
+
       </div>`;
 
     return;
@@ -3580,7 +4038,10 @@ function renderizarHistorial() {
   lista.forEach(
     c =>
       items.appendChild(
-        crearCardCliente(c,true)
+        crearCardCliente(
+          c,
+          true
+        )
       )
   );
 
@@ -3591,36 +4052,49 @@ function renderizarHistorial() {
    BÚSQUEDA
 ===================================================== */
 
-function aplicarFiltroLista(lista) {
+function aplicarFiltroLista(
+  lista
+) {
 
   const q =
     normalizarTexto(
       document
-        .getElementById("searchInput")
+        .getElementById(
+          "searchInput"
+        )
         .value
     );
 
 
-  if (!q) return lista;
+  if (!q)
+    return lista;
 
 
-  return lista.filter(c => {
+  return lista.filter(
+    c => {
 
-    return (
-      normalizarTexto(
-        obtenerNombreCliente(c)
-      ).includes(q) ||
+      return (
 
-      normalizarTexto(
-        obtenerDniCliente(c)
-      ).includes(q) ||
+        normalizarTexto(
+          obtenerNombreCliente(c)
+        ).includes(q)
 
-      normalizarTexto(
-        obtenerTelefonoCliente(c)
-      ).includes(q)
-    );
+        ||
 
-  });
+        normalizarTexto(
+          obtenerDniCliente(c)
+        ).includes(q)
+
+        ||
+
+        normalizarTexto(
+          obtenerTelefonoCliente(c)
+        ).includes(q)
+
+      );
+
+    }
+  );
 
 }
 
@@ -3645,14 +4119,21 @@ function crearCardCliente(
   const dni =
     obtenerDniCliente(c);
 
+
   const nombre =
     obtenerNombreCliente(c);
+
 
   const telefono =
     obtenerTelefonoCliente(c);
 
+
   const equipo =
-    obtenerEquipoDeConversacion(c);
+    obtenerEquipoDeConversacion(c) ||
+    obtenerEquipoDeGestor(
+      obtenerGestorDeConversacion(c)
+    );
+
 
   const gestor =
     obtenerGestorDeConversacion(c);
@@ -3684,7 +4165,9 @@ function crearCardCliente(
 
 
   const div =
-    document.createElement("div");
+    document.createElement(
+      "div"
+    );
 
 
   div.className =
@@ -3767,7 +4250,9 @@ function crearCardCliente(
   div.addEventListener(
     "click",
     () =>
-      seleccionarConversacion(c.id)
+      seleccionarConversacion(
+        c.id
+      )
   );
 
 
@@ -3780,67 +4265,98 @@ function crearCardCliente(
    CHAT
 ===================================================== */
 
-function seleccionarConversacion(id) {
+function seleccionarConversacion(
+  id
+) {
 
   const c =
     conversaciones[id];
 
 
-  if (!c) return;
+  if (!c)
+    return;
 
 
   conversacionSeleccionada =
     id;
 
 
-  renderizarChat(id,c);
+  renderizarChat(
+    id,
+    c
+  );
+
 
   renderizarListaSegunModo();
 
 }
 
 
-function renderizarChat(id,c) {
+function renderizarChat(
+  id,
+  c
+) {
 
   document
-    .getElementById("chatEmpty")
-    .style.display = "none";
+    .getElementById(
+      "chatEmpty"
+    )
+    .style.display =
+      "none";
 
 
   document
-    .getElementById("chatContent")
-    .style.display = "flex";
+    .getElementById(
+      "chatContent"
+    )
+    .style.display =
+      "flex";
 
 
   const nombre =
     obtenerNombreCliente(c);
 
+
   const dni =
     obtenerDniCliente(c);
+
 
   const telefono =
     obtenerTelefonoCliente(c);
 
+
   const equipo =
-    obtenerEquipoDeConversacion(c);
+    obtenerEquipoDeConversacion(c) ||
+    obtenerEquipoDeGestor(
+      obtenerGestorDeConversacion(c)
+    );
+
 
   const gestor =
     obtenerGestorDeConversacion(c);
+
 
   const motivo =
     obtenerMotivoCliente(c);
 
 
   document
-    .getElementById("chatClientTitle")
+    .getElementById(
+      "chatClientTitle"
+    )
     .textContent =
       dni
         ? `DNI ${dni}`
-        : (nombre || "Cliente");
+        : (
+            nombre ||
+            "Cliente"
+          );
 
 
   document
-    .getElementById("chatClientSub")
+    .getElementById(
+      "chatClientSub"
+    )
     .textContent =
       nombre
         ? `👤 ${nombre}`
@@ -3848,43 +4364,57 @@ function renderizarChat(id,c) {
 
 
   document
-    .getElementById("fileDni")
+    .getElementById(
+      "fileDni"
+    )
     .textContent =
       dni || "—";
 
 
   document
-    .getElementById("fileNombre")
+    .getElementById(
+      "fileNombre"
+    )
     .textContent =
       nombre || "—";
 
 
   document
-    .getElementById("fileTelefono")
+    .getElementById(
+      "fileTelefono"
+    )
     .textContent =
       telefono || "—";
 
 
   document
-    .getElementById("fileMotivo")
+    .getElementById(
+      "fileMotivo"
+    )
     .textContent =
       motivo || "—";
 
 
   document
-    .getElementById("fileEquipo")
+    .getElementById(
+      "fileEquipo"
+    )
     .textContent =
       equipo || "Sin asignar";
 
 
   document
-    .getElementById("fileGestor")
+    .getElementById(
+      "fileGestor"
+    )
     .textContent =
       gestor || "Sin asignar";
 
 
   document
-    .getElementById("fileFecha")
+    .getElementById(
+      "fileFecha"
+    )
     .textContent =
       formatearFecha(
         obtenerFechaCliente(c)
@@ -3892,7 +4422,9 @@ function renderizarChat(id,c) {
 
 
   document
-    .getElementById("fileEstado")
+    .getElementById(
+      "fileEstado"
+    )
     .textContent =
       esFinalizada(c)
         ? "Finalizada"
@@ -3908,26 +4440,43 @@ function renderizarChat(id,c) {
 
 
   document
-    .getElementById("finalizeBtn")
+    .getElementById(
+      "finalizeBtn"
+    )
     .style.display =
-      (!finalizada && puede)
+      (
+        !finalizada &&
+        puede
+      )
         ? "block"
         : "none";
 
 
   document
-    .getElementById("transferBtn")
+    .getElementById(
+      "transferBtn"
+    )
     .style.display =
-      (!finalizada &&
-       (esSupervisor() || esSenior()))
+      (
+        !finalizada &&
+        (
+          esSupervisor() ||
+          esSenior()
+        )
+      )
         ? "block"
         : "none";
 
 
   document
-    .getElementById("composer")
+    .getElementById(
+      "composer"
+    )
     .style.display =
-      (!finalizada && puede)
+      (
+        !finalizada &&
+        puede
+      )
         ? "flex"
         : "none";
 
@@ -3952,11 +4501,15 @@ window.toggleFicha =
       );
 
 
-    body.classList.toggle("open");
+    body.classList.toggle(
+      "open"
+    );
 
 
     arrow.textContent =
-      body.classList.contains("open")
+      body.classList.contains(
+        "open"
+      )
         ? "▲"
         : "▼";
 
@@ -3967,13 +4520,16 @@ window.toggleFicha =
    MENSAJES
 ===================================================== */
 
-function escucharMensajes(id) {
+function escucharMensajes(
+  id
+) {
 
   onValue(
     ref(
       db,
       `conversaciones/${id}/mensajes`
     ),
+
     snapshot => {
 
       const data =
@@ -3982,12 +4538,14 @@ function escucharMensajes(id) {
 
       const mensajes =
         Object.entries(data)
+
           .map(
             ([key,value]) => ({
               id:key,
               ...value
             })
           )
+
           .sort(
             (a,b) =>
               (a.fecha || 0) -
@@ -4018,107 +4576,132 @@ function renderizarMensajes(
   container.innerHTML = "";
 
 
-  mensajes.forEach(m => {
+  mensajes.forEach(
+    m => {
 
-    const cliente =
-      normalizarTexto(
-        m.remitente
-      ) === "cliente";
-
-
-    const row =
-      document.createElement("div");
+      const cliente =
+        normalizarTexto(
+          m.remitente
+        ) ===
+        "cliente";
 
 
-    row.className =
-      `message-row ${
-        cliente
-          ? "cliente"
-          : "asesor"
-      }`;
+      const row =
+        document.createElement(
+          "div"
+        );
 
 
-    const box =
-      document.createElement("div");
+      row.className =
+        `message-row ${
+          cliente
+            ? "cliente"
+            : "asesor"
+        }`;
 
 
-    box.className =
-      `message ${
-        cliente
-          ? "client"
-          : "agent"
-      }`;
+      const box =
+        document.createElement(
+          "div"
+        );
 
 
-    if (
-      m.tipo === "imagen" &&
-      m.url
-    ) {
-
-      const img =
-        document.createElement("img");
-
-
-      img.src =
-        m.url;
+      box.className =
+        `message ${
+          cliente
+            ? "client"
+            : "agent"
+        }`;
 
 
-      img.className =
-        "message-image";
+      if (
+        m.tipo === "imagen" &&
+        m.url
+      ) {
 
-
-      img.alt =
-        "Imagen enviada";
-
-
-      img.onclick =
-        () =>
-          window.open(
-            m.url,
-            "_blank"
+        const img =
+          document.createElement(
+            "img"
           );
 
 
-      box.appendChild(img);
+        img.src =
+          m.url;
+
+
+        img.className =
+          "message-image";
+
+
+        img.alt =
+          "Imagen enviada";
+
+
+        img.onclick =
+          () =>
+            window.open(
+              m.url,
+              "_blank"
+            );
+
+
+        box.appendChild(
+          img
+        );
+
+      }
+
+      else {
+
+        const text =
+          document.createElement(
+            "div"
+          );
+
+
+        text.textContent =
+          m.texto || "";
+
+
+        box.appendChild(
+          text
+        );
+
+      }
+
+
+      const meta =
+        document.createElement(
+          "div"
+        );
+
+
+      meta.className =
+        "message-meta";
+
+
+      meta.textContent =
+        `${m.remitente || ""} ${
+          formatearHora(m.fecha)
+        }`;
+
+
+      box.appendChild(
+        meta
+      );
+
+
+      row.appendChild(
+        box
+      );
+
+
+      container.appendChild(
+        row
+      );
 
     }
-
-    else {
-
-      const text =
-        document.createElement("div");
-
-
-      text.textContent =
-        m.texto || "";
-
-
-      box.appendChild(text);
-
-    }
-
-
-    const meta =
-      document.createElement("div");
-
-
-    meta.className =
-      "message-meta";
-
-
-    meta.textContent =
-      `${m.remitente || ""} ${
-        formatearHora(m.fecha)
-      }`;
-
-
-    box.appendChild(meta);
-
-    row.appendChild(box);
-
-    container.appendChild(row);
-
-  });
+  );
 
 
   container.scrollTop =
@@ -4134,7 +4717,9 @@ function renderizarMensajes(
 window.enviarMensaje =
   async function() {
 
-    if (!conversacionSeleccionada)
+    if (
+      !conversacionSeleccionada
+    )
       return;
 
 
@@ -4148,7 +4733,8 @@ window.enviarMensaje =
       input.value.trim();
 
 
-    if (!texto) return;
+    if (!texto)
+      return;
 
 
     const c =
@@ -4160,7 +4746,8 @@ window.enviarMensaje =
     if (
       !c ||
       esFinalizada(c)
-    ) return;
+    )
+      return;
 
 
     if (
@@ -4183,6 +4770,7 @@ window.enviarMensaje =
           db,
           `conversaciones/${conversacionSeleccionada}/mensajes`
         ),
+
         {
 
           texto,
@@ -4210,6 +4798,7 @@ window.enviarMensaje =
     catch(error) {
 
       console.error(error);
+
 
       alert(
         "No se pudo enviar el mensaje."
@@ -4254,13 +4843,18 @@ window.seleccionarFotos =
       return;
 
 
-    if (!conversacionSeleccionada) {
+    if (
+      !conversacionSeleccionada
+    ) {
 
       alert(
         "Primero abrí una gestión."
       );
 
-      event.target.value = "";
+
+      event.target.value =
+        "";
+
 
       return;
 
@@ -4283,7 +4877,10 @@ window.seleccionarFotos =
         "No podés enviar fotos en esta gestión."
       );
 
-      event.target.value = "";
+
+      event.target.value =
+        "";
+
 
       return;
 
@@ -4292,9 +4889,13 @@ window.seleccionarFotos =
 
     try {
 
-      for (const file of files) {
+      for (
+        const file of files
+      ) {
 
-        await enviarFoto(file);
+        await enviarFoto(
+          file
+        );
 
       }
 
@@ -4304,6 +4905,7 @@ window.seleccionarFotos =
 
       console.error(error);
 
+
       alert(
         "No se pudo enviar la foto. " +
         "Verificá que Firebase Storage esté habilitado."
@@ -4312,22 +4914,29 @@ window.seleccionarFotos =
     }
 
 
-    event.target.value = "";
+    event.target.value =
+      "";
 
   };
 
 
-async function enviarFoto(file) {
+async function enviarFoto(
+  file
+) {
 
   const maxSize =
     10 * 1024 * 1024;
 
 
-  if (file.size > maxSize) {
+  if (
+    file.size >
+    maxSize
+  ) {
 
     alert(
       `${file.name} supera los 10 MB.`
     );
+
 
     return;
 
@@ -4335,12 +4944,15 @@ async function enviarFoto(file) {
 
 
   if (
-    !file.type.startsWith("image/")
+    !file.type.startsWith(
+      "image/"
+    )
   ) {
 
     alert(
       `${file.name} no es una imagen.`
     );
+
 
     return;
 
@@ -4387,6 +4999,7 @@ async function enviarFoto(file) {
       db,
       `conversaciones/${conversacionSeleccionada}/mensajes`
     ),
+
     {
 
       tipo:
@@ -4419,7 +5032,9 @@ async function enviarFoto(file) {
 window.finalizarGestion =
   async function() {
 
-    if (!conversacionSeleccionada)
+    if (
+      !conversacionSeleccionada
+    )
       return;
 
 
@@ -4441,12 +5056,15 @@ window.finalizarGestion =
         "No tenés permiso para finalizar esta gestión."
       );
 
+
       return;
 
     }
 
 
-    if (esFinalizada(c))
+    if (
+      esFinalizada(c)
+    )
       return;
 
 
@@ -4455,7 +5073,8 @@ window.finalizarGestion =
         "¿Querés finalizar esta gestión?\n\n" +
         "El chat quedará disponible en Historial."
       )
-    ) return;
+    )
+      return;
 
 
     try {
@@ -4465,6 +5084,7 @@ window.finalizarGestion =
           db,
           `conversaciones/${conversacionSeleccionada}`
         ),
+
         {
 
           estado:
@@ -4491,6 +5111,7 @@ window.finalizarGestion =
 
       console.error(error);
 
+
       alert(
         "No se pudo finalizar la gestión."
       );
@@ -4509,8 +5130,12 @@ window.abrirTransferencia =
 
     if (
       !conversacionSeleccionada ||
-      (!esSupervisor() && !esSenior())
-    ) return;
+      (
+        !esSupervisor() &&
+        !esSenior()
+      )
+    )
+      return;
 
 
     const select =
@@ -4565,7 +5190,9 @@ window.abrirTransferencia =
       .getElementById(
         "transferModal"
       )
-      .classList.add("open");
+      .classList.add(
+        "open"
+      );
 
   };
 
@@ -4577,7 +5204,9 @@ window.cerrarTransferencia =
       .getElementById(
         "transferModal"
       )
-      .classList.remove("open");
+      .classList.remove(
+        "open"
+      );
 
   };
 
@@ -4638,7 +5267,9 @@ window.cargarGestoresTransferencia =
 window.confirmarTransferencia =
   async function() {
 
-    if (!conversacionSeleccionada)
+    if (
+      !conversacionSeleccionada
+    )
       return;
 
 
@@ -4654,11 +5285,15 @@ window.confirmarTransferencia =
       ).value;
 
 
-    if (!equipo || !gestor) {
+    if (
+      !equipo ||
+      !gestor
+    ) {
 
       alert(
         "Seleccioná equipo y gestor."
       );
+
 
       return;
 
@@ -4672,6 +5307,7 @@ window.confirmarTransferencia =
           db,
           `conversaciones/${conversacionSeleccionada}`
         ),
+
         {
 
           equipo,
@@ -4685,7 +5321,9 @@ window.confirmarTransferencia =
             gestor,
 
           gestorEmail:
-            obtenerEmailPorNombre(gestor),
+            obtenerEmailPorNombre(
+              gestor
+            ),
 
           fechaUltimaAsignacion:
             Date.now(),
@@ -4705,6 +5343,7 @@ window.confirmarTransferencia =
 
       console.error(error);
 
+
       alert(
         "No se pudo transferir la gestión."
       );
@@ -4714,10 +5353,15 @@ window.confirmarTransferencia =
   };
 
 
-function obtenerEmailPorNombre(nombre) {
+function obtenerEmailPorNombre(
+  nombre
+) {
 
   for (
-    const [email,nombreMapa]
+    const [
+      email,
+      nombreMapa
+    ]
     of Object.entries(
       emailsPorNombre
     )
@@ -4738,6 +5382,7 @@ function obtenerEmailPorNombre(nombre) {
 
   }
 
+
   return "";
 
 }
@@ -4750,7 +5395,9 @@ function obtenerEmailPorNombre(nombre) {
 window.pedirAyudaSenior =
   async function() {
 
-    if (!conversacionSeleccionada)
+    if (
+      !conversacionSeleccionada
+    )
       return;
 
 
@@ -4779,12 +5426,17 @@ async function crearUrgencia(c) {
 
   const equipo =
     obtenerEquipoDeConversacion(c) ||
+    obtenerEquipoDeGestor(
+      obtenerGestorDeConversacion(c)
+    ) ||
     equiposMios[0] ||
     "";
 
 
   const seniors =
-    seniorsDeEquipo(equipo);
+    seniorsDeEquipo(
+      equipo
+    );
 
 
   const senior =
@@ -4795,7 +5447,10 @@ async function crearUrgencia(c) {
 
   const urgencyRef =
     push(
-      ref(db,"urgencias")
+      ref(
+        db,
+        "urgencias"
+      )
     );
 
 
@@ -4851,6 +5506,7 @@ async function crearUrgencia(c) {
         db,
         `urgencias/${id}/mensajes`
       ),
+
       {
 
         texto:
@@ -4882,6 +5538,7 @@ async function crearUrgencia(c) {
 
     console.error(error);
 
+
     alert(
       "No se pudo enviar la solicitud de ayuda."
     );
@@ -4900,11 +5557,14 @@ async function abrirChatSenior() {
 
 
   const equipo =
-    equiposMios[0] || "";
+    equiposMios[0] ||
+    "";
 
 
   const seniors =
-    seniorsDeEquipo(equipo);
+    seniorsDeEquipo(
+      equipo
+    );
 
 
   const senior =
@@ -4915,7 +5575,10 @@ async function abrirChatSenior() {
 
   const urgencyRef =
     push(
-      ref(db,"urgencias")
+      ref(
+        db,
+        "urgencias"
+      )
     );
 
 
@@ -4968,6 +5631,7 @@ async function abrirChatSenior() {
 
     console.error(error);
 
+
     alert(
       "No se pudo abrir el chat con el senior."
     );
@@ -4984,7 +5648,11 @@ async function abrirChatSenior() {
 function escucharUrgencias() {
 
   onValue(
-    ref(db,"urgencias"),
+    ref(
+      db,
+      "urgencias"
+    ),
+
     snapshot => {
 
       urgencias =
@@ -5005,7 +5673,9 @@ function urgenciaEsVisible(u) {
     return false;
 
 
-  if (u.estado === "cerrada")
+  if (
+    u.estado === "cerrada"
+  )
     return false;
 
 
@@ -5039,7 +5709,9 @@ function urgenciaEsVisible(u) {
     return misEquipos.some(
       e =>
         normalizarTexto(e) ===
-        normalizarTexto(u.equipo)
+        normalizarTexto(
+          u.equipo
+        )
     );
 
   }
@@ -5062,16 +5734,19 @@ function actualizarContadorUrgencias() {
   if (
     !esSenior() &&
     !esSupervisor()
-  ) return;
+  )
+    return;
 
 
   const cantidad =
-    Object.values(urgencias)
-      .filter(
-        u =>
-          urgenciaEsVisible(u)
-      )
-      .length;
+    Object.values(
+      urgencias
+    )
+    .filter(
+      u =>
+        urgenciaEsVisible(u)
+    )
+    .length;
 
 
   document
@@ -5088,11 +5763,13 @@ window.abrirListaUrgencias =
   function() {
 
     const visibles =
-      Object.entries(urgencias)
-        .filter(
-          ([id,u]) =>
-            urgenciaEsVisible(u)
-        );
+      Object.entries(
+        urgencias
+      )
+      .filter(
+        ([id,u]) =>
+          urgenciaEsVisible(u)
+      );
 
 
     if (!visibles.length) {
@@ -5100,6 +5777,7 @@ window.abrirListaUrgencias =
       alert(
         "No hay pedidos de ayuda pendientes. 💚"
       );
+
 
       return;
 
@@ -5113,7 +5791,9 @@ window.abrirListaUrgencias =
   };
 
 
-function abrirUrgenciaChat(id) {
+function abrirUrgenciaChat(
+  id
+) {
 
   urgenciaSeleccionada =
     id;
@@ -5131,13 +5811,18 @@ function abrirUrgenciaChat(id) {
     .getElementById(
       "urgencyPanel"
     )
-    .classList.add("open");
+    .classList.add(
+      "open"
+    );
 
 
   let texto;
 
 
-  if (u.tipo === "chat_senior") {
+  if (
+    u.tipo ===
+    "chat_senior"
+  ) {
 
     texto =
       `💬 ${u.gestor} está hablando con su senior`;
@@ -5148,6 +5833,7 @@ function abrirUrgenciaChat(id) {
 
     texto =
       `🚨 Ayuda de ${u.gestor}`;
+
 
     if (u.clienteDni) {
 
@@ -5167,18 +5853,23 @@ function abrirUrgenciaChat(id) {
       texto;
 
 
-  escucharMensajesUrgencia(id);
+  escucharMensajesUrgencia(
+    id
+  );
 
 }
 
 
-function escucharMensajesUrgencia(id) {
+function escucharMensajesUrgencia(
+  id
+) {
 
   onValue(
     ref(
       db,
       `urgencias/${id}/mensajes`
     ),
+
     snapshot => {
 
       const data =
@@ -5203,64 +5894,68 @@ function escucharMensajesUrgencia(id) {
       box.innerHTML = "";
 
 
-      mensajes.forEach(m => {
+      mensajes.forEach(
+        m => {
 
-        const div =
-          document.createElement(
-            "div"
-          );
-
-
-        div.className =
-          "urgency-msg";
+          const div =
+            document.createElement(
+              "div"
+            );
 
 
-        if (
-          normalizarTexto(
-            m.remitente
-          ) ===
-          normalizarTexto(
-            nombreActual
-          )
-        ) {
+          div.className =
+            "urgency-msg";
 
-          div.classList.add(
-            "mine"
+
+          if (
+            normalizarTexto(
+              m.remitente
+            ) ===
+            normalizarTexto(
+              nombreActual
+            )
+          ) {
+
+            div.classList.add(
+              "mine"
+            );
+
+          }
+
+
+          div.innerHTML = `
+
+            <strong>
+              ${escapeHtml(
+                m.remitente || ""
+              )}
+            </strong>
+
+            <div style="margin-top:3px;">
+              ${escapeHtml(
+                m.texto || ""
+              )}
+            </div>
+
+            <div style="
+              margin-top:4px;
+              font-size:9px;
+              color:#999;
+            ">
+              ${formatearHora(
+                m.fecha
+              )}
+            </div>
+
+          `;
+
+
+          box.appendChild(
+            div
           );
 
         }
-
-
-        div.innerHTML = `
-
-          <strong>
-            ${escapeHtml(
-              m.remitente || ""
-            )}
-          </strong>
-
-          <div style="margin-top:3px;">
-            ${escapeHtml(
-              m.texto || ""
-            )}
-          </div>
-
-          <div style="
-            margin-top:4px;
-            font-size:9px;
-            color:#999;
-          ">
-            ${formatearHora(
-              m.fecha
-            )}
-          </div>
-
-        `;
-
-
-        box.appendChild(div);
-
-      });
+      );
 
 
       box.scrollTop =
@@ -5275,7 +5970,9 @@ function escucharMensajesUrgencia(id) {
 window.enviarMensajeUrgencia =
   async function() {
 
-    if (!urgenciaSeleccionada)
+    if (
+      !urgenciaSeleccionada
+    )
       return;
 
 
@@ -5300,6 +5997,7 @@ window.enviarMensajeUrgencia =
           db,
           `urgencias/${urgenciaSeleccionada}/mensajes`
         ),
+
         {
 
           texto,
@@ -5325,6 +6023,7 @@ window.enviarMensajeUrgencia =
 
       console.error(error);
 
+
       alert(
         "No se pudo enviar el mensaje."
       );
@@ -5341,7 +6040,9 @@ window.cerrarUrgencia =
       .getElementById(
         "urgencyPanel"
       )
-      .classList.remove("open");
+      .classList.remove(
+        "open"
+      );
 
 
     urgenciaSeleccionada =
@@ -5373,15 +6074,20 @@ function actualizarContadores() {
   if (esSupervisor()) {
 
     principal =
-      obtenerTodosLosGestores().length;
+      obtenerTodosLosGestores()
+        .length;
+
 
     agentes =
       activas.length;
 
+
     sinAsignar =
       activas.filter(
-        c => estaSinAsignar(c)
+        c =>
+          estaSinAsignar(c)
       ).length;
+
 
     historial =
       finalizadas.length;
@@ -5392,7 +6098,8 @@ function actualizarContadores() {
 
     principal =
       activas.filter(
-        c => conversacionEsMia(c)
+        c =>
+          conversacionEsMia(c)
       ).length;
 
 
@@ -5495,6 +6202,7 @@ window.cerrarSesion =
             db,
             `presencia/${usuarioActual.uid}`
           ),
+
           {
 
             estado:
@@ -5520,7 +6228,9 @@ window.cerrarSesion =
     }
 
 
-    await signOut(auth);
+    await signOut(
+      auth
+    );
 
   };
 
@@ -5531,12 +6241,29 @@ window.cerrarSesion =
 
 function escapeHtml(text) {
 
-  return String(text || "")
-    .replace(/&/g,"&amp;")
-    .replace(/</g,"&lt;")
-    .replace(/>/g,"&gt;")
-    .replace(/"/g,"&quot;")
-    .replace(/'/g,"&#039;");
+  return String(
+    text || ""
+  )
+  .replace(
+    /&/g,
+    "&amp;"
+  )
+  .replace(
+    /</g,
+    "&lt;"
+  )
+  .replace(
+    />/g,
+    "&gt;"
+  )
+  .replace(
+    /"/g,
+    "&quot;"
+  )
+  .replace(
+    /'/g,
+    "&#039;"
+  );
 
 }
 
