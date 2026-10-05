@@ -933,8 +933,8 @@ function puedeGestionarConversacion(c){
     return conversacionEsMia(c) || puedeVerPorEquipo(c);
   }
   if(esAsesor()){
-    // Un gestor puede trabajar sus propios chats y los chats activos de su equipo.
-    return conversacionEsMia(c) || puedeVerPorEquipo(c);
+    // Un gestor puede trabajar sus propios chats, los de su equipo y los nuevos sin asignar.
+    return estaSinAsignar(c) || conversacionEsMia(c) || puedeVerPorEquipo(c);
   }
   return false;
 }
@@ -1113,12 +1113,12 @@ function abrirChatsDeGestor(nombre){
 }
 
 function renderizarSinAsignar(){
-  if(!esSenior() && !esSupervisor()){ mostrarVista("principal"); return; }
+  if(!esSenior() && !esSupervisor() && !esAsesor()){ mostrarVista("principal"); return; }
   const items=$("items");
   items.innerHTML="";
-  // Seniors y supervisores ven TODAS las conversaciones sin asignar.
+  // Seniors, supervisores y gestores ven TODAS las conversaciones sin asignar.
   let lista=conversacionesActivas().filter(estaSinAsignar);
-  if(!esSenior() && !esSupervisor()){
+  if(!esSenior() && !esSupervisor() && !esAsesor()){
     items.innerHTML=`<div class="empty">No tenés permisos para ver conversaciones sin asignar.</div>`;
     return;
   }
@@ -1246,8 +1246,9 @@ function actualizarContadores(){
     agentes=activas.filter(c=>!estaSinAsignar(c)&&puedeVerPorEquipo(c)).length;
     sinAsignar=activas.filter(estaSinAsignar).length;
   }else{
-    principal=activas.filter(c=>conversacionEsMia(c)).length;
+    principal=activas.filter(c=>conversacionEsMia(c) || estaSinAsignar(c)).length;
     agentes=activas.filter(c=>!estaSinAsignar(c)&&puedeVerPorEquipo(c)).length;
+    sinAsignar=activas.filter(estaSinAsignar).length;
   }
 
   $("badgePrincipal").textContent=principal;
@@ -1271,7 +1272,7 @@ function actualizarContadores(){
   $("navSOS").classList.toggle("hidden",sosPendientes.size===0);
   $("navSOS").classList.toggle("sos-active",sosPendientes.size>0);
 
-  $("navSinAsignar").classList.toggle("hidden",!esSenior()&&!esSupervisor());
+  $("navSinAsignar").classList.remove("hidden");
   $("navAgenda").classList.toggle("hidden",!puedeVerAgendaGestores());
   $("navVencimientos").classList.toggle("hidden",false);
 }
@@ -2311,10 +2312,10 @@ onAuthStateChanged(auth,async user=>{
     perfilActual==="senior"?"Senior":perfilActual==="asesor"?"Gestor":"Supervisor";
 
   greeting();
-  // Ocultamiento físico de funciones según rol. Paula y cualquier asesor no reciben Agenda ni Sin asignar.
+  // Ocultamiento físico de funciones según rol. Agenda queda para seniors/supervisores; Sin asignar queda disponible para todos los gestores.
   const esGestionSuperior=esSenior()||esSupervisor();
   $("navAgenda").classList.toggle("hidden",!esGestionSuperior);
-  $("navSinAsignar").classList.toggle("hidden",!esGestionSuperior);
+  $("navSinAsignar").classList.remove("hidden");
   // SOS: solamente el senior correspondiente al equipo puede verlo.
   $("navSOS").classList.toggle("hidden",!esSenior());
   renderizarPanelSOS();
@@ -2365,6 +2366,19 @@ window.pedirAyudaSenior=pedirAyudaSenior;
 window.abrirSOS=abrirSOS;
 window.cerrarSOS=cerrarSOS;
 window.guardarAcuerdoCliente=guardarAcuerdoCliente;
+const IA_BACKEND_URL = ""; // Pegá aquí la URL de tu backend seguro cuando lo creemos.
+
+async function ejecutarIAReal(accion){
+  if(!IA_BACKEND_URL) return null;
+  const c=conversaciones[conversacionSeleccionada];
+  if(!c) return null;
+  const mensajes=contextoIA().map(m=>({rol:m.remitente||"usuario",texto:m.texto||""}));
+  const resp=await fetch(IA_BACKEND_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({accion,mensajes,cliente:obtenerDatosCliente(c),usuario:nombreActual})});
+  if(!resp.ok) throw new Error("El servidor de IA respondió con error "+resp.status);
+  const data=await resp.json();
+  return data.texto||data.output||data.result||"";
+}
+
 function abrirIA(){
   if(!conversacionSeleccionada){ alert("Primero seleccioná una conversación."); return; }
   $("aiModal").classList.remove("hidden");
@@ -2380,7 +2394,8 @@ function textoClienteIA(){
   const ms=contextoIA().filter(m=>normalizarTexto(m.tipo)!=="interno");
   return ms.filter(m=>normalizarTexto(m.remitente)!==normalizarTexto(nombreActual)).map(m=>m.texto||"").join(" ").trim();
 }
-function iaSugerirRespuesta(){
+async function iaSugerirRespuesta(){
+  try{ const real=await ejecutarIAReal("sugerir_respuesta"); if(real){ $("aiResult").textContent=real; return; } }catch(e){ $("aiResult").textContent="No se pudo conectar con la IA: "+e.message; return; }
   const t=textoClienteIA();
   let r="Hola. Gracias por comunicarte con nosotros. Voy a revisar tu situación y te informo las alternativas disponibles.";
   const n=normalizarTexto(t);
@@ -2389,13 +2404,15 @@ function iaSugerirRespuesta(){
   else if(n.includes("cuota")||n.includes("convenio")||n.includes("plan")) r="Hola. Podemos revisar las alternativas de financiación disponibles para tu situación. Voy a verificar el expediente y te informo las opciones.";
   $("aiResult").textContent=r;
 }
-function iaResumir(){
+async function iaResumir(){
+  try{ const real=await ejecutarIAReal("resumir"); if(real){ $("aiResult").textContent=real; return; } }catch(e){ $("aiResult").textContent="No se pudo conectar con la IA: "+e.message; return; }
   const ms=contextoIA();
   if(!ms.length){ $("aiResult").textContent="No hay mensajes suficientes para resumir."; return; }
   const ult=ms.slice(-5).map(m=>`${m.remitente||"Usuario"}: ${m.texto}`).join("\n");
   $("aiResult").textContent="Resumen preliminar:\n"+ult;
 }
-function iaAnalizar(){
+async function iaAnalizar(){
+  try{ const real=await ejecutarIAReal("analizar"); if(real){ $("aiResult").textContent=real; return; } }catch(e){ $("aiResult").textContent="No se pudo conectar con la IA: "+e.message; return; }
   const t=textoClienteIA(); const n=normalizarTexto(t); const hallazgos=[];
   if(n.includes("deuda")||n.includes("monto")) hallazgos.push("• Consulta relacionada con deuda/monto.");
   if(n.includes("pago")||n.includes("transfer")) hallazgos.push("• Menciona un pago o transferencia; conviene verificar imputación.");
@@ -2404,7 +2421,8 @@ function iaAnalizar(){
   if(!hallazgos.length) hallazgos.push("• No se detectó una categoría específica con las palabras disponibles.");
   $("aiResult").textContent="Análisis preliminar:\n"+hallazgos.join("\n");
 }
-function iaNota(){
+async function iaNota(){
+  try{ const real=await ejecutarIAReal("nota_interna"); if(real){ $("aiResult").textContent=real; return; } }catch(e){ $("aiResult").textContent="No se pudo conectar con la IA: "+e.message; return; }
   const c=conversaciones[conversacionSeleccionada]; const d=obtenerDatosCliente(c||{});
   $("aiResult").textContent=`Nota interna sugerida:\nCliente ${mostrarNombreCliente({...c,_id:conversacionSeleccionada})}. DNI: ${d.dni||"no informado"}. Revisar conversación y dejar asentada la gestión realizada.`;
 }
@@ -2445,7 +2463,7 @@ window.guardarVencimiento=guardarVencimiento;
         <button onclick="iaNota()">📝 Nota interna</button>
       </div>
       <div id="aiResult" class="ai-result">Elegí una opción.</div>
-      <div class="ai-note">La interfaz queda preparada para conectar un modelo de IA mediante un backend seguro. No se coloca una clave de API dentro de esta página.</div>
+      <div class="ai-note">La IA real se conecta mediante un backend seguro. No se coloca una clave de API dentro de esta página. Hasta conectar ese backend, las opciones muestran una ayuda local de emergencia.</div>
     </div>
     <div class="modal-actions"><button class="cancel" onclick="cerrarIA()">Cerrar</button></div>
   </div>
