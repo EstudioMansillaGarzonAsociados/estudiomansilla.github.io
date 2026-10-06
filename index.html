@@ -523,6 +523,7 @@
           iaActiva: true,
           iaEstado: "activa",
           iaDerivada: false,
+          iaPaso: "menu",
           fechaCreacion: Date.now()
         });
       }
@@ -666,6 +667,17 @@
 
         document.getElementById("mensajes").innerHTML = "";
 
+        // Saludo inicial de la IA.
+        const saludoInicial = "Buen día. Soy el asistente virtual del Centro de Atención. ¿En qué podemos ayudarte?";
+        await push(ref(db, `conversaciones/${conversacionId}/mensajes`), {
+          texto: saludoInicial,
+          remitente: "ia",
+          nombreRemitente: IA_NOMBRE,
+          fecha: Date.now(),
+          tipo: "saludo_automatico"
+        });
+        mostrarMensaje(saludoInicial, "ia");
+
         if (!mensajesRef) {
           mensajesRef = ref(db, `conversaciones/${conversacionId}/mensajes`);
         }
@@ -752,6 +764,15 @@
 
       if (!n) return "silencio";
 
+      // Opciones del menú inicial.
+      if (n.includes("enviar comprobante") || n === "comprobante" || n.includes("mandar comprobante") || n.includes("adjunto comprobante") || n.includes("adjuntar comprobante")) return "comprobante";
+      if (n.includes("tengo un acuerdo") || n === "acuerdo" || n.includes("tengo acuerdo")) return "acuerdo";
+      if (n.includes("quiero un acuerdo") || n.includes("quiero acuerdo")) return "acuerdo";
+      if (n.includes("libre de deuda") || n.includes("libre deuda") || n.includes("certificado de libre")) return "libre_deuda";
+
+      // Comprobante enviado como texto: se recibe y se deriva.
+      if (n.includes("comprobante") || n.includes("recibo de pago") || n.includes("comprobante de pago")) return "comprobante";
+
       // Casos que SIEMPRE requieren una persona.
       const derivar = [
         "amenaza",
@@ -768,7 +789,6 @@
         "pago no imputado",
         "pago no figura",
         "transferencia no figura",
-        "comprobante",
         "convenio",
         "refinanciacion",
         "plan de pago",
@@ -887,43 +907,25 @@
     }
 
     function respuestaIA(intencion, textoOriginal) {
-      const nombre = nombreCorto(datosClienteActual.nombre);
-      const saludo = nombre ? `Hola ${nombre} 😊` : "Hola 😊";
-
       switch (intencion) {
         case "saludo":
-          return `${saludo} Soy el asistente virtual de Estudio Mansilla Garzón y Asociados. ¿En qué puedo ayudarte? Puedo orientarte sobre horarios, medios de pago, documentación, consultas generales y otras preguntas frecuentes.`;
+          return "Buen día. Soy el asistente virtual del Centro de Atención. ¿En qué podemos ayudarte?";
 
-        case "horarios":
-          return `${nombre ? `Claro, ${nombre}. ` : ""}Nuestro horario de atención es de lunes a viernes de 9:00 a 18:00 y sábados de 9:00 a 13:00. 😊`;
+        case "menu":
+          return "Por favor, elegí una de estas opciones:\n\n• Enviar comprobante\n• Tengo un acuerdo\n• Quiero un acuerdo\n• Libre de deuda";
 
-        case "contacto":
-          if (WHATSAPP_URL) {
-            return `${saludo} También podés comunicarte con nosotros por WhatsApp. Te dejo el acceso directo: ${WHATSAPP_URL}`;
-          }
-          return `${saludo} Podés continuar por este medio. También estamos preparando la vinculación con WhatsApp para que puedas comunicarte directamente por ese canal.`;
+        case "comprobante":
+          return "Perfecto. Recibimos tu comprobante. Lo vamos a derivar a un asesor para que pueda revisarlo.";
 
-        case "pago":
-          return `${saludo} Actualmente podemos orientarte sobre pagos mediante transferencia. Si necesitás los datos exactos para realizar una transferencia o querés informar un pago realizado, puedo derivarte con un asesor para que revise tu caso.`;
-
-        case "documentacion":
-          return `${saludo} Podés enviar la documentación directamente por este chat utilizando el envío de archivos cuando esté habilitado. Si necesitás saber exactamente qué documentación corresponde a tu caso, puedo derivarte con un asesor.`;
-
-        case "deuda":
-          return `${saludo} Para informarte sobre el estado exacto de tu deuda necesitamos verificar tus datos en nuestra base. Si querés, indicame tu DNI y un asesor puede revisar tu situación. La consulta automática con la base de clientes se habilitará cuando esté cargada y configurada por los supervisores.`;
+        case "acuerdo":
+          return "Entendido. Vamos a derivar tu consulta a un asesor para que pueda revisar tu acuerdo.";
 
         case "libre_deuda":
-          return `${saludo} Para solicitar un libre de deuda necesitamos verificar primero tu situación. Un asesor puede revisar si corresponde emitirlo y, una vez validado, enviártelo por este medio.`;
-
-        case "cuotas":
-          return `${saludo} Las alternativas de cuotas o planes dependen de la situación particular de cada cuenta. Para darte información correcta y actualizada, voy a derivar tu consulta con un asesor.`;
-
-        case "faq":
-          return `${saludo} Puedo orientarte sobre nuestros horarios, medios de pago por transferencia, envío de documentación y consultas generales. Contame qué necesitás y voy a intentar ayudarte.`;
+          return "Entendido. Vamos a derivar tu solicitud a un asesor para que pueda verificar tu situación y gestionar el libre de deuda.";
 
         case "derivar":
         default:
-          return `${saludo} Para darte una respuesta correcta sobre tu situación necesito que un asesor revise tu caso. Voy a dejar tu consulta para que puedan ayudarte. 😊`;
+          return "Gracias por tu mensaje. Vamos a derivar tu consulta a un asesor para que pueda ayudarte.";
       }
     }
 
@@ -958,7 +960,22 @@
       iaProcesando = true;
 
       try {
-        const intencion = detectarIntencionIA(texto);
+        let intencion = detectarIntencionIA(texto);
+
+        // Después del primer mensaje del cliente, la IA muestra el menú de opciones.
+        const convSnap = await get(ref(db, `conversaciones/${conversacionId}`));
+        const convActual = convSnap.exists() ? (convSnap.val() || {}) : {};
+        if (convActual.iaPaso === "menu") {
+          const nTexto = normalizarTexto(texto);
+          const esOpcion = [
+            "enviar comprobante", "comprobante", "mandar comprobante",
+            "adjunto comprobante", "adjuntar comprobante",
+            "tengo un acuerdo", "tengo acuerdo", "acuerdo",
+            "quiero un acuerdo", "quiero acuerdo",
+            "libre de deuda", "libre deuda", "certificado de libre"
+          ].some(x => nTexto.includes(x));
+          if (!esOpcion) intencion = "menu";
+        }
 
         // Si requiere humano, dejamos la conversación sin asignar.
         if (intencion === "derivar") {
@@ -1021,6 +1038,20 @@
           tipo: "respuesta_automatica"
         });
 
+        if (["comprobante", "acuerdo", "libre_deuda"].includes(intencion)) {
+          iaDerivada = true;
+          await update(ref(db, `conversaciones/${conversacionId}`), {
+            iaActiva: false,
+            iaEstado: "derivada",
+            iaDerivada: true,
+            iaPaso: "derivar",
+            estado: "pendiente",
+            ultimaActividad: Date.now(),
+            ultimoMensaje: respuesta,
+            ultimoRemitente: "ia"
+          });
+        }
+
         await update(
           ref(db, `conversaciones/${conversacionId}/mensajes/${messageKey}`),
           { iaProcesado: true, iaProcesando: false }
@@ -1030,6 +1061,7 @@
           iaActiva: true,
           iaEstado: "activa",
           iaDerivada: false,
+          iaPaso: intencion === "menu" ? "opcion" : (intencion === "comprobante" || intencion === "acuerdo" || intencion === "libre_deuda" ? "derivar" : "opcion"),
           iaUltimoMensajeProcesado: messageKey,
           ultimaActividad: Date.now(),
           ultimoMensaje: respuesta,
