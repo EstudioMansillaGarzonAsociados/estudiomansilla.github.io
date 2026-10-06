@@ -179,6 +179,37 @@
       cursor: pointer;
     }
 
+    .opciones-ia {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin: 8px 0 14px 0;
+      max-width: 82%;
+    }
+
+    .opcion-ia {
+      width: 100%;
+      text-align: left;
+      padding: 12px 14px;
+      border: 1px solid #222;
+      border-radius: 10px;
+      background: white;
+      color: #222;
+      font-size: 14px;
+      cursor: pointer;
+      transition: .15s ease;
+    }
+
+    .opcion-ia:hover {
+      background: #222;
+      color: white;
+    }
+
+    .opcion-ia:disabled {
+      opacity: .55;
+      cursor: default;
+    }
+
     .nombre-cliente {
       font-size: 14px;
     }
@@ -709,9 +740,9 @@
        ENVIAR MENSAJE
     ========================================================= */
 
-    window.enviarMensaje = async function () {
+    window.enviarMensaje = async function (textoForzado = "") {
       const input = document.getElementById("mensajeInput");
-      const texto = input.value.trim();
+      const texto = String(textoForzado || input.value || "").trim();
 
       if (!texto || !mensajesRef) return;
 
@@ -1102,6 +1133,42 @@
 
       div.textContent = texto;
       contenedor.appendChild(div);
+
+      // Cuando la IA muestra el menú, lo convertimos en botones reales.
+      const textoMenu = String(texto || "");
+      const esMenuIA = remitente === "ia" &&
+        textoMenu.includes("Enviar comprobante") &&
+        textoMenu.includes("Tengo un acuerdo") &&
+        textoMenu.includes("Quiero un acuerdo") &&
+        textoMenu.includes("Libre de deuda");
+
+      if (esMenuIA) {
+        const opciones = [
+          "Enviar comprobante",
+          "Tengo un acuerdo",
+          "Quiero un acuerdo",
+          "Libre de deuda"
+        ];
+
+        const caja = document.createElement("div");
+        caja.className = "opciones-ia";
+
+        opciones.forEach(opcion => {
+          const boton = document.createElement("button");
+          boton.type = "button";
+          boton.className = "opcion-ia";
+          boton.textContent = opcion;
+          boton.onclick = () => {
+            Array.from(caja.querySelectorAll("button")).forEach(b => b.disabled = true);
+            enviarMensaje(opcion);
+            caja.remove();
+          };
+          caja.appendChild(boton);
+        });
+
+        contenedor.appendChild(caja);
+      }
+
       contenedor.scrollTop = contenedor.scrollHeight;
     }
 
