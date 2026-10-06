@@ -943,8 +943,9 @@ function puedeGestionarConversacion(c){
     return conversacionEsMia(c) || puedeVerPorEquipo(c);
   }
   if(esAsesor()){
-    // Un gestor puede trabajar sus propios chats, los de su equipo y los nuevos sin asignar.
-    return estaSinAsignar(c) || conversacionEsMia(c) || puedeVerPorEquipo(c);
+    // Un gestor puede trabajar sus propios chats y los de su equipo.
+    // Las conversaciones sin asignar quedan reservadas para seniors/supervisores.
+    return conversacionEsMia(c) || puedeVerPorEquipo(c);
   }
   return false;
 }
@@ -1136,12 +1137,12 @@ function abrirChatsDeGestor(nombre){
 }
 
 function renderizarSinAsignar(){
-  if(!esSenior() && !esSupervisor() && !esAsesor()){ mostrarVista("principal"); return; }
+  if(!esSenior() && !esSupervisor()){ mostrarVista("principal"); return; }
   const items=$("items");
   items.innerHTML="";
-  // Seniors, supervisores y gestores ven TODAS las conversaciones sin asignar.
+  // Solo seniors y supervisores ven las conversaciones sin asignar.
   let lista=conversacionesActivas().filter(estaSinAsignar);
-  if(!esSenior() && !esSupervisor() && !esAsesor()){
+  if(!esSenior() && !esSupervisor()){
     items.innerHTML=`<div class="empty">No tenés permisos para ver conversaciones sin asignar.</div>`;
     return;
   }
@@ -1295,7 +1296,7 @@ function actualizarContadores(){
   $("navSOS").classList.toggle("hidden",sosPendientes.size===0);
   $("navSOS").classList.toggle("sos-active",sosPendientes.size>0);
 
-  $("navSinAsignar").classList.remove("hidden");
+  $("navSinAsignar").classList.toggle("hidden",!esSenior() && !esSupervisor());
   $("navAgenda").classList.toggle("hidden",!puedeVerAgendaGestores());
   $("navVencimientos").classList.toggle("hidden",false);
 }
@@ -2523,10 +2524,10 @@ onAuthStateChanged(auth,async user=>{
     perfilActual==="senior"?"Senior":perfilActual==="asesor"?"Gestor":"Supervisor";
 
   greeting();
-  // Ocultamiento físico de funciones según rol. Agenda queda para seniors/supervisores; Sin asignar queda disponible para todos los gestores.
+  // Ocultamiento físico de funciones según rol. Agenda y Sin asignar quedan para seniors/supervisores.
   const esGestionSuperior=esSenior()||esSupervisor();
   $("navAgenda").classList.toggle("hidden",!esGestionSuperior);
-  $("navSinAsignar").classList.remove("hidden");
+  $("navSinAsignar").classList.toggle("hidden",!esGestionSuperior);
   // SOS: solamente el senior correspondiente al equipo puede verlo.
   $("navSOS").classList.toggle("hidden",!esSenior());
   renderizarPanelSOS();
