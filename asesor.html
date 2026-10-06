@@ -210,6 +210,13 @@ button{cursor:pointer}
 .calendar-grid .day-name{padding:4px 2px !important;font-size:10px !important}
 .calendar-grid .day-number{font-size:11px !important}
 .calendar-grid .event{padding:2px 3px !important;margin-top:2px !important;font-size:9px !important;line-height:1.15 !important}
+.attendance-wrap{margin-top:14px;border:1px solid #e2e8f0;border-radius:12px;background:#fff;padding:12px;overflow:auto}
+.attendance-title{font-weight:900;font-size:14px;margin-bottom:9px}
+.attendance-table{width:100%;border-collapse:collapse;font-size:11px;min-width:760px}
+.attendance-table th,.attendance-table td{border-bottom:1px solid #edf0f3;padding:7px 6px;text-align:left;vertical-align:middle}
+.attendance-table th{background:#f8fafc;font-size:10px;text-transform:uppercase;color:#667085}
+.attendance-ok{font-weight:800;color:#15803d}.attendance-break{font-weight:800;color:#b45309}.attendance-open{font-weight:800;color:#2563eb}.attendance-muted{color:#98a2b3}
+.attendance-day{font-weight:800;white-space:nowrap}
 
 .sos-panel{margin:12px;position:relative;z-index:5;border:2px solid #dc2626;background:#fff5f5;border-radius:12px;padding:10px;box-shadow:0 4px 14px rgba(180,35,24,.12)}
 .sos-title{font-weight:900;color:#b42318;font-size:14px;margin-bottom:7px}
@@ -619,6 +626,7 @@ let nombreActual = "";
 let perfilActual = "";
 let conversaciones = {};
 let presencias = {};
+let jornadasCache = {};
 let usuariosDB = {};
 let vistaActual = "principal";
 let gestorSeleccionado = null;
@@ -1938,20 +1946,68 @@ function buscarPresenciaPorNombre(nombre){
   return null;
 }
 
+function fechaLocalISO(ts=Date.now()){
+  const d=new Date(ts);
+  const y=d.getFullYear();
+  const m=String(d.getMonth()+1).padStart(2,"0");
+  const day=String(d.getDate()).padStart(2,"0");
+  return `${y}-${m}-${day}`;
+}
+
+function horaLocal(ts){
+  if(!ts) return "—";
+  return new Date(ts).toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"});
+}
+
+async function registrarEventoJornada(tipo,extra={}){
+  if(!usuarioActual) return;
+  const ahora=Date.now();
+  const fecha=fechaLocalISO(ahora);
+  try{
+    const r=push(ref(db,`jornadas/${usuarioActual.uid}/${fecha}`));
+    await set(r,{
+      tipo,
+      timestamp:ahora,
+      nombre:nombreActual,
+      email:usuarioActual.email||"",
+      ...extra
+    });
+  }catch(err){
+    console.warn("No se pudo registrar jornada",err);
+  }
+}
+
 async function actualizarPresencia(estado){
   if(!usuarioActual) return;
+  const anterior=presencias?.[usuarioActual.uid]?.estado || "sin";
+  const ahora=Date.now();
   const data={
     nombre:nombreActual,
     email:usuarioActual.email||"",
     estado,
-    fecha:Date.now()
+    fecha:ahora
   };
+
+  // Historial de jornada: se registra cada transición para poder controlar
+  // ingreso, egreso y uno o varios períodos de break/descanso.
+  if(estado!==anterior){
+    if(estado==="activo" && !["activo"].includes(anterior)){
+      if(anterior==="break" || anterior==="rest") await registrarEventoJornada("finBreak",{estadoAnterior:anterior});
+      else await registrarEventoJornada("ingreso");
+    }
+    if((estado==="break" || estado==="rest") && anterior!==estado){
+      await registrarEventoJornada("inicioBreak",{estado});
+    }
+    if(estado==="finalizado") await registrarEventoJornada("egreso",{estadoAnterior:anterior});
+  }
+
   try{
     await set(ref(db,`presencia/${usuarioActual.uid}`),data);
   }catch(err){
     console.warn("No se pudo actualizar presencia",err);
   }
   pintarPresencia(data);
+  if(vistaActual==="agenda") dibujarControlJornada();
 }
 
 function pintarPresencia(p){
@@ -2173,6 +2229,11 @@ function escucharPresencias(){
   onValue(ref(db,"presencia"),snap=>{
     presencias=snap.val()||{};
     refrescarVistaActual();
+    if(vistaActual==="agenda") dibujarControlJornada();
+  });
+  onValue(ref(db,"jornadas"),snap=>{
+    jornadasCache=snap.val()||{};
+    if(vistaActual==="agenda") dibujarControlJornada();
   });
 }
 
@@ -2208,9 +2269,11 @@ function renderizarAgenda(){
         </div>
       </div>
       <div id="agendaCalendar"></div>
+      <div id="attendanceControl"></div>
     </div>
   `;
   dibujarCalendarioAgenda();
+  dibujarControlJornada();
 }
 
 function cambiarMesAgenda(delta){
@@ -2258,6 +2321,65 @@ function dibujarCalendarioAgenda(){
 function gestorPermitidoCalendario(gestor){
   return gestoresVisibles().some(g=>normalizarTexto(g)===normalizarTexto(gestor));
 }
+
+function agruparJornadaMensual(){
+  const salida=[];
+  const visibles=gestoresVisibles();
+  const nombres=new Map(visibles.map(n=>[normalizarTexto(n),n]));
+  Object.entries(presencias||{});
+  // El historial se carga desde Firebase en jornadasCache.
+  Object.entries(jornadasCache||{}).forEach(([uid,dias])=>{
+    const p=presencias?.[uid]||{};
+    const nombre=p.nombre || Object.values(dias||{})?.[0]?.[Object.keys(Object.values(dias||{})[0]||{})[0]]?.nombre || "";
+    const nombreNorm=normalizarTexto(nombre);
+    if(!nombres.has(nombreNorm)) return;
+    Object.entries(dias||{}).forEach(([fecha,eventos])=>{
+      if(!fecha.startsWith(`${agendaAnio}-${String(agendaMes+1).padStart(2,"0")}-`)) return;
+      const arr=Object.values(eventos||{}).sort((a,b)=>(a.timestamp||0)-(b.timestamp||0));
+      let ingreso=null, egreso=null, breakIn=null, breakMs=0, breakInicio=null;
+      for(const e of arr){
+        if(e.tipo==="ingreso" && !ingreso) ingreso=e.timestamp;
+        if(e.tipo==="inicioBreak") breakInicio=e.timestamp;
+        if(e.tipo==="finBreak" && breakInicio){ breakMs+=Math.max(0,e.timestamp-breakInicio); breakInicio=null; }
+        if(e.tipo==="egreso") egreso=e.timestamp;
+      }
+      if(breakInicio) breakMs+=Math.max(0,Date.now()-breakInicio);
+      salida.push({fecha,nombre:nombres.get(nombreNorm)||nombre,ingreso,egreso,breakMs,enBreak:!!breakInicio});
+    });
+  });
+  return salida.sort((a,b)=>a.fecha.localeCompare(b.fecha)||a.nombre.localeCompare(b.nombre));
+}
+
+function formatoDuracion(ms){
+  if(!ms || ms<0) return "0 min";
+  const min=Math.floor(ms/60000);
+  const h=Math.floor(min/60);
+  const m=min%60;
+  return h?`${h} h ${m} min`:`${m} min`;
+}
+
+function dibujarControlJornada(){
+  const root=$("attendanceControl");
+  if(!root) return;
+  const filas=agruparJornadaMensual();
+  root.innerHTML=`
+    <div class="attendance-wrap">
+      <div class="attendance-title">🕐 Control de jornada — ingresos, breaks y egresos</div>
+      ${filas.length?`<table class="attendance-table">
+        <thead><tr><th>Fecha</th><th>Gestor</th><th>Ingreso</th><th>Break</th><th>Duración break</th><th>Egreso</th><th>Estado</th></tr></thead>
+        <tbody>${filas.map(f=>`<tr>
+          <td class="attendance-day">${new Date(`${f.fecha}T12:00:00`).toLocaleDateString("es-AR")}</td>
+          <td><b>${escapeHtml(f.nombre)}</b></td>
+          <td>${horaLocal(f.ingreso)}</td>
+          <td class="${f.enBreak?"attendance-break":"attendance-muted"}">${f.enBreak?"En break":"—"}</td>
+          <td>${formatoDuracion(f.breakMs)}</td>
+          <td>${horaLocal(f.egreso)}</td>
+          <td class="${f.egreso?"attendance-ok":f.enBreak?"attendance-break":"attendance-open"}">${f.egreso?"Finalizada":f.enBreak?"En break":"Jornada abierta"}</td>
+        </tr>`).join("")}</tbody>
+      </table>`:`<div class="attendance-muted">Todavía no hay registros de jornada para ${new Date(agendaAnio,agendaMes,1).toLocaleDateString("es-AR",{month:"long",year:"numeric"})}.</div>`}
+    </div>`;
+}
+
 
 function abrirModalEvento(id=null){
   if(!puedeAdministrarAgenda()) return;
@@ -2707,6 +2829,7 @@ window.abrirModalEvento=abrirModalEvento;
 window.editarEvento=editarEvento;
 window.cerrarModalEvento=cerrarModalEvento;
 window.guardarEventoAgenda=guardarEventoAgenda;
+window.dibujarControlJornada=dibujarControlJornada;
 window.cambiarMesVenc=cambiarMesVenc;
 window.cargarGestoresVencimiento=cargarGestoresVencimiento;
 window.abrirModalVencimiento=abrirModalVencimiento;
