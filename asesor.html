@@ -700,19 +700,30 @@ function valorCampoProfundo(obj, claves){
 }
 
 function obtenerDatosCliente(c){
-  const fuentes=[c?.datosCliente,c?.cliente,c?.datos,c];
-  let nombre=valorCampoProfundo({fuentes},["nombre","nombreCliente","clienteNombre","name","fullName","nombreCompleto"]);
-  // Algunos registros guardan el DNI dentro de un campo llamado "cliente".
+  // Prioridad absoluta: datosCliente es la ficha real del cliente guardada en Firebase.
+  // En estas conversaciones los datos vienen como: datosCliente.nombre, dni, telefono, etc.
+  const dc=(c && typeof c.datosCliente === "object" && c.datosCliente) ? c.datosCliente : {};
+  const fuentes=[dc,c?.cliente,c?.datos,c];
+
+  // Primero leemos directamente los campos conocidos de datosCliente.
+  // Esto evita que el buscador recursivo encuentre otro "nombre" ajeno a la ficha.
+  let nombre=dc.nombre ?? dc.nombreCliente ?? dc.clienteNombre ?? dc.name ?? dc.fullName ?? dc.nombreCompleto ?? "";
+  if(!nombre){
+    nombre=valorCampoProfundo({fuentes},["nombre","nombreCliente","clienteNombre","name","fullName","nombreCompleto"]);
+  }
+
+  // Algunos registros antiguos guardan el DNI dentro de un campo llamado "cliente".
   // Nunca debemos mostrar ese valor como si fuera el nombre.
   if(!nombre){
     const posibleCliente=valorCampoProfundo({fuentes},["cliente"]);
     const pc=String(posibleCliente||"").trim();
     if(pc && !/^\d{6,12}$/.test(pc)) nombre=pc;
   }
-  const dni=valorCampoProfundo({fuentes},["dni","DNI","documento","document","documentNumber","documentoCliente","dniCliente","nroDni","numeroDni","numeroDocumento","nroDocumento","doc"]);
-  let telefono=valorCampoProfundo({fuentes},["telefono","teléfono","celular","phone","telefonoCliente","numeroTelefono","mobile"]);
-  const fecha=valorCampoProfundo({fuentes},["fecha","fechaCliente","fechaConsulta"]);
-  const motivo=valorCampoProfundo({fuentes},["motivo","asunto","motivoConsulta","consulta","tema"]);
+
+  const dni=dc.dni ?? dc.DNI ?? valorCampoProfundo({fuentes},["dni","DNI","documento","document","documentNumber","documentoCliente","dniCliente","nroDni","numeroDni","numeroDocumento","nroDocumento","doc"]);
+  let telefono=dc.telefono ?? dc["teléfono"] ?? dc.celular ?? dc.phone ?? valorCampoProfundo({fuentes},["telefono","teléfono","celular","phone","telefonoCliente","numeroTelefono","mobile"]);
+  const fecha=dc.fecha ?? dc.fechaCliente ?? dc.fechaConsulta ?? valorCampoProfundo({fuentes},["fecha","fechaCliente","fechaConsulta"]);
+  const motivo=dc.motivo ?? dc.asunto ?? dc.motivoConsulta ?? dc.consulta ?? dc.tema ?? valorCampoProfundo({fuentes},["motivo","asunto","motivoConsulta","consulta","tema"]);
   let dniFinal=String(dni||"").trim();
   if(!dniFinal){
     const candidatos=[c?.idCliente,c?.clienteId,c?.dniCliente,c?.documentoCliente,c?.numeroDocumento,c?.numeroDni,c?.documentNumber,c?.id];
@@ -991,11 +1002,9 @@ function aplicarFiltroLista(lista){
 
 function mostrarNombreCliente(c){
   const d=obtenerDatosCliente(c);
-  // El DNI se muestra en su propia línea; no lo repetimos junto al nombre.
-  if(d.nombre) return d.nombre;
-  // Si Firebase no tiene nombre guardado, no usamos el DNI como si fuera el nombre.
-  // El DNI queda exclusivamente en su propia línea de la ficha.
-  return "Cliente";
+  // El nombre real siempre sale de datosCliente.nombre cuando existe.
+  // El DNI se muestra exclusivamente en su propia línea.
+  return d.nombre || "Cliente";
 }
 
 function crearCardCliente(c,finalizada=false){
