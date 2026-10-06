@@ -398,26 +398,22 @@
   <!-- FIREBASE -->
 
   <script type="module">
-
-    import {
-      initializeApp
-    } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
-
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
     import {
       getDatabase,
       ref,
       push,
       set,
-      onChildAdded
+      update,
+      onChildAdded,
+      get
     } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-database.js";
 
-
-    /* =========================
-       CONFIGURACIÓN FIREBASE
-    ========================= */
-
+    /* =========================================================
+       FIREBASE
+    ========================================================= */
     const firebaseConfig = {
-      apiKey: "AIzaSyC1sOc1O1aBwkzz5DXT3GD_OEcFFrkOua8",
+      apiKey: "AIzaSyC1sOc1Oa1Bwkzz5DXT3GD_OEcFFrkOua8",
       authDomain: "estudiomansilla.firebaseapp.com",
       databaseURL: "https://estudiomansilla-default-rtdb.firebaseio.com",
       projectId: "estudiomansilla",
@@ -427,442 +423,682 @@
       measurementId: "G-8710S26Z8L"
     };
 
-
-    /* =========================
-       INICIALIZAR FIREBASE
-    ========================= */
-
-    let app;
-    let db;
+    let app = null;
+    let db = null;
 
     try {
-
       app = initializeApp(firebaseConfig);
-
       db = getDatabase(app);
-
       console.log("Firebase conectado correctamente.");
-
     } catch (error) {
-
-      console.error(
-        "Error al iniciar Firebase:",
-        error
-      );
-
-      document.getElementById(
-        "errorFirebase"
-      ).style.display = "block";
-
+      console.error("Error al iniciar Firebase:", error);
+      const box = document.getElementById("errorFirebase");
+      if (box) {
+        box.textContent = "No se pudo conectar con el sistema. Revisá la configuración de Firebase.";
+        box.style.display = "block";
+      }
     }
 
+    /* =========================================================
+       CONFIGURACIÓN GENERAL
+    ========================================================= */
 
-    /* =========================
-       CONVERSACIÓN DEL CLIENTE
-    ========================= */
+    // Cuando tengas el número oficial de WhatsApp, reemplazá SOLO este valor.
+    // Ejemplo: https://wa.me/549351XXXXXXXX
+    const WHATSAPP_URL = "";
 
-    let conversacionId =
-      sessionStorage.getItem(
-        "conversacionId"
-      );
+    const IA_HABILITADA = true;
+    const IA_NOMBRE = "Asistente virtual de Estudio Mansilla Garzón y Asociados";
 
-
-    if (!conversacionId && db) {
-
-      const nuevaConversacionRef =
-        push(
-          ref(
-            db,
-            "conversaciones"
-          )
-        );
-
-      conversacionId =
-        nuevaConversacionRef.key;
-
-      sessionStorage.setItem(
-        "conversacionId",
-        conversacionId
-      );
-
-    }
-
-
-    console.log(
-      "Conversación:",
-      conversacionId
-    );
-
-
-    /* =========================
-       REFERENCIA DE MENSAJES
-    ========================= */
-
+    let conversacionId = sessionStorage.getItem("conversacionId") || "";
     let mensajesRef = null;
 
-    if (db && conversacionId) {
+    let datosClienteActual = {
+      nombre: "",
+      dni: "",
+      telefono: "",
+      motivo: ""
+    };
 
-      mensajesRef =
-        ref(
-          db,
-          "conversaciones/" +
-          conversacionId +
-          "/mensajes"
-        );
+    let iaProcesando = false;
+    let iaUltimoMensajeProcesado = "";
+    let iaDerivada = false;
 
+    /* =========================================================
+       UTILIDADES
+    ========================================================= */
+
+    function normalizarTexto(texto) {
+      return String(texto || "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[¿?¡!.,;:()[\]{}"']/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
     }
 
-
-    /* =========================
-       MOSTRAR MENSAJES
-    ========================= */
-
-    if (mensajesRef) {
-
-      onChildAdded(
-        mensajesRef,
-        (snapshot) => {
-
-          const mensaje =
-            snapshot.val();
-
-          if (!mensaje) {
-            return;
-          }
-
-          mostrarMensaje(
-            mensaje.texto,
-            mensaje.remitente
-          );
-
-        }
-      );
-
+    function escaparHtmlBasico(texto) {
+      return String(texto || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
     }
 
-
-    /* =========================
-       COMENZAR CHAT
-    ========================= */
-
-    window.comenzarChat =
-      async function() {
-
-        const nombre =
-          document.getElementById(
-            "nombre"
-          ).value.trim();
-
-        const dni =
-          document.getElementById(
-            "dni"
-          ).value.trim();
-
-        const telefono =
-          document.getElementById(
-            "telefono"
-          ).value.trim();
-
-        const motivo =
-          document.getElementById(
-            "motivo"
-          ).value;
-
-        const error =
-          document.getElementById(
-            "error"
-          );
-
-        const errorFirebase =
-          document.getElementById(
-            "errorFirebase"
-          );
-
-
-        /* VALIDACIÓN */
-
-        if (
-          nombre === "" ||
-          dni === "" ||
-          telefono === "" ||
-          motivo === ""
-        ) {
-
-          error.style.display =
-            "block";
-
-          return;
-
-        }
-
-
-        error.style.display =
-          "none";
-
-
-        /* VERIFICAR FIREBASE */
-
-        if (!db || !mensajesRef) {
-
-          errorFirebase.style.display =
-            "block";
-
-          return;
-
-        }
-
-
-        try {
-
-          /* DATOS DEL CLIENTE */
-
-          await set(
-            ref(
-              db,
-              "conversaciones/" +
-              conversacionId +
-              "/datosCliente"
-            ),
-            {
-
-              nombre: nombre,
-              dni: dni,
-              telefono: telefono,
-              motivo: motivo,
-              fecha: Date.now()
-
-            }
-          );
-
-
-          /* ESTADO INICIAL */
-
-          await set(
-            ref(
-              db,
-              "conversaciones/" +
-              conversacionId +
-              "/estado"
-            ),
-            "pendiente"
-          );
-
-
-          /* FECHA DE CREACIÓN */
-
-          await set(
-            ref(
-              db,
-              "conversaciones/" +
-              conversacionId +
-              "/fechaCreacion"
-            ),
-            Date.now()
-          );
-
-
-          /* MOSTRAR NOMBRE */
-
-          document.getElementById(
-            "infoChat"
-          ).textContent =
-            nombre;
-
-
-          /* OCULTAR FORMULARIO */
-
-          document.getElementById(
-            "inicio"
-          ).style.display =
-            "none";
-
-
-          /* MOSTRAR CHAT */
-
-          document.getElementById(
-            "chat"
-          ).style.display =
-            "flex";
-
-
-          /* LIMPIAR MENSAJES */
-
-          document.getElementById(
-            "mensajes"
-          ).innerHTML = "";
-
-
-          /* FOCUS */
-
-          document.getElementById(
-            "mensajeInput"
-          ).focus();
-
-
-        } catch (error) {
-
-          console.error(
-            "Error al guardar la conversación:",
-            error
-          );
-
-          errorFirebase.textContent =
-            "No se pudo guardar la conversación: " +
-            error.message;
-
-          errorFirebase.style.display =
-            "block";
-
-        }
-
-      };
-
-
-    /* =========================
-       VOLVER
-    ========================= */
-
-    window.volverInicio =
-      function() {
-
-        document.getElementById(
-          "chat"
-        ).style.display =
-          "none";
-
-        document.getElementById(
-          "inicio"
-        ).style.display =
-          "block";
-
-      };
-
-
-    /* =========================
-       ENVIAR MENSAJE
-    ========================= */
-
-    window.enviarMensaje =
-      async function() {
-
-        const input =
-          document.getElementById(
-            "mensajeInput"
-          );
-
-        const texto =
-          input.value.trim();
-
-        if (
-          texto === "" ||
-          !mensajesRef
-        ) {
-
-          return;
-
-        }
-
-        try {
-
-          await push(
-            mensajesRef,
-            {
-
-              texto: texto,
-              remitente: "cliente",
-              fecha: Date.now()
-
-            }
-          );
-
-          input.value = "";
-
-          input.focus();
-
-        } catch (error) {
-
-          console.error(
-            "Error al enviar mensaje:",
-            error
-          );
-
-          alert(
-            "No se pudo enviar el mensaje."
-          );
-
-        }
-
-      };
-
-
-    /* =========================
-       ENTER
-    ========================= */
-
-    window.presionarEnter =
-      function(event) {
-
-        if (
-          event.key === "Enter"
-        ) {
-
-          enviarMensaje();
-
-        }
-
-      };
-
-
-    /* =========================
-       MOSTRAR MENSAJE
-    ========================= */
-
-    function mostrarMensaje(
-      texto,
-      remitente
-    ) {
-
-      const contenedor =
-        document.getElementById(
-          "mensajes"
-        );
-
-      const div =
-        document.createElement(
-          "div"
-        );
-
-      div.classList.add(
-        "mensaje"
-      );
-
-      if (
-        remitente === "cliente"
-      ) {
-
-        div.classList.add(
-          "cliente"
-        );
-
-      } else {
-
-        div.classList.add(
-          "asesor"
-        );
-
+    function nombreCorto(nombre) {
+      const limpio = String(nombre || "").trim();
+      return limpio ? limpio.split(/\s+/)[0] : "";
+    }
+
+    function mostrarErrorFirebase(mensaje) {
+      const box = document.getElementById("errorFirebase");
+      if (!box) return;
+      box.textContent = mensaje;
+      box.style.display = "block";
+    }
+
+    function ocultarErrorFirebase() {
+      const box = document.getElementById("errorFirebase");
+      if (box) box.style.display = "none";
+    }
+
+    /* =========================================================
+       CONVERSACIÓN
+    ========================================================= */
+
+    async function asegurarConversacion() {
+      if (!db) throw new Error("Firebase no está conectado.");
+
+      if (!conversacionId) {
+        const nuevaConversacionRef = push(ref(db, "conversaciones"));
+        conversacionId = nuevaConversacionRef.key;
+
+        sessionStorage.setItem("conversacionId", conversacionId);
+
+        await set(ref(db, `conversaciones/${conversacionId}`), {
+          estado: "pendiente",
+          iaActiva: true,
+          iaEstado: "activa",
+          iaDerivada: false,
+          fechaCreacion: Date.now()
+        });
       }
 
-      div.textContent =
-        texto;
-
-      contenedor.appendChild(
-        div
-      );
-
-      contenedor.scrollTop =
-        contenedor.scrollHeight;
-
+      mensajesRef = ref(db, `conversaciones/${conversacionId}/mensajes`);
+      return conversacionId;
     }
+
+    async function cargarDatosConversacionExistente() {
+      if (!db || !conversacionId) return;
+
+      try {
+        const snap = await get(ref(db, `conversaciones/${conversacionId}/datosCliente`));
+        if (snap.exists()) {
+          const datos = snap.val() || {};
+          datosClienteActual = {
+            nombre: datos.nombre || "",
+            dni: datos.dni || "",
+            telefono: datos.telefono || "",
+            motivo: datos.motivo || ""
+          };
+
+          if (datosClienteActual.nombre) {
+            document.getElementById("infoChat").textContent = datosClienteActual.nombre;
+          }
+        }
+      } catch (error) {
+        console.warn("No se pudieron recuperar los datos del cliente:", error);
+      }
+    }
+
+    /* =========================================================
+       ESCUCHAR MENSAJES
+    ========================================================= */
+
+    function escucharMensajes() {
+      if (!mensajesRef) return;
+
+      onChildAdded(mensajesRef, async (snapshot) => {
+        const mensaje = snapshot.val();
+        if (!mensaje) return;
+
+        mostrarMensaje(
+          mensaje.texto || "",
+          mensaje.remitente || "asesor"
+        );
+
+        // La IA del cliente solamente procesa mensajes nuevos del cliente.
+        if (
+          IA_HABILITADA &&
+          mensaje.remitente === "cliente" &&
+          !mensaje.iaProcesado
+        ) {
+          await procesarRespuestaIA(snapshot.key, mensaje);
+        }
+      });
+    }
+
+    /* =========================================================
+       COMENZAR CHAT
+    ========================================================= */
+
+    window.comenzarChat = async function () {
+      const nombre = document.getElementById("nombre").value.trim();
+      const dni = document.getElementById("dni").value.trim();
+      const telefono = document.getElementById("telefono").value.trim();
+      const motivo = document.getElementById("motivo").value;
+
+      const error = document.getElementById("error");
+
+      if (!nombre || !dni || !telefono || !motivo) {
+        error.style.display = "block";
+        return;
+      }
+
+      error.style.display = "none";
+      ocultarErrorFirebase();
+
+      try {
+        if (!db) {
+          mostrarErrorFirebase("No se pudo conectar con el sistema. Revisá la configuración de Firebase.");
+          return;
+        }
+
+        /*
+          Si no hay conversación, la crea.
+          Si ya existe una conversación en esta sesión, la reutiliza.
+        */
+        await asegurarConversacion();
+
+        datosClienteActual = { nombre, dni, telefono, motivo };
+
+        await update(ref(db, `conversaciones/${conversacionId}`), {
+          estado: "pendiente",
+
+          // Campos compatibles con el panel de asesores.
+          nombreCliente: nombre,
+          clienteNombre: nombre,
+          dniCliente: dni,
+          telefonoCliente: telefono,
+          motivo: motivo,
+
+          // Datos completos.
+          datosCliente: {
+            nombre,
+            dni,
+            telefono,
+            motivo,
+            fecha: Date.now()
+          },
+
+          // IA.
+          iaActiva: true,
+          iaEstado: "activa",
+          iaDerivada: false,
+
+          // Sin asignar al comenzar.
+          equipo: null,
+          nombreEquipo: null,
+          team: null,
+          equipoAsignado: null,
+          gestor: null,
+          gestorAsignado: null,
+          asignadoA: null,
+          asesor: null,
+          usuarioAsignado: null,
+          nombreGestor: null,
+          gestorEmail: null,
+          asignadoEmail: null,
+          emailGestor: null,
+          asesorEmail: null,
+
+          fechaCreacion: Date.now(),
+          ultimaActividad: Date.now()
+        });
+
+        document.getElementById("infoChat").textContent = nombre;
+
+        document.getElementById("inicio").style.display = "none";
+        document.getElementById("chat").style.display = "flex";
+
+        document.getElementById("mensajes").innerHTML = "";
+
+        if (!mensajesRef) {
+          mensajesRef = ref(db, `conversaciones/${conversacionId}/mensajes`);
+        }
+
+        // Evita registrar el listener dos veces.
+        if (!window.__mensajesEscuchados) {
+          window.__mensajesEscuchados = true;
+          escucharMensajes();
+        }
+
+        document.getElementById("mensajeInput").focus();
+
+      } catch (error) {
+        console.error("Error al guardar la conversación:", error);
+        mostrarErrorFirebase("No se pudo guardar la conversación: " + error.message);
+      }
+    };
+
+    /* =========================================================
+       VOLVER
+    ========================================================= */
+
+    window.volverInicio = function () {
+      document.getElementById("chat").style.display = "none";
+      document.getElementById("inicio").style.display = "block";
+    };
+
+    /* =========================================================
+       ENVIAR MENSAJE
+    ========================================================= */
+
+    window.enviarMensaje = async function () {
+      const input = document.getElementById("mensajeInput");
+      const texto = input.value.trim();
+
+      if (!texto || !mensajesRef) return;
+
+      try {
+        // Si el cliente vuelve a escribir después de una derivación,
+        // no reactivamos la IA: queda para el equipo humano.
+        const mensajeRef = await push(mensajesRef, {
+          texto,
+          remitente: "cliente",
+          nombreRemitente: datosClienteActual.nombre || "Cliente",
+          fecha: Date.now(),
+          iaProcesado: false
+        });
+
+        await update(ref(db, `conversaciones/${conversacionId}`), {
+          ultimaActividad: Date.now(),
+          ultimoMensaje: texto,
+          ultimoRemitente: "cliente",
+          estado: iaDerivada ? "pendiente" : "pendiente"
+        });
+
+        input.value = "";
+        input.focus();
+
+        console.log("Mensaje enviado:", mensajeRef.key);
+
+      } catch (error) {
+        console.error("Error al enviar mensaje:", error);
+        alert("No se pudo enviar el mensaje.");
+      }
+    };
+
+    /* =========================================================
+       ENTER
+    ========================================================= */
+
+    window.presionarEnter = function (event) {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        enviarMensaje();
+      }
+    };
+
+    /* =========================================================
+       RESPUESTA AUTOMÁTICA DE IA
+       ========================================================= */
+
+    function detectarIntencionIA(texto) {
+      const n = normalizarTexto(texto);
+
+      if (!n) return "silencio";
+
+      // Casos que SIEMPRE requieren una persona.
+      const derivar = [
+        "amenaza",
+        "denuncia",
+        "denunciar",
+        "abogado",
+        "abogada",
+        "carta documento",
+        "defensa del consumidor",
+        "reclamo",
+        "reclamar",
+        "pague y figura",
+        "pague y aparece",
+        "pago no imputado",
+        "pago no figura",
+        "transferencia no figura",
+        "comprobante",
+        "convenio",
+        "refinanciacion",
+        "plan de pago",
+        "cuotas",
+        "cuota",
+        "descuento",
+        "quita",
+        "embargo",
+        "judicial",
+        "demanda",
+        "intimacion",
+        "libre deuda",
+        "cancelar deuda",
+        "desconozco",
+        "no soy",
+        "fraude",
+        "estafa",
+        "suplantacion",
+        "datos personales",
+        "error en mi deuda",
+        "monto incorrecto"
+      ];
+
+      if (derivar.some(x => n.includes(x))) return "derivar";
+
+      // Saludos.
+      if (
+        /\b(hola|buen dia|buenas|buenas tardes|buenas noches|buen diaa)\b/.test(n) &&
+        n.length < 120
+      ) return "saludo";
+
+      // Horarios.
+      if (
+        n.includes("horario") ||
+        n.includes("atienden") ||
+        n.includes("atencion") ||
+        n.includes("hasta que hora") ||
+        n.includes("abren") ||
+        n.includes("cierran") ||
+        n.includes("sabado") ||
+        n.includes("sábado")
+      ) return "horarios";
+
+      // WhatsApp / contacto.
+      if (
+        n.includes("whatsapp") ||
+        n.includes("wsp") ||
+        n.includes("contacto") ||
+        n.includes("como contacto") ||
+        n.includes("telefono") ||
+        n.includes("comunicarme")
+      ) return "contacto";
+
+      // Transferencias / medios de pago.
+      if (
+        n.includes("transferencia") ||
+        n.includes("transferir") ||
+        n.includes("como pago") ||
+        n.includes("donde pago") ||
+        n.includes("medio de pago") ||
+        n.includes("medios de pago") ||
+        n.includes("pagar")
+      ) return "pago";
+
+      // Documentación.
+      if (
+        n.includes("documentacion") ||
+        n.includes("documento") ||
+        n.includes("documentos") ||
+        n.includes("archivo") ||
+        n.includes("adjuntar") ||
+        n.includes("enviar document") ||
+        n.includes("mandar document")
+      ) return "documentacion";
+
+      // Consulta de deuda.
+      if (
+        n.includes("cuanto debo") ||
+        n.includes("cuánto debo") ||
+        n.includes("deuda") ||
+        n.includes("saldo") ||
+        n.includes("situacion") ||
+        n.includes("situación") ||
+        n.includes("estado de mi deuda") ||
+        n.includes("estado de cuenta")
+      ) return "deuda";
+
+      // Libre deuda.
+      if (
+        n.includes("libre de deuda") ||
+        n.includes("libre deuda") ||
+        n.includes("certificado de deuda") ||
+        n.includes("certificado de libre")
+      ) return "libre_deuda";
+
+      // Cuotas / planes, si no cayó en derivación anterior.
+      if (
+        n.includes("cuotas") ||
+        n.includes("cuota") ||
+        n.includes("plan") ||
+        n.includes("financiar") ||
+        n.includes("financiacion")
+      ) return "cuotas";
+
+      // FAQ generales.
+      if (
+        n.includes("que necesitan") ||
+        n.includes("como funciona") ||
+        n.includes("ayuda") ||
+        n.includes("informacion") ||
+        n.includes("información") ||
+        n.includes("pregunta")
+      ) return "faq";
+
+      return "derivar";
+    }
+
+    function respuestaIA(intencion, textoOriginal) {
+      const nombre = nombreCorto(datosClienteActual.nombre);
+      const saludo = nombre ? `Hola ${nombre} 😊` : "Hola 😊";
+
+      switch (intencion) {
+        case "saludo":
+          return `${saludo} Soy el asistente virtual de Estudio Mansilla Garzón y Asociados. ¿En qué puedo ayudarte? Puedo orientarte sobre horarios, medios de pago, documentación, consultas generales y otras preguntas frecuentes.`;
+
+        case "horarios":
+          return `${nombre ? `Claro, ${nombre}. ` : ""}Nuestro horario de atención es de lunes a viernes de 9:00 a 18:00 y sábados de 9:00 a 13:00. 😊`;
+
+        case "contacto":
+          if (WHATSAPP_URL) {
+            return `${saludo} También podés comunicarte con nosotros por WhatsApp. Te dejo el acceso directo: ${WHATSAPP_URL}`;
+          }
+          return `${saludo} Podés continuar por este medio. También estamos preparando la vinculación con WhatsApp para que puedas comunicarte directamente por ese canal.`;
+
+        case "pago":
+          return `${saludo} Actualmente podemos orientarte sobre pagos mediante transferencia. Si necesitás los datos exactos para realizar una transferencia o querés informar un pago realizado, puedo derivarte con un asesor para que revise tu caso.`;
+
+        case "documentacion":
+          return `${saludo} Podés enviar la documentación directamente por este chat utilizando el envío de archivos cuando esté habilitado. Si necesitás saber exactamente qué documentación corresponde a tu caso, puedo derivarte con un asesor.`;
+
+        case "deuda":
+          return `${saludo} Para informarte sobre el estado exacto de tu deuda necesitamos verificar tus datos en nuestra base. Si querés, indicame tu DNI y un asesor puede revisar tu situación. La consulta automática con la base de clientes se habilitará cuando esté cargada y configurada por los supervisores.`;
+
+        case "libre_deuda":
+          return `${saludo} Para solicitar un libre de deuda necesitamos verificar primero tu situación. Un asesor puede revisar si corresponde emitirlo y, una vez validado, enviártelo por este medio.`;
+
+        case "cuotas":
+          return `${saludo} Las alternativas de cuotas o planes dependen de la situación particular de cada cuenta. Para darte información correcta y actualizada, voy a derivar tu consulta con un asesor.`;
+
+        case "faq":
+          return `${saludo} Puedo orientarte sobre nuestros horarios, medios de pago por transferencia, envío de documentación y consultas generales. Contame qué necesitás y voy a intentar ayudarte.`;
+
+        case "derivar":
+        default:
+          return `${saludo} Para darte una respuesta correcta sobre tu situación necesito que un asesor revise tu caso. Voy a dejar tu consulta para que puedan ayudarte. 😊`;
+      }
+    }
+
+    async function procesarRespuestaIA(messageKey, mensaje) {
+      if (!IA_HABILITADA || iaDerivada || iaProcesando || !db) return;
+
+      const texto = String(mensaje?.texto || "").trim();
+      if (!texto) return;
+
+      const identificador = `${messageKey}:${texto}`;
+      if (identificador === iaUltimoMensajeProcesado) return;
+
+      iaUltimoMensajeProcesado = identificador;
+      iaProcesando = true;
+
+      try {
+        const intencion = detectarIntencionIA(texto);
+
+        // Si requiere humano, dejamos la conversación sin asignar.
+        if (intencion === "derivar") {
+          iaDerivada = true;
+
+          await update(ref(db, `conversaciones/${conversacionId}`), {
+            iaActiva: false,
+            iaEstado: "derivada",
+            iaDerivada: true,
+            estado: "pendiente",
+            equipo: null,
+            nombreEquipo: null,
+            team: null,
+            equipoAsignado: null,
+            gestor: null,
+            gestorAsignado: null,
+            asignadoA: null,
+            asesor: null,
+            usuarioAsignado: null,
+            nombreGestor: null,
+            gestorEmail: null,
+            asignadoEmail: null,
+            emailGestor: null,
+            asesorEmail: null,
+            ultimaActividad: Date.now(),
+            ultimoMensaje: texto,
+            ultimoRemitente: "cliente"
+          });
+
+          await update(
+            ref(db, `conversaciones/${conversacionId}/mensajes/${messageKey}`),
+            { iaProcesado: true }
+          );
+
+          // No responde automáticamente en este caso.
+          console.log("IA derivó la conversación:", conversacionId);
+          return;
+        }
+
+        if (intencion === "silencio") return;
+
+        const respuesta = respuestaIA(intencion, texto);
+        if (!respuesta) return;
+
+        // Pequeña pausa para que se sienta como una respuesta natural.
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        await push(mensajesRef, {
+          texto: respuesta,
+          remitente: "ia",
+          nombreRemitente: IA_NOMBRE,
+          fecha: Date.now(),
+          respondeA: messageKey,
+          tipo: "respuesta_automatica"
+        });
+
+        await update(
+          ref(db, `conversaciones/${conversacionId}/mensajes/${messageKey}`),
+          { iaProcesado: true }
+        );
+
+        await update(ref(db, `conversaciones/${conversacionId}`), {
+          iaActiva: true,
+          iaEstado: "activa",
+          iaDerivada: false,
+          iaUltimoMensajeProcesado: messageKey,
+          ultimaActividad: Date.now(),
+          ultimoMensaje: respuesta,
+          ultimoRemitente: "ia"
+        });
+
+      } catch (error) {
+        console.error("Error de IA automática:", error);
+      } finally {
+        iaProcesando = false;
+      }
+    }
+
+    /* =========================================================
+       MOSTRAR MENSAJE
+    ========================================================= */
+
+    function mostrarMensaje(texto, remitente) {
+      const contenedor = document.getElementById("mensajes");
+      if (!contenedor) return;
+
+      const div = document.createElement("div");
+      div.classList.add("mensaje");
+
+      if (remitente === "cliente") {
+        div.classList.add("cliente");
+      } else {
+        div.classList.add("asesor");
+      }
+
+      div.textContent = texto;
+      contenedor.appendChild(div);
+      contenedor.scrollTop = contenedor.scrollHeight;
+    }
+
+    /* =========================================================
+       RECUPERAR SESIÓN
+    ========================================================= */
+
+    async function iniciarSesionExistente() {
+      if (!db || !conversacionId) return;
+
+      try {
+        mensajesRef = ref(db, `conversaciones/${conversacionId}/mensajes`);
+        await cargarDatosConversacionExistente();
+
+        const snap = await get(ref(db, `conversaciones/${conversacionId}`));
+        if (snap.exists()) {
+          const c = snap.val() || {};
+          iaDerivada = c.iaDerivada === true || c.iaActiva === false;
+
+          if (c.datosCliente) {
+            datosClienteActual = {
+              nombre: c.datosCliente.nombre || c.nombreCliente || "",
+              dni: c.datosCliente.dni || c.dniCliente || "",
+              telefono: c.datosCliente.telefono || c.telefonoCliente || "",
+              motivo: c.datosCliente.motivo || c.motivo || ""
+            };
+          }
+
+          if (c.nombreCliente) {
+            document.getElementById("infoChat").textContent = c.nombreCliente;
+          }
+
+          // Si la sesión ya estaba dentro del chat, lo mostramos.
+          if (c.datosCliente || c.nombreCliente) {
+            document.getElementById("inicio").style.display = "none";
+            document.getElementById("chat").style.display = "flex";
+          }
+        }
+
+        if (!window.__mensajesEscuchados) {
+          window.__mensajesEscuchados = true;
+          escucharMensajes();
+        }
+
+      } catch (error) {
+        console.warn("No se pudo recuperar la conversación:", error);
+      }
+    }
+
+    iniciarSesionExistente();
+
+    /* =========================================================
+       WHATSAPP
+    ========================================================= */
+
+    window.abrirWhatsApp = function () {
+      if (!WHATSAPP_URL) {
+        alert("El enlace de WhatsApp todavía no fue configurado.");
+        return;
+      }
+      window.open(WHATSAPP_URL, "_blank", "noopener,noreferrer");
+    };
 
   </script>
 
