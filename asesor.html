@@ -710,7 +710,7 @@ function obtenerDatosCliente(c){
     if(pc && !/^\d{6,12}$/.test(pc)) nombre=pc;
   }
   const dni=valorCampoProfundo({fuentes},["dni","DNI","documento","document","documentNumber","documentoCliente","dniCliente","nroDni","numeroDni","numeroDocumento","nroDocumento","doc"]);
-  const telefono=valorCampoProfundo({fuentes},["telefono","teléfono","celular","phone","telefonoCliente","numeroTelefono","mobile"]);
+  let telefono=valorCampoProfundo({fuentes},["telefono","teléfono","celular","phone","telefonoCliente","numeroTelefono","mobile"]);
   const fecha=valorCampoProfundo({fuentes},["fecha","fechaCliente","fechaConsulta"]);
   const motivo=valorCampoProfundo({fuentes},["motivo","asunto","motivoConsulta","consulta","tema"]);
   let dniFinal=String(dni||"").trim();
@@ -725,7 +725,14 @@ function obtenerDatosCliente(c){
   let nombreFinal=String(nombre||"").trim();
   // Si por la estructura del registro el "nombre" terminó siendo el DNI, lo descartamos.
   if(/^\d{6,12}$/.test(nombreFinal) || (dniFinal && normalizarTexto(nombreFinal)===normalizarTexto(dniFinal))) nombreFinal="";
-  return { nombre:nombreFinal, dni:dniFinal, telefono:String(telefono||""), fecha:String(fecha||""), motivo:String(motivo||"") };
+
+  // Nunca mostramos el DNI como teléfono. Algunos registros antiguos lo tienen
+  // copiado en ambos campos y eso genera la duplicación visible en la ficha.
+  let telefonoFinal=String(telefono||"").trim();
+  if(dniFinal && normalizarTexto(telefonoFinal)===normalizarTexto(dniFinal)) telefonoFinal="";
+  if(/^\d{6,12}$/.test(telefonoFinal) && !dniFinal) telefonoFinal="";
+
+  return { nombre:nombreFinal, dni:dniFinal, telefono:telefonoFinal, fecha:String(fecha||""), motivo:String(motivo||"") };
 }
 
 function obtenerEquipoDeConversacion(c){
@@ -986,8 +993,9 @@ function mostrarNombreCliente(c){
   const d=obtenerDatosCliente(c);
   // El DNI se muestra en su propia línea; no lo repetimos junto al nombre.
   if(d.nombre) return d.nombre;
-  if(d.dni) return `DNI ${d.dni}`;
-  return "Cliente sin identificar";
+  // Si Firebase no tiene nombre guardado, no usamos el DNI como si fuera el nombre.
+  // El DNI queda exclusivamente en su propia línea de la ficha.
+  return "Cliente";
 }
 
 function crearCardCliente(c,finalizada=false){
@@ -1443,6 +1451,10 @@ function renderizarMensajes(c){
     .map(([id,m])=>({...m,_id:id}))
     .sort((a,b)=>(a.fecha||0)-(b.fecha||0));
 
+  // Evita mostrar dos veces la misma respuesta automática de IA.
+  // También limpia visualmente duplicados que ya hayan quedado guardados en Firebase.
+  const iaYaMostrada=new Set();
+
   if(!mensajes.length){
     box.innerHTML=`<div class="empty">Todavía no hay mensajes.</div>`;
     return;
@@ -1450,6 +1462,13 @@ function renderizarMensajes(c){
 
   mensajes.forEach(m=>{
     if((m?.sos===true || m?.urgente===true) && normalizarTexto(urgencias?.[conversacionSeleccionada]?.estado)==="atendido") return;
+
+    if(m?.generadoPorIA===true || normalizarTexto(m?.remitente)==="asistente virtual" || normalizarTexto(m?.remitente)==="ia"){
+      const claveIA=normalizarTexto(`${m?.iaTipo||""}|${m?.texto||""}`);
+      if(iaYaMostrada.has(claveIA)) return;
+      iaYaMostrada.add(claveIA);
+    }
+
     const tipo=m.tipo||"texto";
     const div=document.createElement("div");
 
@@ -2052,7 +2071,7 @@ async function procesarIAAutomatica(id,c){
   iaProcesandoAhora.add(clave);
 
   const tipo=clasificarConsultaIA(ultimo.texto||"");
-  if(tipo==="silencio") return;
+  if(tipo==="silencio"){ iaProcesandoAhora.delete(clave); return; }
 
   const ahora=Date.now();
   let texto="";
@@ -2065,27 +2084,30 @@ async function procesarIAAutomatica(id,c){
   }
   if(!texto){ iaProcesandoAhora.delete(clave); return; }
 
-  const r=ref(db,`conversaciones/${id}/mensajes`);
-  await push(r,{
-    tipo:"texto",
-    texto,
-    remitente:IA_AUTOMATICA_NOMBRE,
-    remitenteEmail:"",
-    fecha:ahora,
-    generadoPorIA:true,
-    iaTipo:tipo
-  });
+  try{
+    const r=ref(db,`conversaciones/${id}/mensajes`);
+    await push(r,{
+      tipo:"texto",
+      texto,
+      remitente:IA_AUTOMATICA_NOMBRE,
+      remitenteEmail:"",
+      fecha:ahora,
+      generadoPorIA:true,
+      iaTipo:tipo
+    });
 
-  // Marcamos el mensaje del cliente para que Firebase no dispare otra respuesta.
-  await update(ref(db,`conversaciones/${id}/mensajes/${ultimo._id}`),{iaProcesado:true,iaProcesadoFecha:ahora});
-  await update(ref(db,`conversaciones/${id}`),{
-    iaActiva:true,
-    iaUltimoMensajeProcesado:ultimo._id,
-    iaUltimaRespuesta:ahora,
-    iaDerivada:deriva,
-    iaEstado:deriva?"derivada":"atendiendo"
-  });
-  iaProcesandoAhora.delete(clave);
+    // Marcamos el mensaje del cliente para que Firebase no dispare otra respuesta.
+    await update(ref(db,`conversaciones/${id}/mensajes/${ultimo._id}`),{iaProcesado:true,iaProcesadoFecha:ahora});
+    await update(ref(db,`conversaciones/${id}`),{
+      iaActiva:true,
+      iaUltimoMensajeProcesado:ultimo._id,
+      iaUltimaRespuesta:ahora,
+      iaDerivada:deriva,
+      iaEstado:deriva?"derivada":"atendiendo"
+    });
+  }finally{
+    iaProcesandoAhora.delete(clave);
+  }
 }
 
 function procesarIAAutomaticaParaTodas(data){
