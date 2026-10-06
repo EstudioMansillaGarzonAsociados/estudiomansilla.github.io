@@ -1977,6 +1977,50 @@ async function registrarEventoJornada(tipo,extra={}){
   }
 }
 
+// Al iniciar sesión se crea automáticamente el ingreso del día.
+// Se consulta primero el historial para evitar duplicar el ingreso si la persona
+// recarga la página o entra más de una vez durante la misma jornada.
+async function registrarIngresoAutomatico(){
+  if(!usuarioActual) return;
+  const ahora=Date.now();
+  const fecha=fechaLocalISO(ahora);
+  try{
+    const snap=await get(ref(db,`jornadas/${usuarioActual.uid}/${fecha}`));
+    const eventos=snap.val()||{};
+    const arr=Object.values(eventos);
+    const tieneIngreso=arr.some(e=>e?.tipo==="ingreso");
+    const tieneEgreso=arr.some(e=>e?.tipo==="egreso");
+
+    // Si ya existe un ingreso y no hubo egreso, la jornada sigue abierta.
+    if(tieneIngreso && !tieneEgreso){
+      await set(ref(db,`presencia/${usuarioActual.uid}`),{
+        nombre:nombreActual,
+        email:usuarioActual.email||"",
+        estado:"activo",
+        fecha:ahora
+      });
+      pintarPresencia({estado:"activo",nombre:nombreActual,email:usuarioActual.email||"",fecha:ahora});
+      return;
+    }
+
+    // Si ya hubo egreso hoy, no se crea otro ingreso automáticamente.
+    // La persona puede iniciar una nueva jornada manualmente desde el selector.
+    if(tieneEgreso) return;
+
+    await registrarEventoJornada("ingreso",{automatico:true});
+    const data={
+      nombre:nombreActual,
+      email:usuarioActual.email||"",
+      estado:"activo",
+      fecha:ahora
+    };
+    await set(ref(db,`presencia/${usuarioActual.uid}`),data);
+    pintarPresencia(data);
+  }catch(err){
+    console.warn("No se pudo registrar ingreso automático",err);
+  }
+}
+
 async function actualizarPresencia(estado){
   if(!usuarioActual) return;
   const anterior=presencias?.[usuarioActual.uid]?.estado || "sin";
@@ -2705,9 +2749,10 @@ onAuthStateChanged(auth,async user=>{
   renderizarPanelSOS();
 
   try{
-    const snap=await get(ref(db,`presencia/${user.uid}`));
-    if(snap.exists()) pintarPresencia(snap.val());
-  }catch(e){}
+    await registrarIngresoAutomatico();
+  }catch(e){
+    console.warn("No se pudo iniciar automáticamente la jornada",e);
+  }
 
   try{
     await onDisconnect(ref(db,`presencia/${user.uid}`)).update({
@@ -2730,6 +2775,13 @@ onAuthStateChanged(auth,async user=>{
 async function cerrarSesion(){
   detenerTyping();
   if(usuarioActual){
+    try{
+      // Cerrar la jornada antes de salir para que quede registrado el egreso.
+      const actual=presencias?.[usuarioActual.uid]?.estado || "activo";
+      if(actual!=="finalizado" && actual!=="sin") await actualizarPresencia("finalizado");
+    }catch(e){
+      console.warn("No se pudo registrar el egreso al cerrar sesión",e);
+    }
     try{
       await update(ref(db,`presencia/${usuarioActual.uid}`),{
         estado:"sin",
