@@ -701,7 +701,14 @@ function valorCampoProfundo(obj, claves){
 
 function obtenerDatosCliente(c){
   const fuentes=[c?.datosCliente,c?.cliente,c?.datos,c];
-  const nombre=valorCampoProfundo({fuentes},["nombre","nombreCliente","clienteNombre","cliente","name","fullName","nombreCompleto"]);
+  let nombre=valorCampoProfundo({fuentes},["nombre","nombreCliente","clienteNombre","name","fullName","nombreCompleto"]);
+  // Algunos registros guardan el DNI dentro de un campo llamado "cliente".
+  // Nunca debemos mostrar ese valor como si fuera el nombre.
+  if(!nombre){
+    const posibleCliente=valorCampoProfundo({fuentes},["cliente"]);
+    const pc=String(posibleCliente||"").trim();
+    if(pc && !/^\d{6,12}$/.test(pc)) nombre=pc;
+  }
   const dni=valorCampoProfundo({fuentes},["dni","DNI","documento","document","documentNumber","documentoCliente","dniCliente","nroDni","numeroDni","numeroDocumento","nroDocumento","doc"]);
   const telefono=valorCampoProfundo({fuentes},["telefono","teléfono","celular","phone","telefonoCliente","numeroTelefono","mobile"]);
   const fecha=valorCampoProfundo({fuentes},["fecha","fechaCliente","fechaConsulta"]);
@@ -715,7 +722,10 @@ function obtenerDatosCliente(c){
     }
     if(!dniFinal && /^[0-9]{6,12}$/.test(String(c?._id||""))) dniFinal=String(c._id);
   }
-  return { nombre:String(nombre||""), dni:dniFinal, telefono:String(telefono||""), fecha:String(fecha||""), motivo:String(motivo||"") };
+  let nombreFinal=String(nombre||"").trim();
+  // Si por la estructura del registro el "nombre" terminó siendo el DNI, lo descartamos.
+  if(/^\d{6,12}$/.test(nombreFinal) || (dniFinal && normalizarTexto(nombreFinal)===normalizarTexto(dniFinal))) nombreFinal="";
+  return { nombre:nombreFinal, dni:dniFinal, telefono:String(telefono||""), fecha:String(fecha||""), motivo:String(motivo||"") };
 }
 
 function obtenerEquipoDeConversacion(c){
@@ -974,7 +984,7 @@ function aplicarFiltroLista(lista){
 
 function mostrarNombreCliente(c){
   const d=obtenerDatosCliente(c);
-  if(d.nombre && d.dni) return `${d.nombre} · DNI ${d.dni}`;
+  // El DNI se muestra en su propia línea; no lo repetimos junto al nombre.
   if(d.nombre) return d.nombre;
   if(d.dni) return `DNI ${d.dni}`;
   return "Cliente sin identificar";
@@ -2022,6 +2032,8 @@ function respuestaAutomaticaIA(tipo){
   return respuestas[tipo]||null;
 }
 
+const iaProcesandoAhora=new Set();
+
 async function procesarIAAutomatica(id,c){
   if(!IA_AUTOMATICA_HABILITADA || !id || !c || !estaActiva(c)) return;
   // La IA solo interviene en conversaciones sin asignar. Una vez tomada por un asesor, se retira.
@@ -2032,6 +2044,12 @@ async function procesarIAAutomatica(id,c){
   // Evita duplicar respuestas ante múltiples eventos de Firebase.
   if(ultimo.iaProcesado===true || ultimo.iaRespuestaGenerada===true) return;
   if(c.iaUltimoMensajeProcesado===ultimo._id) return;
+
+  // Firebase puede disparar varios onValue casi al mismo tiempo.
+  // Este bloqueo evita que dos ejecuciones creen la misma respuesta de IA.
+  const clave=`${id}:${ultimo._id}`;
+  if(iaProcesandoAhora.has(clave)) return;
+  iaProcesandoAhora.add(clave);
 
   const tipo=clasificarConsultaIA(ultimo.texto||"");
   if(tipo==="silencio") return;
@@ -2045,7 +2063,7 @@ async function procesarIAAutomatica(id,c){
   } else {
     texto=respuestaAutomaticaIA(tipo);
   }
-  if(!texto) return;
+  if(!texto){ iaProcesandoAhora.delete(clave); return; }
 
   const r=ref(db,`conversaciones/${id}/mensajes`);
   await push(r,{
@@ -2067,6 +2085,7 @@ async function procesarIAAutomatica(id,c){
     iaDerivada:deriva,
     iaEstado:deriva?"derivada":"atendiendo"
   });
+  iaProcesandoAhora.delete(clave);
 }
 
 function procesarIAAutomaticaParaTodas(data){
