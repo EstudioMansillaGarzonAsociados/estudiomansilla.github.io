@@ -406,7 +406,8 @@
       set,
       update,
       onChildAdded,
-      get
+      get,
+      runTransaction
     } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-database.js";
 
     /* =========================================================
@@ -935,6 +936,24 @@
       const identificador = `${messageKey}:${texto}`;
       if (identificador === iaUltimoMensajeProcesado) return;
 
+      // Reclamo ATÓMICO del mensaje: si hay dos pestañas abiertas o el listener
+      // se registra dos veces, solamente una podrá marcarlo como procesándose.
+      let reclamo = false;
+      try {
+        const mensajeRef = ref(db, `conversaciones/${conversacionId}/mensajes/${messageKey}`);
+        const resultado = await runTransaction(mensajeRef, actual => {
+          if (!actual || actual.remitente !== "cliente") return actual;
+          if (actual.iaProcesado === true || actual.iaProcesando === true) return;
+          return { ...actual, iaProcesando: true };
+        });
+        reclamo = resultado.committed === true;
+      } catch (error) {
+        console.warn("No se pudo reclamar el mensaje para la IA:", error);
+        return;
+      }
+
+      if (!reclamo) return;
+
       iaUltimoMensajeProcesado = identificador;
       iaProcesando = true;
 
@@ -971,7 +990,7 @@
 
           await update(
             ref(db, `conversaciones/${conversacionId}/mensajes/${messageKey}`),
-            { iaProcesado: true }
+            { iaProcesado: true, iaProcesando: false }
           );
 
           // No responde automáticamente en este caso.
@@ -987,6 +1006,12 @@
         // Pequeña pausa para que se sienta como una respuesta natural.
         await new Promise(resolve => setTimeout(resolve, 500));
 
+        // Antes de escribir, verificamos que este mensaje siga siendo el que
+        // reclamamos. Así evitamos una segunda respuesta automática.
+        const actualSnap = await get(ref(db, `conversaciones/${conversacionId}/mensajes/${messageKey}`));
+        const actualMensaje = actualSnap.exists() ? actualSnap.val() : null;
+        if (!actualMensaje || actualMensaje.iaProcesado === true) return;
+
         await push(mensajesRef, {
           texto: respuesta,
           remitente: "ia",
@@ -998,7 +1023,7 @@
 
         await update(
           ref(db, `conversaciones/${conversacionId}/mensajes/${messageKey}`),
-          { iaProcesado: true }
+          { iaProcesado: true, iaProcesando: false }
         );
 
         await update(ref(db, `conversaciones/${conversacionId}`), {
@@ -1015,6 +1040,14 @@
         console.error("Error de IA automática:", error);
       } finally {
         iaProcesando = false;
+        // Si la función salió antes de responder, liberamos el bloqueo para
+        // que el mensaje pueda volver a procesarse correctamente.
+        try {
+          await update(
+            ref(db, `conversaciones/${conversacionId}/mensajes/${messageKey}`),
+            { iaProcesando: false }
+          );
+        } catch (_) {}
       }
     }
 
