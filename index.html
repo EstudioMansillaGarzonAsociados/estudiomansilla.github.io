@@ -699,7 +699,7 @@
         document.getElementById("mensajes").innerHTML = "";
 
         // Saludo inicial de la IA.
-        const saludoInicial = "Buen día. Soy el asistente virtual del Centro de Atención. ¿En qué podemos ayudarte?";
+        const saludoInicial = "Buen día. Soy el asistente virtual del Estudio Mansilla Garzon y asociados. ¿En qué podemos ayudarte?";
         await push(ref(db, `conversaciones/${conversacionId}/mensajes`), {
           texto: saludoInicial,
           remitente: "ia",
@@ -940,7 +940,7 @@
     function respuestaIA(intencion, textoOriginal) {
       switch (intencion) {
         case "saludo":
-          return "Buen día. Soy el asistente virtual del Centro de Atención. ¿En qué podemos ayudarte?";
+          return "Buen día. Soy el asistente virtual del Estudio Mansilla Garzon y asociados. ¿En qué podemos ayudarte?";
 
         case "menu":
           return "Por favor, elegí una de estas opciones:\n\n• Enviar comprobante\n• Tengo un acuerdo\n• Quiero un acuerdo\n• Libre de deuda";
@@ -1134,13 +1134,17 @@
       div.textContent = texto;
       contenedor.appendChild(div);
 
-      // Cuando la IA muestra el menú, lo convertimos en botones reales.
+      // El saludo inicial y el menú de opciones se muestran con botones reales.
       const textoMenu = String(texto || "");
-      const esMenuIA = remitente === "ia" &&
-        textoMenu.includes("Enviar comprobante") &&
-        textoMenu.includes("Tengo un acuerdo") &&
-        textoMenu.includes("Quiero un acuerdo") &&
-        textoMenu.includes("Libre de deuda");
+      const esSaludoIA = remitente === "ia" &&
+        textoMenu.includes("Buen día. Soy el asistente virtual del Estudio Mansilla Garzon y asociados. ¿En qué podemos ayudarte?");
+      const esMenuIA = remitente === "ia" && (
+        esSaludoIA ||
+        (textoMenu.includes("Enviar comprobante") &&
+         textoMenu.includes("Tengo un acuerdo") &&
+         textoMenu.includes("Quiero un acuerdo") &&
+         textoMenu.includes("Libre de deuda"))
+      );
 
       if (esMenuIA) {
         const opciones = [
