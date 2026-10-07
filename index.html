@@ -707,7 +707,10 @@
           fecha: Date.now(),
           tipo: "saludo_automatico"
         });
-        mostrarMensaje(saludoInicial, "ia");
+
+        // IMPORTANTE: no mostramos el saludo manualmente aquí.
+        // El listener onChildAdded lo mostrará una sola vez y también
+        // generará los botones debajo del saludo.
 
         if (!mensajesRef) {
           mensajesRef = ref(db, `conversaciones/${conversacionId}/mensajes`);
