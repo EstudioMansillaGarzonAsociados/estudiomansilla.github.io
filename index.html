@@ -554,7 +554,7 @@
           iaActiva: true,
           iaEstado: "activa",
           iaDerivada: false,
-          iaPaso: "menu",
+          iaPaso: "esperando_opcion",
           fechaCreacion: Date.now()
         });
       }
@@ -698,29 +698,27 @@
 
         document.getElementById("mensajes").innerHTML = "";
 
-        // Saludo inicial de la IA.
+        // El listener debe estar activo ANTES de guardar el saludo para que
+        // el saludo + botones se rendericen una sola vez desde Firebase.
+        if (!mensajesRef) {
+          mensajesRef = ref(db, `conversaciones/${conversacionId}/mensajes`);
+        }
+
+        if (!window.__mensajesEscuchados) {
+          window.__mensajesEscuchados = true;
+          escucharMensajes();
+        }
+
+        // PRIMERA respuesta de la IA: saludo + botones.
+        // Después de esto la IA queda esperando la elección del cliente.
         const saludoInicial = "Buen día. Soy el asistente virtual del Estudio Mansilla Garzon y asociados. ¿En qué podemos ayudarte?";
-        await push(ref(db, `conversaciones/${conversacionId}/mensajes`), {
+        await push(mensajesRef, {
           texto: saludoInicial,
           remitente: "ia",
           nombreRemitente: IA_NOMBRE,
           fecha: Date.now(),
           tipo: "saludo_automatico"
         });
-
-        // IMPORTANTE: no mostramos el saludo manualmente aquí.
-        // El listener onChildAdded lo mostrará una sola vez y también
-        // generará los botones debajo del saludo.
-
-        if (!mensajesRef) {
-          mensajesRef = ref(db, `conversaciones/${conversacionId}/mensajes`);
-        }
-
-        // Evita registrar el listener dos veces.
-        if (!window.__mensajesEscuchados) {
-          window.__mensajesEscuchados = true;
-          escucharMensajes();
-        }
 
         document.getElementById("mensajeInput").focus();
 
@@ -996,10 +994,12 @@
       try {
         let intencion = detectarIntencionIA(texto);
 
-        // Después del primer mensaje del cliente, la IA muestra el menú de opciones.
+        // La primera respuesta ya fue enviada al iniciar el chat: saludo + botones.
+        // Mientras esperamos una opción, NO derivamos ni enviamos otro mensaje
+        // automático por un texto libre. La IA espera la elección del cliente.
         const convSnap = await get(ref(db, `conversaciones/${conversacionId}`));
         const convActual = convSnap.exists() ? (convSnap.val() || {}) : {};
-        if (convActual.iaPaso === "menu") {
+        if (convActual.iaPaso === "esperando_opcion") {
           const nTexto = normalizarTexto(texto);
           const esOpcion = [
             "enviar comprobante", "comprobante", "mandar comprobante",
@@ -1007,8 +1007,15 @@
             "tengo un acuerdo", "tengo acuerdo", "acuerdo",
             "quiero un acuerdo", "quiero acuerdo",
             "libre de deuda", "libre deuda", "certificado de libre"
-          ].some(x => nTexto.includes(x));
-          if (!esOpcion) intencion = "menu";
+          ].some(x => nTexto === x || nTexto.includes(x));
+
+          if (!esOpcion) {
+            await update(
+              ref(db, `conversaciones/${conversacionId}/mensajes/${messageKey}`),
+              { iaProcesado: true, iaProcesando: false }
+            );
+            return;
+          }
         }
 
         // Si requiere humano, dejamos la conversación sin asignar.
@@ -1095,7 +1102,7 @@
           iaActiva: true,
           iaEstado: "activa",
           iaDerivada: false,
-          iaPaso: intencion === "menu" ? "opcion" : (intencion === "comprobante" || intencion === "acuerdo" || intencion === "libre_deuda" ? "derivar" : "opcion"),
+          iaPaso: (intencion === "comprobante" || intencion === "acuerdo" || intencion === "libre_deuda") ? "derivar" : "opcion",
           iaUltimoMensajeProcesado: messageKey,
           ultimaActividad: Date.now(),
           ultimoMensaje: respuesta,
