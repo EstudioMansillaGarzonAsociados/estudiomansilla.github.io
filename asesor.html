@@ -301,6 +301,9 @@ button{cursor:pointer}
       <button id="navVencimientos" onclick="mostrarVista('vencimientos')">
         <span>📆 Vencimientos</span>
       </button>
+      <button id="navBaseClientes" class="hidden" onclick="mostrarVista('baseClientes')">
+        <span>📊 Base de clientes</span>
+      </button>
     </nav>
 
     <div id="sosPanel" class="sos-panel hidden">
@@ -487,8 +490,34 @@ button{cursor:pointer}
   </div>
 </div>
 
+<!-- BASE DE CLIENTES / EXCEL -->
+<div id="baseClientesView" class="hidden" style="position:fixed;inset:0;background:#f7f8fa;z-index:40;overflow:auto;padding:24px;">
+  <div style="max-width:1100px;margin:0 auto;background:white;border:1px solid #e1e6eb;border-radius:16px;padding:20px;box-shadow:0 8px 28px rgba(0,0,0,.08)">
+    <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap">
+      <div><h2 style="margin:0">📊 Base de clientes</h2>
+      <div class="small" style="margin-top:5px">Cargá el Excel de clientes. El sistema guarda los datos en Firebase para poder buscarlos por DNI.</div></div>
+      <button class="btn" onclick="mostrarVista('principal')">← Volver</button>
+    </div>
+    <div style="margin-top:18px;padding:16px;border:1px solid #dce3e8;border-radius:12px;background:#f8fafb">
+      <div style="font-weight:800;margin-bottom:8px">1. Cargar Excel</div>
+      <input id="excelClientesInput" type="file" accept=".xlsx,.xls,.csv" style="display:block;margin-bottom:10px">
+      <button class="btn green" onclick="importarExcelClientes()">📥 Importar Excel</button>
+      <div id="excelClientesStatus" class="small" style="margin-top:10px"></div>
+    </div>
+    <div style="margin-top:16px;padding:16px;border:1px solid #dce3e8;border-radius:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+        <div><div style="font-weight:800">2. Clientes cargados</div><div id="baseClientesCount" class="small">0 registros</div></div>
+        <input id="baseClientesSearch" placeholder="Buscar por DNI, nombre o teléfono..." style="max-width:360px;width:100%;padding:9px;border:1px solid #d7dde3;border-radius:9px" oninput="renderizarBaseClientes()">
+      </div>
+      <div id="baseClientesTable" style="margin-top:12px;overflow:auto"></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { initializeApp from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getAuth,
   signInWithEmailAndPassword,
@@ -623,6 +652,8 @@ const emailsPorNombre = {
 
 let usuarioActual = null;
 let nombreActual = "";
+let baseClientes = {};
+let excelImportando = false;
 let perfilActual = "";
 let conversaciones = {};
 let presencias = {};
@@ -1279,6 +1310,83 @@ function renderizarSOS(){
   });
 }
 
+
+async function cargarBaseClientes(){
+  try{
+    const snap=await get(ref(db,"baseClientes"));
+    baseClientes=snap.exists()?(snap.val()||{}):{};
+    renderizarBaseClientes();
+  }catch(e){ console.error("No se pudo cargar la base de clientes:",e); }
+}
+function normalizarDniBase(valor){ return String(valor??"").replace(/\D/g,""); }
+function encontrarColumna(obj,patrones){
+  const claves=Object.keys(obj||{});
+  for(const patron of patrones){
+    const exacta=claves.find(k=>normalizarTexto(k)===normalizarTexto(patron));
+    if(exacta) return exacta;
+  }
+  return claves.find(k=>patrones.some(p=>normalizarTexto(k).includes(normalizarTexto(p))))||"";
+}
+async function importarExcelClientes(){
+  if(!esSupervisor()){ alert("Solo un supervisor puede cargar la base de clientes."); return; }
+  const input=$("excelClientesInput"), file=input?.files?.[0];
+  if(!file){ alert("Seleccioná un archivo Excel."); return; }
+  if(typeof XLSX==="undefined"){ alert("No se pudo cargar el lector de Excel. Actualizá la página e intentá nuevamente."); return; }
+  if(excelImportando)return;
+  excelImportando=true;
+  const status=$("excelClientesStatus");
+  if(status)status.textContent="Leyendo Excel...";
+  try{
+    const buffer=await file.arrayBuffer();
+    const workbook=XLSX.read(buffer,{type:"array",cellDates:true});
+    let filasTotales=0,filasGuardadas=0,sinDni=0;
+    const importId=`${Date.now()}_${normalizarTexto(file.name).replace(/[^a-z0-9]+/g,"_").slice(0,50)}`;
+    for(const sheetName of workbook.SheetNames){
+      const rows=XLSX.utils.sheet_to_json(workbook.Sheets[sheetName],{defval:""});
+      for(const row of rows){
+        filasTotales++;
+        const dniCol=encontrarColumna(row,["dni","documento","documento de identidad","nro dni","numero dni"]);
+        const dni=normalizarDniBase(dniCol?row[dniCol]:"");
+        if(!dni){sinDni++;continue;}
+        const nombreCol=encontrarColumna(row,["nombre","nombre y apellido","cliente","apellido y nombre","titular"]);
+        const telefonoCol=encontrarColumna(row,["telefono","teléfono","celular","movil","móvil"]);
+        const emailCol=encontrarColumna(row,["email","correo","correo electronico","correo electrónico"]);
+        const montoCol=encontrarColumna(row,["monto","deuda","saldo","capital"]);
+        const estadoCol=encontrarColumna(row,["estado","situacion","situación"]);
+        const datos={dni,nombre:nombreCol?String(row[nombreCol]||"").trim():"",telefono:telefonoCol?String(row[telefonoCol]||"").trim():"",email:emailCol?String(row[emailCol]||"").trim():"",monto:montoCol?String(row[montoCol]||"").trim():"",estado:estadoCol?String(row[estadoCol]||"").trim():"",fila:row,hoja:sheetName,archivo:file.name,importadoPor:nombreActual,importadoPorEmail:usuarioActual?.email||"",fechaImportacion:Date.now(),importId};
+        await set(ref(db,`baseClientes/${dni}`),datos);
+        filasGuardadas++;
+      }
+    }
+    await set(ref(db,`importacionesExcel/${importId}`),{archivo:file.name,fecha:Date.now(),usuario:nombreActual,email:usuarioActual?.email||"",filasTotales,filasGuardadas,sinDni});
+    try{
+      const path=`basesClientes/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g,"_")}`;
+      const sr=storageRef(storage,path); await uploadBytes(sr,file); const url=await getDownloadURL(sr);
+      await update(ref(db,`importacionesExcel/${importId}`),{archivoStorage:url});
+    }catch(storageError){ console.warn("Excel importado, pero no se pudo guardar el original en Storage:",storageError); }
+    await cargarBaseClientes();
+    if(status)status.textContent=`✅ Listo. Se cargaron ${filasGuardadas} clientes. ${sinDni} filas fueron omitidas porque no tenían DNI.`;
+    input.value="";
+  }catch(e){
+    console.error("Error al importar Excel:",e);
+    if(status)status.textContent="❌ No se pudo importar el Excel. Revisá que tenga una columna DNI.";
+    alert("No se pudo importar el Excel.");
+  }finally{excelImportando=false;}
+}
+function renderizarBaseClientes(){
+  const table=$("baseClientesTable"),count=$("baseClientesCount"); if(!table)return;
+  const registros=Object.values(baseClientes||{});
+  if(count)count.textContent=`${registros.length} registros`;
+  const q=normalizarTexto($("baseClientesSearch")?.value||"");
+  const filtrados=q?registros.filter(r=>normalizarTexto(`${r.dni} ${r.nombre} ${r.telefono} ${r.email} ${r.estado}`).includes(q)):registros;
+  if(!filtrados.length){table.innerHTML='<div class="empty">No hay clientes para mostrar.</div>';return;}
+  const muestra=filtrados.slice(0,200);
+  table.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr>
+  <th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">DNI</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">Nombre</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">Teléfono</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">Estado</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">Monto</th></tr></thead><tbody>
+  ${muestra.map(r=>`<tr><td style="padding:7px;border-bottom:1px solid #eef1f4">${escapeHtml(r.dni||"")}</td><td style="padding:7px;border-bottom:1px solid #eef1f4">${escapeHtml(r.nombre||"")}</td><td style="padding:7px;border-bottom:1px solid #eef1f4">${escapeHtml(r.telefono||"")}</td><td style="padding:7px;border-bottom:1px solid #eef1f4">${escapeHtml(r.estado||"")}</td><td style="padding:7px;border-bottom:1px solid #eef1f4">${escapeHtml(r.monto||"")}</td></tr>`).join("")}</tbody></table>
+  ${filtrados.length>200?`<div class="small" style="margin-top:8px">Se muestran 200 de ${filtrados.length}. Usá el buscador para encontrar un cliente.</div>`:""}`;
+}
+
 function mostrarVista(vista){
   // Seguridad de interfaz: un asesor nunca puede abrir la Agenda de gestores.
   if(vista==="agenda" && !puedeVerAgendaGestores()){
@@ -1296,10 +1404,11 @@ function mostrarVista(vista){
     return mostrarVista("principal");
   }
 
+  document.getElementById("baseClientesView")?.classList.add("hidden");
   vistaActual=vista;
   gestorSeleccionado=null;
   document.querySelectorAll(".nav button").forEach(b=>b.classList.remove("active"));
-  const mapa={principal:"navPrincipal",agentes:"navAgentes",sos:"navSOS",sinAsignar:"navSinAsignar",historial:"navHistorial",agenda:"navAgenda",vencimientos:"navVencimientos"};
+  const mapa={principal:"navPrincipal",agentes:"navAgentes",sos:"navSOS",sinAsignar:"navSinAsignar",historial:"navHistorial",agenda:"navAgenda",vencimientos:"navVencimientos",baseClientes:"navBaseClientes"};
   $(mapa[vista])?.classList.add("active");
 
   $("listSearch").value="";
@@ -1311,6 +1420,12 @@ function mostrarVista(vista){
   }
   if(vista==="vencimientos"){
     renderizarVencimientos();
+    return;
+  }
+  if(vista==="baseClientes"){
+    if(!esSupervisor()) return mostrarVista("principal");
+    document.getElementById("baseClientesView")?.classList.remove("hidden");
+    cargarBaseClientes();
     return;
   }
   if(vista==="principal") renderizarPrincipal();
@@ -2789,7 +2904,9 @@ onAuthStateChanged(auth,async user=>{
   $("navSinAsignar").classList.toggle("hidden",!esGestionSuperior);
   // SOS: solamente el senior correspondiente al equipo puede verlo.
   $("navSOS").classList.toggle("hidden",!esSenior());
+  $("navBaseClientes").classList.toggle("hidden",!esSupervisor());
   renderizarPanelSOS();
+  if(esSupervisor()) cargarBaseClientes();
 
   try{
     await registrarIngresoAutomatico();
@@ -2836,6 +2953,9 @@ async function cerrarSesion(){
 }
 
 window.mostrarVista=mostrarVista;
+window.importarExcelClientes=importarExcelClientes;
+window.renderizarBaseClientes=renderizarBaseClientes;
+window.cargarBaseClientes=cargarBaseClientes;
 window.refrescarVistaActual=refrescarVistaActual;
 window.limpiarBusqueda=limpiarBusqueda;
 window.abrirConversacion=abrirConversacion;
