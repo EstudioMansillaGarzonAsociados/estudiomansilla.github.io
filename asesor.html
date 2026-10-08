@@ -1329,13 +1329,17 @@ async function cargarBaseClientes(){
   }catch(e){ console.error("No se pudo cargar la base de clientes:",e); }
 }
 function normalizarDniBase(valor){ return String(valor??"").replace(/\D/g,""); }
+function claveExcelNormalizada(v){
+  return String(v??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"");
+}
 function encontrarColumna(obj,patrones){
   const claves=Object.keys(obj||{});
   for(const patron of patrones){
-    const exacta=claves.find(k=>normalizarTexto(k)===normalizarTexto(patron));
+    const objetivo=claveExcelNormalizada(patron);
+    const exacta=claves.find(k=>claveExcelNormalizada(k)===objetivo);
     if(exacta) return exacta;
   }
-  return claves.find(k=>patrones.some(p=>normalizarTexto(k).includes(normalizarTexto(p))))||"";
+  return claves.find(k=>patrones.some(p=>{ const kk=claveExcelNormalizada(k), pp=claveExcelNormalizada(p); return kk.includes(pp) || pp.includes(kk); }))||"";
 }
 async function importarExcelClientes(){
   if(!esSupervisor()){ alert("Solo un supervisor puede cargar la base de clientes."); return; }
@@ -1394,7 +1398,7 @@ function renderizarBaseClientes(){
   if(!filtrados.length){table.innerHTML='<div class="empty">No hay clientes para mostrar.</div>';return;}
   const muestra=filtrados.slice(0,200);
   table.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr>
-  <th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">DNI</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">Nombre</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">Teléfono</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">Estado</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">Monto</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">PQ</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">3 cuotas</th></tr></thead><tbody>
+  <th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">DNI</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">Nombre</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">Teléfono</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">Estado</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">Monto</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">Pago cancelatorio</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">3 cuotas</th></tr></thead><tbody>
   ${muestra.map(r=>`<tr><td style="padding:7px;border-bottom:1px solid #eef1f4">${escapeHtml(r.dni||"")}</td><td style="padding:7px;border-bottom:1px solid #eef1f4">${escapeHtml(r.nombre||"")}</td><td style="padding:7px;border-bottom:1px solid #eef1f4">${escapeHtml(r.telefono||"")}</td><td style="padding:7px;border-bottom:1px solid #eef1f4">${escapeHtml(r.estado||"")}</td><td style="padding:7px;border-bottom:1px solid #eef1f4">${escapeHtml(r.monto||"")}</td><td style="padding:7px;border-bottom:1px solid #eef1f4">${escapeHtml(r.pq||"")}</td><td style="padding:7px;border-bottom:1px solid #eef1f4">${escapeHtml(r.tresCuotas||"")}</td></tr>`).join("")}</tbody></table>
   ${filtrados.length>200?`<div class="small" style="margin-top:8px">Se muestran 200 de ${filtrados.length}. Usá el buscador para encontrar un cliente.</div>`:""}`;
 }
@@ -1621,8 +1625,8 @@ function renderizarPlanPago(c){
       <div class="plan-grid">
         ${p.solicitado ? `<div class="plan-item"><div class="info-label">Solicitud</div><div class="info-value">${escapeHtml(String(p.solicitado))}</div></div>` : ""}
         ${p.deuda ? `<div class="plan-item"><div class="info-label">Deuda según base</div><div class="info-value">${escapeHtml(String(p.deuda))}</div></div>` : ""}
-        ${p.pq ? `<div class="plan-item"><div class="info-label">Pago cancelatorio (PQ)</div><div class="info-value">${escapeHtml(String(p.pq))}</div></div>` : ""}
-        ${p.respuestaPQ || p.resp || p.op ? `<div class="plan-item"><div class="info-label">Respuesta al PQ</div><div class="info-value">${etiquetaRespuestaPlan(p.respuestaPQ || p.resp || p.op)}</div></div>` : ""}
+        ${p.pq ? `<div class="plan-item"><div class="info-label">Pago cancelatorio</div><div class="info-value">${escapeHtml(String(p.pq))}</div></div>` : ""}
+        ${p.respuestaPQ || p.resp || p.op ? `<div class="plan-item"><div class="info-label">Respuesta al pago cancelatorio</div><div class="info-value">${etiquetaRespuestaPlan(p.respuestaPQ || p.resp || p.op)}</div></div>` : ""}
         ${p.tres ? `<div class="plan-item"><div class="info-label">3 cuotas</div><div class="info-value">${escapeHtml(String(p.tres))}</div></div>` : ""}
         ${p.respuestaTres ? `<div class="plan-item"><div class="info-label">Respuesta 3 cuotas</div><div class="info-value">${etiquetaRespuestaPlan(p.respuestaTres)}</div></div>` : ""}
         ${p.op && !p.resp ? `<div class="plan-item"><div class="info-label">Opción elegida</div><div class="info-value">${escapeHtml(String(p.op))}</div></div>` : ""}
@@ -2342,7 +2346,7 @@ document.addEventListener("click",()=>{sonidoPermitido=true},{once:true});
 // ================= IA AUTOMATICA / PRIMERA LINEA =================
 // La IA automática responde únicamente consultas simples y deriva al equipo
 // cualquier caso que requiera revisión humana. No modifica montos, deudas ni convenios.
-const IA_AUTOMATICA_HABILITADA = true;
+const IA_AUTOMATICA_HABILITADA = false;
 const IA_AUTOMATICA_NOMBRE = "Asistente virtual";
 
 function emailEsPersonal(email){
@@ -2402,9 +2406,6 @@ const iaProcesandoAhora=new Set();
 
 async function procesarIAAutomatica(id,c){
   if(!IA_AUTOMATICA_HABILITADA || !id || !c || !estaActiva(c)) return;
-  // Los chats creados desde index.html ya tienen su propia IA de cliente.
-  // El panel asesor NO debe volver a contestar el mismo mensaje.
-  if(c.iaMotor === "cliente_web" || c.origen === "web_cliente") return;
   // La IA solo interviene en conversaciones sin asignar. Una vez tomada por un asesor, se retira.
   if(!estaSinAsignar(c)) return;
   const arr=Object.entries(c.mensajes||{}).map(([mid,m])=>({...m,_id:mid})).sort((a,b)=>(a.fecha||0)-(b.fecha||0));
@@ -2436,13 +2437,6 @@ async function procesarIAAutomatica(id,c){
 
   try{
     const r=ref(db,`conversaciones/${id}/mensajes`);
-    // Revalidamos antes de escribir: otra pestaña/proceso puede haber contestado.
-    const ultimoSnap=await get(ref(db,`conversaciones/${id}/mensajes/${ultimo._id}`));
-    const ultimoActual=ultimoSnap.exists() ? (ultimoSnap.val()||{}) : {};
-    if(ultimoActual.iaProcesado===true || ultimoActual.iaRespuestaGenerada===true){
-      return;
-    }
-
     await push(r,{
       tipo:"texto",
       texto,
@@ -2450,12 +2444,11 @@ async function procesarIAAutomatica(id,c){
       remitenteEmail:"",
       fecha:ahora,
       generadoPorIA:true,
-      iaTipo:tipo,
-      respondeA:ultimo._id
+      iaTipo:tipo
     });
 
-    // Marcamos el mensaje del cliente de forma permanente.
-    await update(ref(db,`conversaciones/${id}/mensajes/${ultimo._id}`),{iaProcesado:true,iaRespuestaGenerada:true,iaProcesadoFecha:ahora});
+    // Marcamos el mensaje del cliente para que Firebase no dispare otra respuesta.
+    await update(ref(db,`conversaciones/${id}/mensajes/${ultimo._id}`),{iaProcesado:true,iaProcesadoFecha:ahora});
     await update(ref(db,`conversaciones/${id}`),{
       iaActiva:true,
       iaUltimoMensajeProcesado:ultimo._id,
