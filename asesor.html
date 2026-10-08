@@ -2395,18 +2395,14 @@ function respuestaAutomaticaIA(tipo){
 const iaProcesandoAhora=new Set();
 
 async function procesarIAAutomatica(id,c){
-  // DESACTIVADO: la IA de las conversaciones web pertenece exclusivamente a index.html.
-  // El panel de asesor solo recibe, muestra y permite responder conversaciones.
+  // DESACTIVADO: la IA de atención al cliente funciona únicamente desde index.html.
+  // El panel de asesor nunca debe generar ni enviar respuestas automáticas.
   return;
 }
 
 function procesarIAAutomaticaParaTodas(data){
-  if(!IA_AUTOMATICA_HABILITADA) return;
-  Object.entries(data||{}).forEach(([id,c])=>{
-    if(c && estaActiva(c) && estaSinAsignar(c)) {
-      procesarIAAutomatica(id,c).catch(err=>console.warn("IA automática:",err));
-    }
-  });
+  // DESACTIVADO: el panel de asesor no procesa IA automática.
+  return;
 }
 
 let ultimosMensajesSnapshot={};
