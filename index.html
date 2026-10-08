@@ -1005,7 +1005,11 @@
         planPagoSolicitado: true,
         planPagoOpcion: datos.opcion || null,
         planPagoRespuesta: datos.respuesta || null,
+        planPagoRespuestaPQ: datos.respuestaPQ || null,
+        planPagoRespuestaTresCuotas: datos.respuestaTresCuotas || null,
         propuestaCliente: datos.propuesta || null,
+        propuestaMonto: datos.propuestaMonto || null,
+        propuestaFecha: datos.propuestaFecha || null,
         ultimaActividad: Date.now()
       });
       iaDerivada = true;
@@ -1019,6 +1023,20 @@
     function esRespuestaNo(n){
       return /^(no|nop|no puedo|no quiero)$/.test(n) ||
         n.startsWith("no ") || n.startsWith("no,");
+    }
+
+    function extraerMontoYFechaPropuesta(texto){
+      const original=String(texto||"").trim();
+      let monto="", fecha="";
+      const montoMatch=original.match(/(?:\$\s*|(?:pesos?|ars)\s*)([0-9]{1,3}(?:[.\s][0-9]{3})+(?:,[0-9]{1,2})?|[0-9]+(?:,[0-9]{1,2})?)/i);
+      if(montoMatch) monto=montoMatch[1].replace(/\s/g,"");
+      const f=original.match(/\b([0-3]?\d)[\/\-]([01]?\d)(?:[\/\-](20\d{2}))?\b/);
+      if(f){ fecha=`${f[1].padStart(2,"0")}/${f[2].padStart(2,"0")}/${f[3]||new Date().getFullYear()}`; }
+      else {
+        const ft=original.match(/\b([0-3]?\d)\s+de\s+(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|setiembre|octubre|noviembre|diciembre)(?:\s+de\s+(20\d{2}))?\b/i);
+        if(ft){ const meses={enero:"01",febrero:"02",marzo:"03",abril:"04",mayo:"05",junio:"06",julio:"07",agosto:"08",septiembre:"09",setiembre:"09",octubre:"10",noviembre:"11",diciembre:"12"}; fecha=`${ft[1].padStart(2,"0")}/${meses[ft[2].toLowerCase()]}/${ft[3]||new Date().getFullYear()}`; }
+      }
+      return {monto,fecha};
     }
 
     function respuestaIA(intencion, textoOriginal) {
@@ -1063,7 +1081,7 @@
         const mensajeRef = ref(db, `conversaciones/${conversacionId}/mensajes/${messageKey}`);
         const resultado = await runTransaction(mensajeRef, actual => {
           if (!actual || actual.remitente !== "cliente") return actual;
-          if (actual.iaProcesado === true || actual.iaProcesando === true) return;
+          if (actual.iaProcesado === true || actual.iaProcesando === true || actual.iaRespuestaGenerada === true) return;
           return { ...actual, iaProcesando: true };
         });
         reclamo = resultado.committed === true;
@@ -1178,7 +1196,7 @@
                 opcionPlan: "PQ — Pago cancelatorio"
               });
               await update(ref(db, `conversaciones/${conversacionId}/mensajes/${messageKey}`), { iaProcesado: true, iaProcesando: false });
-              await derivarAAsesor({ opcion:"PQ — Pago cancelatorio", respuesta:"Sí", tipoDerivacion:"gestor", motivo:"Cliente acepta pago cancelatorio (PQ)" });
+              await derivarAAsesor({ opcion:"PQ — Pago cancelatorio", respuesta:"Sí", respuestaPQ:"Sí", tipoDerivacion:"gestor", destinoDerivacion:"gestor", motivo:"Cliente acepta pago cancelatorio (PQ)" });
               await update(ref(db, `conversaciones/${conversacionId}`), { ultimoMensaje: respuestaSiPQ, ultimoRemitente:"ia" });
               return;
             }
@@ -1201,6 +1219,7 @@
               await update(ref(db, `conversaciones/${conversacionId}`), {
                 iaPaso: "tres_cuotas_confirmacion",
                 planPagoOpcion: "3 cuotas",
+                planPagoRespuestaPQ: "No",
                 ultimaActividad: Date.now(),
                 ultimoMensaje: respuesta3,
                 ultimoRemitente: "ia"
@@ -1222,7 +1241,7 @@
                 opcionPlan: "3 cuotas"
               });
               await update(ref(db, `conversaciones/${conversacionId}/mensajes/${messageKey}`), { iaProcesado: true, iaProcesando: false });
-              await derivarAAsesor({ opcion:"3 cuotas", respuesta:"Sí", tipoDerivacion:"asesor", motivo:"Cliente acepta opción de 3 cuotas" });
+              await derivarAAsesor({ opcion:"3 cuotas", respuesta:"Sí", respuestaTresCuotas:"Sí", respuestaPQ:convActual.planPagoRespuestaPQ || "No", tipoDerivacion:"asesor", destinoDerivacion:"asesor", motivo:"Cliente acepta opción de 3 cuotas" });
               await update(ref(db, `conversaciones/${conversacionId}`), { ultimoMensaje: respuestaSi3, ultimoRemitente:"ia" });
               return;
             }
@@ -1241,6 +1260,7 @@
               await update(ref(db, `conversaciones/${conversacionId}`), {
                 iaPaso: "esperando_monto_fecha",
                 planPagoOpcion: "propuesta_cliente",
+                planPagoRespuestaTresCuotas: "No",
                 ultimaActividad: Date.now(),
                 ultimoMensaje: respuestaPropuesta,
                 ultimoRemitente: "ia"
@@ -1251,6 +1271,7 @@
 
           if (convActual.iaPaso === "esperando_monto_fecha") {
             const propuesta = texto.trim();
+            const propuestaDatos = extraerMontoYFechaPropuesta(propuesta);
             const respuestaPropuestaGuardada = "Perfecto. Registramos tu propuesta de pago. Vamos a derivarte con un asesor para que pueda revisarla y continuar con la gestión.";
             await push(mensajesRef, {
               texto: respuestaPropuestaGuardada,
@@ -1265,7 +1286,12 @@
               opcion:"propuesta_cliente",
               respuesta:"No a 3 cuotas",
               propuesta,
+              propuestaMonto:propuestaDatos.monto,
+              propuestaFecha:propuestaDatos.fecha,
+              respuestaPQ:convActual.planPagoRespuestaPQ || "No",
+              respuestaTresCuotas:"No",
               tipoDerivacion:"asesor",
+              destinoDerivacion:"asesor",
               motivo:"Cliente propone monto y fecha de pago"
             });
             await update(ref(db, `conversaciones/${conversacionId}`), { ultimoMensaje: respuestaPropuestaGuardada, ultimoRemitente:"ia" });
@@ -1385,44 +1411,30 @@
         const actualMensaje = actualSnap.exists() ? actualSnap.val() : null;
         if (!actualMensaje || actualMensaje.iaProcesado === true) return;
 
+        const esDerivacionDirecta=["comprobante","acuerdo","libre_deuda"].includes(intencion);
         await push(mensajesRef, {
           texto: respuesta,
           remitente: "ia",
           nombreRemitente: IA_NOMBRE,
           fecha: Date.now(),
           respondeA: messageKey,
-          tipo: "respuesta_automatica"
+          tipo: esDerivacionDirecta ? "derivacion_automatica" : "respuesta_automatica"
         });
 
-        if (["comprobante", "acuerdo", "libre_deuda"].includes(intencion)) {
+        if (esDerivacionDirecta) {
           iaDerivada = true;
-          await update(ref(db, `conversaciones/${conversacionId}`), {
-            iaActiva: false,
-            iaEstado: "derivada",
-            iaDerivada: true,
-            iaPaso: "derivar",
-            estado: "pendiente",
-            ultimaActividad: Date.now(),
-            ultimoMensaje: respuesta,
-            ultimoRemitente: "ia"
-          });
+          const motivos={comprobante:"Cliente informa que desea enviar un comprobante",acuerdo:"Cliente solicita revisar un acuerdo",libre_deuda:"Cliente solicita libre de deuda"};
+          await derivarAAsesor({ opcion:intencion, respuesta:"Consulta derivada", tipoDerivacion:"asesor", destinoDerivacion:"asesor", motivo:motivos[intencion] });
         }
 
-        await update(
-          ref(db, `conversaciones/${conversacionId}/mensajes/${messageKey}`),
-          { iaProcesado: true, iaProcesando: false }
-        );
+        await update(ref(db, `conversaciones/${conversacionId}/mensajes/${messageKey}`), { iaProcesado:true, iaProcesando:false, iaRespuestaGenerada:true });
 
-        await update(ref(db, `conversaciones/${conversacionId}`), {
-          iaActiva: true,
-          iaEstado: "activa",
-          iaDerivada: false,
-          iaPaso: (intencion === "comprobante" || intencion === "acuerdo" || intencion === "libre_deuda") ? "derivar" : "opcion",
-          iaUltimoMensajeProcesado: messageKey,
-          ultimaActividad: Date.now(),
-          ultimoMensaje: respuesta,
-          ultimoRemitente: "ia"
-        });
+        if(!esDerivacionDirecta){
+          await update(ref(db, `conversaciones/${conversacionId}`), {
+            iaActiva:true, iaEstado:"activa", iaDerivada:false, iaPaso:"opcion",
+            iaUltimoMensajeProcesado:messageKey, ultimaActividad:Date.now(), ultimoMensaje:respuesta, ultimoRemitente:"ia"
+          });
+        }
 
       } catch (error) {
         console.error("Error de IA automática:", error);
