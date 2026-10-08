@@ -2402,6 +2402,9 @@ const iaProcesandoAhora=new Set();
 
 async function procesarIAAutomatica(id,c){
   if(!IA_AUTOMATICA_HABILITADA || !id || !c || !estaActiva(c)) return;
+  // Los chats creados desde index.html ya tienen su propia IA de cliente.
+  // El panel asesor NO debe volver a contestar el mismo mensaje.
+  if(c.iaMotor === "cliente_web" || c.origen === "web_cliente") return;
   // La IA solo interviene en conversaciones sin asignar. Una vez tomada por un asesor, se retira.
   if(!estaSinAsignar(c)) return;
   const arr=Object.entries(c.mensajes||{}).map(([mid,m])=>({...m,_id:mid})).sort((a,b)=>(a.fecha||0)-(b.fecha||0));
@@ -2433,6 +2436,13 @@ async function procesarIAAutomatica(id,c){
 
   try{
     const r=ref(db,`conversaciones/${id}/mensajes`);
+    // Revalidamos antes de escribir: otra pestaña/proceso puede haber contestado.
+    const ultimoSnap=await get(ref(db,`conversaciones/${id}/mensajes/${ultimo._id}`));
+    const ultimoActual=ultimoSnap.exists() ? (ultimoSnap.val()||{}) : {};
+    if(ultimoActual.iaProcesado===true || ultimoActual.iaRespuestaGenerada===true){
+      return;
+    }
+
     await push(r,{
       tipo:"texto",
       texto,
@@ -2440,11 +2450,12 @@ async function procesarIAAutomatica(id,c){
       remitenteEmail:"",
       fecha:ahora,
       generadoPorIA:true,
-      iaTipo:tipo
+      iaTipo:tipo,
+      respondeA:ultimo._id
     });
 
-    // Marcamos el mensaje del cliente para que Firebase no dispare otra respuesta.
-    await update(ref(db,`conversaciones/${id}/mensajes/${ultimo._id}`),{iaProcesado:true,iaProcesadoFecha:ahora});
+    // Marcamos el mensaje del cliente de forma permanente.
+    await update(ref(db,`conversaciones/${id}/mensajes/${ultimo._id}`),{iaProcesado:true,iaRespuestaGenerada:true,iaProcesadoFecha:ahora});
     await update(ref(db,`conversaciones/${id}`),{
       iaActiva:true,
       iaUltimoMensajeProcesado:ultimo._id,
