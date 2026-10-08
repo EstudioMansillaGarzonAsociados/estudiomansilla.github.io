@@ -554,8 +554,6 @@
           iaActiva: true,
           iaEstado: "activa",
           iaDerivada: false,
-          iaMotor: "cliente_web",
-          origen: "web_cliente",
           iaPaso: "esperando_opcion",
           fechaCreacion: Date.now()
         });
@@ -673,8 +671,6 @@
           iaActiva: true,
           iaEstado: "activa",
           iaDerivada: false,
-          iaMotor: "cliente_web",
-          origen: "web_cliente",
 
           // Sin asignar al comenzar.
           equipo: null,
@@ -804,7 +800,7 @@
       // Opciones del menú inicial.
       if (n.includes("enviar comprobante") || n === "comprobante" || n.includes("mandar comprobante") || n.includes("adjunto comprobante") || n.includes("adjuntar comprobante")) return "comprobante";
       if (n.includes("tengo un acuerdo") || n === "acuerdo" || n.includes("tengo acuerdo")) return "acuerdo";
-      if (n.includes("quiero un acuerdo") || n.includes("quiero acuerdo") || n.includes("necesito un acuerdo") || n.includes("hacer un acuerdo") || n.includes("acuerdo de pago")) return "plan_pago";
+      if (n.includes("quiero un acuerdo") || n.includes("quiero acuerdo")) return "acuerdo";
       if (n.includes("libre de deuda") || n.includes("libre deuda") || n.includes("certificado de libre")) return "libre_deuda";
 
       // Comprobante enviado como texto: se recibe y se deriva.
@@ -981,66 +977,6 @@
       return buscarClienteEnBasePorDni(dni || datosClienteActual.dni);
     }
 
-    // La base se importa desde Excel con estos nombres: MONTO, PQ y 3 CUOTAS.
-    // Aceptamos también las variantes normalizadas para que no dependa de mayúsculas,
-    // acentos, espacios o de una versión anterior del importador.
-    function claveBaseNormalizada(valor){
-      return String(valor ?? "")
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "");
-    }
-
-    function obtenerValorBase(registro, aliases){
-      if(!registro) return "";
-      const entradas = Object.entries(registro);
-      for(const alias of aliases){
-        const objetivo = claveBaseNormalizada(alias);
-        const encontrado = entradas.find(([clave, valor]) =>
-          claveBaseNormalizada(clave) === objetivo &&
-          valor !== undefined && valor !== null && String(valor).trim() !== ""
-        );
-        if(encontrado) return encontrado[1];
-      }
-      return "";
-    }
-
-    function valorBaseDisponible(valor){
-      const n = normalizarTexto(valor);
-      return !!n && !["no informado","no informada","sin informar","s/d","sd","n/a","na","-","—"].includes(n);
-    }
-
-    function formatearImporteCliente(valor){
-      if(!valorBaseDisponible(valor)) return "";
-      const original = String(valor).trim();
-      const limpio = original.replace(/[$\s]/g, "");
-
-      // Si Excel entregó un número puro, lo mostramos en formato argentino.
-      if(/^\d+(?:\.\d+)?$/.test(limpio)){
-        const numero = Number(limpio);
-        if(Number.isFinite(numero)){
-          return `$${new Intl.NumberFormat("es-AR", { maximumFractionDigits: 0 }).format(numero)}`;
-        }
-      }
-
-      // Si ya viene con formato argentino o con símbolo $, lo conservamos.
-      return original.startsWith("$") ? original : `$${original}`;
-    }
-
-    function obtenerDatosPlanDesdeRegistro(registro){
-      const monto = obtenerValorBase(registro, ["MONTO","monto","deuda actualizada","deudaactualizada","saldo"]);
-      const pq = obtenerValorBase(registro, ["PQ","pago cancelatorio","pago cancelatorio (PQ)","pagocancelatorio","cancelatorio"]);
-      const tresCuotas = obtenerValorBase(registro, ["3 CUOTAS","3 cuotas","3cuotas","tres cuotas","trescuotas"]);
-      const nombre = obtenerValorBase(registro, ["NOMBRE","nombre","nombre y apellido","cliente","titular"]) || datosClienteActual.nombre || "";
-      return {
-        nombre: String(nombre || "").trim(),
-        deuda: formatearImporteCliente(monto),
-        pq: formatearImporteCliente(pq),
-        tresCuotas: formatearImporteCliente(tresCuotas)
-      };
-    }
-
     async function derivarAAsesor(datos = {}){
       const motivoDerivacion = datos.motivo || "Consulta de plan de pago";
       await update(ref(db, `conversaciones/${conversacionId}`), {
@@ -1107,7 +1043,7 @@
 
         case "derivar":
         default:
-          return "Gracias por tu mensaje. Vamos a derivar tu consulta a un asesor para que pueda ayudarte.";
+          return null;
       }
     }
 
@@ -1201,7 +1137,7 @@
 
             const respuestaPQ =
               `Perfecto${nombre ? `, ${nombre.split(/\s+/)[0]}` : ""}. Según nuestros registros, tu deuda es de ${deuda}. ` +
-              `Podemos ofrecerte un pago cancelatorio por ${pq}. ¿Podés abonar el pago cancelatorio?`;
+              `Podemos ofrecerte un pago cancelatorio (PQ) por ${pq}. ¿Podés abonar el pago cancelatorio?`;
 
             await push(mensajesRef, {
               texto: respuestaPQ,
@@ -1239,41 +1175,18 @@
                 fecha: Date.now(),
                 respondeA: messageKey,
                 tipo: "derivacion_plan_pago",
-                opcionPlan: "Pago cancelatorio"
+                opcionPlan: "PQ — Pago cancelatorio"
               });
               await update(ref(db, `conversaciones/${conversacionId}/mensajes/${messageKey}`), { iaProcesado: true, iaProcesando: false });
-              await derivarAAsesor({ opcion:"Pago cancelatorio", respuesta:"Sí", tipoDerivacion:"gestor", motivo:"Cliente acepta pago cancelatorio" });
+              await derivarAAsesor({ opcion:"PQ — Pago cancelatorio", respuesta:"Sí", tipoDerivacion:"gestor", motivo:"Cliente acepta pago cancelatorio (PQ)" });
               await update(ref(db, `conversaciones/${conversacionId}`), { ultimoMensaje: respuestaSiPQ, ultimoRemitente:"ia" });
               return;
             }
 
             if (esRespuestaNo(nPlan)) {
-              const tres = convActual.planPagoTresCuotas || "";
-
-              if (!valorBaseDisponible(tres)) {
-                const respuestaSinTres = "Entiendo. En este caso, decime qué monto podrías abonar y en qué fecha podrías realizar el pago.";
-                await push(mensajesRef, {
-                  texto: respuestaSinTres,
-                  remitente: "ia",
-                  nombreRemitente: IA_NOMBRE,
-                  fecha: Date.now(),
-                  respondeA: messageKey,
-                  tipo: "solicitar_monto_fecha"
-                });
-                await update(ref(db, `conversaciones/${conversacionId}/mensajes/${messageKey}`), { iaProcesado: true, iaProcesando: false });
-                await update(ref(db, `conversaciones/${conversacionId}`), {
-                  iaPaso: "esperando_monto_fecha",
-                  planPagoOpcion: "propuesta_cliente",
-                  planPagoRespuesta: "No a pago cancelatorio - 3 cuotas no informadas",
-                  ultimaActividad: Date.now(),
-                  ultimoMensaje: respuestaSinTres,
-                  ultimoRemitente: "ia"
-                });
-                return;
-              }
-
+              const tres = convActual.planPagoTresCuotas || "No informado";
               const respuesta3 =
-                `Entiendo. Como alternativa, podemos ofrecerte un plan de 3 cuotas de ${tres}. ¿Podés abonar ese importe?`;
+                `Entendido. También podemos ofrecerte la opción de 3 cuotas por ${tres}. ¿Podés abonar la opción de 3 cuotas?`;
 
               await push(mensajesRef, {
                 texto: respuesta3,
@@ -1391,73 +1304,32 @@
           }
         }
 
-        // "Quiero un acuerdo" y las consultas de plan de pago entran DIRECTAMENTE
-        // al flujo de oferta: deuda actualizada -> pago cancelatorio -> 3 cuotas -> propuesta.
-        // No mostramos el menú PQ/3 cuotas ni el mensaje genérico de derivación.
-        if (intencion === "plan_pago") {
-          const registro = await obtenerDatosBaseParaConversacion(datosClienteActual.dni || extraerDniDeTexto(texto));
-
-          if (!registro) {
-            const respuestaSinRegistro = "Para poder informarte las opciones de pago necesito encontrar tu registro. Por favor, indicame tu DNI.";
+        // Plan de pago: mostramos las opciones y dejamos la IA activa para que el cliente elija.
+        if (intencion === "plan_pago" || intencion === "acuerdo") {
+          const respuestaPlan = respuestaIA(intencion, texto);
+          await new Promise(resolve => setTimeout(resolve, 400));
+          const actualSnapPlan = await get(ref(db, `conversaciones/${conversacionId}/mensajes/${messageKey}`));
+          const actualMensajePlan = actualSnapPlan.exists() ? actualSnapPlan.val() : null;
+          if(actualMensajePlan && actualMensajePlan.iaProcesado !== true){
             await push(mensajesRef, {
-              texto: respuestaSinRegistro,
+              texto: respuestaPlan,
               remitente: "ia",
               nombreRemitente: IA_NOMBRE,
               fecha: Date.now(),
               respondeA: messageKey,
-              tipo: "solicitar_dni_plan_pago"
+              tipo: "opciones_plan_pago"
             });
             await update(ref(db, `conversaciones/${conversacionId}/mensajes/${messageKey}`), { iaProcesado: true, iaProcesando: false });
             await update(ref(db, `conversaciones/${conversacionId}`), {
+              iaActiva: true,
+              iaEstado: "activa",
+              iaDerivada: false,
               iaPaso: "plan_pago_opciones",
-              ultimaActividad: Date.now()
+              ultimaActividad: Date.now(),
+              ultimoMensaje: respuestaPlan,
+              ultimoRemitente: "ia"
             });
-            return;
           }
-
-          const datosPlan = obtenerDatosPlanDesdeRegistro(registro);
-          const deuda = datosPlan.deuda || "";
-          const pq = datosPlan.pq || "";
-          const tresCuotas = datosPlan.tresCuotas || "";
-          const nombre = datosPlan.nombre;
-
-          let respuestaPQ;
-          if (valorBaseDisponible(pq)) {
-            respuestaPQ = `Perfecto${nombre ? `, ${nombreCorto(nombre)}` : ""}. Según nuestros registros, tu deuda es de ${deuda || "el importe informado en nuestros registros"}. Podemos ofrecerte un pago cancelatorio por ${pq}. ¿Podés abonar el pago cancelatorio?`;
-          } else {
-            respuestaPQ = `Perfecto${nombre ? `, ${nombreCorto(nombre)}` : ""}. Según nuestros registros, tu deuda es de ${deuda || "el importe informado en nuestros registros"}. Para continuar con la gestión de tu acuerdo, vamos a derivar la consulta a un asesor para que pueda verificar el importe disponible.`;
-          }
-
-          await push(mensajesRef, {
-            texto: respuestaPQ,
-            remitente: "ia",
-            nombreRemitente: IA_NOMBRE,
-            fecha: Date.now(),
-            respondeA: messageKey,
-            tipo: valorBaseDisponible(pq) ? "pq_confirmacion" : "derivacion_plan_pago",
-            opciones: valorBaseDisponible(pq) ? ["Sí", "No"] : [],
-            datosPlan: { deuda, pq, tresCuotas }
-          });
-
-          await update(ref(db, `conversaciones/${conversacionId}/mensajes/${messageKey}`), { iaProcesado: true, iaProcesando: false });
-          await update(ref(db, `conversaciones/${conversacionId}`), {
-            iaActiva: valorBaseDisponible(pq),
-            iaEstado: valorBaseDisponible(pq) ? "activa" : "derivada",
-            iaDerivada: !valorBaseDisponible(pq),
-            iaPaso: valorBaseDisponible(pq) ? "pq_confirmacion" : "derivar",
-            planPagoSolicitado: true,
-            planPagoDeuda: deuda,
-            planPagoPQ: pq,
-            planPagoTresCuotas: tresCuotas,
-            planPagoNombre: nombre,
-            tipoDerivacion: valorBaseDisponible(pq) ? null : "asesor",
-            destinoDerivacion: valorBaseDisponible(pq) ? null : "asesor",
-            motivoDerivacion: valorBaseDisponible(pq) ? null : "Verificación de importe de pago cancelatorio",
-            ultimaActividad: Date.now(),
-            ultimoMensaje: respuestaPQ,
-            ultimoRemitente: "ia"
-          });
-          if(!valorBaseDisponible(pq)) iaDerivada = true;
           return;
         }
 
@@ -1640,10 +1512,14 @@
       }
 
       // Compatibilidad con conversaciones anteriores que ya tenían el menú PQ/3 cuotas.
-      const esOpcionesPlan = false; // El flujo actual ofrece primero el pago cancelatorio y nunca muestra “PQ” al cliente.
+      const esOpcionesPlan = remitente === "ia" &&
+        textoMenu.includes("PQ") &&
+        textoMenu.includes("Pago cancelatorio") &&
+        textoMenu.includes("3 cuotas") &&
+        mensajeMeta.tipo !== "pq_confirmacion";
 
       if (esOpcionesPlan) {
-        agregarBotones(["3 cuotas"], "plan-opciones");
+        agregarBotones(["PQ — Pago cancelatorio", "3 cuotas"], "plan-opciones");
       }
 
       contenedor.scrollTop = contenedor.scrollHeight;
