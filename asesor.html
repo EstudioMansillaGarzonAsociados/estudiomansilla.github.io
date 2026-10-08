@@ -2395,13 +2395,13 @@ function respuestaAutomaticaIA(tipo){
 const iaProcesandoAhora=new Set();
 
 async function procesarIAAutomatica(id,c){
-  // La IA automática al cliente funciona exclusivamente en index.html.
-  // El panel asesor no genera mensajes automáticos para evitar duplicados.
+  // IMPORTANTE: la IA de atención al cliente funciona exclusivamente en index.html.
+  // El panel de asesores NO genera respuestas automáticas para evitar duplicados.
   return;
 }
 
 function procesarIAAutomaticaParaTodas(data){
-  // Desactivado: el panel asesor nunca responde automáticamente al cliente.
+  // Desactivado: el panel de asesores nunca debe responder automáticamente al cliente.
   return;
 }
 
@@ -2429,8 +2429,6 @@ function escucharConversaciones(){
     Object.keys(ultimosMensajesSnapshot).forEach(id=>{ if(!nuevos.has(id)) delete ultimosMensajesSnapshot[id]; });
 
     conversaciones=data;
-    // La IA funciona como primera línea para chats todavía sin asignar.
-    procesarIAAutomaticaParaTodas(data);
     ultimoSnapshotIds=nuevos;
     primerCargaConversaciones=false;
 
