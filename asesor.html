@@ -2395,18 +2395,14 @@ function respuestaAutomaticaIA(tipo){
 const iaProcesandoAhora=new Set();
 
 async function procesarIAAutomatica(id,c){
-  // DESACTIVADA: la IA del cliente se gestiona exclusivamente desde index.html.
-  // Este bloqueo evita que asesor.html genere respuestas automáticas duplicadas.
+  // IMPORTANTE: la IA de atención al cliente funciona exclusivamente en index.html.
+  // El panel de asesores NO genera respuestas automáticas para evitar duplicados.
   return;
 }
 
 function procesarIAAutomaticaParaTodas(data){
-  if(!IA_AUTOMATICA_HABILITADA) return;
-  Object.entries(data||{}).forEach(([id,c])=>{
-    if(c && estaActiva(c) && estaSinAsignar(c)) {
-      procesarIAAutomatica(id,c).catch(err=>console.warn("IA automática:",err));
-    }
-  });
+  // Desactivado: el panel de asesores nunca debe responder automáticamente al cliente.
+  return;
 }
 
 let ultimosMensajesSnapshot={};
@@ -2433,8 +2429,6 @@ function escucharConversaciones(){
     Object.keys(ultimosMensajesSnapshot).forEach(id=>{ if(!nuevos.has(id)) delete ultimosMensajesSnapshot[id]; });
 
     conversaciones=data;
-    // La IA funciona como primera línea para chats todavía sin asignar.
-    procesarIAAutomaticaParaTodas(data);
     ultimoSnapshotIds=nuevos;
     primerCargaConversaciones=false;
 
