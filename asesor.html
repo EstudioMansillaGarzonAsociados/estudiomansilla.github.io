@@ -1329,17 +1329,13 @@ async function cargarBaseClientes(){
   }catch(e){ console.error("No se pudo cargar la base de clientes:",e); }
 }
 function normalizarDniBase(valor){ return String(valor??"").replace(/\D/g,""); }
-function claveExcelNormalizada(v){
-  return String(v??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"");
-}
 function encontrarColumna(obj,patrones){
   const claves=Object.keys(obj||{});
   for(const patron of patrones){
-    const objetivo=claveExcelNormalizada(patron);
-    const exacta=claves.find(k=>claveExcelNormalizada(k)===objetivo);
+    const exacta=claves.find(k=>normalizarTexto(k)===normalizarTexto(patron));
     if(exacta) return exacta;
   }
-  return claves.find(k=>patrones.some(p=>{ const kk=claveExcelNormalizada(k), pp=claveExcelNormalizada(p); return kk.includes(pp) || pp.includes(kk); }))||"";
+  return claves.find(k=>patrones.some(p=>normalizarTexto(k).includes(normalizarTexto(p))))||"";
 }
 async function importarExcelClientes(){
   if(!esSupervisor()){ alert("Solo un supervisor puede cargar la base de clientes."); return; }
@@ -1347,123 +1343,47 @@ async function importarExcelClientes(){
   if(!file){ alert("Seleccioná un archivo Excel."); return; }
   if(typeof XLSX==="undefined"){ alert("No se pudo cargar el lector de Excel. Actualizá la página e intentá nuevamente."); return; }
   if(excelImportando)return;
-
   excelImportando=true;
   const status=$("excelClientesStatus");
-  const boton=input?.parentElement?.querySelector('button.btn.green');
-  if(boton){ boton.disabled=true; boton.style.opacity=".6"; boton.textContent="⏳ Procesando..."; }
-  if(status)status.textContent="📂 Leyendo Excel...";
-
+  if(status)status.textContent="Leyendo Excel...";
   try{
     const buffer=await file.arrayBuffer();
-    if(status)status.textContent="📊 Analizando filas del Excel...";
-
     const workbook=XLSX.read(buffer,{type:"array",cellDates:true});
     let filasTotales=0,filasGuardadas=0,sinDni=0;
     const importId=`${Date.now()}_${normalizarTexto(file.name).replace(/[^a-z0-9]+/g,"_").slice(0,50)}`;
-    const updates={};
-
     for(const sheetName of workbook.SheetNames){
       const rows=XLSX.utils.sheet_to_json(workbook.Sheets[sheetName],{defval:""});
-
       for(const row of rows){
         filasTotales++;
-
         const dniCol=encontrarColumna(row,["dni","documento","documento de identidad","nro dni","numero dni"]);
         const dni=normalizarDniBase(dniCol?row[dniCol]:"");
         if(!dni){sinDni++;continue;}
-
         const nombreCol=encontrarColumna(row,["nombre","nombre y apellido","cliente","apellido y nombre","titular"]);
         const telefonoCol=encontrarColumna(row,["telefono","teléfono","celular","movil","móvil"]);
         const emailCol=encontrarColumna(row,["email","correo","correo electronico","correo electrónico"]);
-
-        // CAMPOS DE LA BASE:
-        // MONTO = deuda actualizada
-        // PQ = pago cancelatorio
-        // 3 CUOTAS = importe del plan de 3 cuotas
-        const montoCol=encontrarColumna(row,["MONTO","monto"]);
-        const pqCol=encontrarColumna(row,["PQ","pago cancelatorio","pago cancelatorio (pq)","cancelatorio"]);
-        const tresCuotasCol=encontrarColumna(row,["3 CUOTAS","3 cuotas","3cuotas","tres cuotas","trescuotas"]);
+        const montoCol=encontrarColumna(row,["monto","deuda","saldo","capital"]);
+        const pqCol=encontrarColumna(row,["pq","pago cancelatorio","pago cancelatorio (pq)","cancelatorio"]);
+        const tresCuotasCol=encontrarColumna(row,["3 cuotas","3cuotas","tres cuotas","trescuotas"]);
         const estadoCol=encontrarColumna(row,["estado","situacion","situación"]);
-
-        const datos={
-          dni,
-          nombre:nombreCol?String(row[nombreCol]||"").trim():"",
-          telefono:telefonoCol?String(row[telefonoCol]||"").trim():"",
-          email:emailCol?String(row[emailCol]||"").trim():"",
-          monto:montoCol?String(row[montoCol]||"").trim():"",
-          pq:pqCol?String(row[pqCol]||"").trim():"",
-          tresCuotas:tresCuotasCol?String(row[tresCuotasCol]||"").trim():"",
-          estado:estadoCol?String(row[estadoCol]||"").trim():"",
-          fila:row,
-          hoja:sheetName,
-          archivo:file.name,
-          importadoPor:nombreActual,
-          importadoPorEmail:usuarioActual?.email||"",
-          fechaImportacion:Date.now(),
-          importId
-        };
-
-        updates[`baseClientes/${dni}`]=datos;
+        const datos={dni,nombre:nombreCol?String(row[nombreCol]||"").trim():"",telefono:telefonoCol?String(row[telefonoCol]||"").trim():"",email:emailCol?String(row[emailCol]||"").trim():"",monto:montoCol?String(row[montoCol]||"").trim():"",pq:pqCol?String(row[pqCol]||"").trim():"",tresCuotas:tresCuotasCol?String(row[tresCuotasCol]||"").trim():"",estado:estadoCol?String(row[estadoCol]||"").trim():"",fila:row,hoja:sheetName,archivo:file.name,importadoPor:nombreActual,importadoPorEmail:usuarioActual?.email||"",fechaImportacion:Date.now(),importId};
+        await set(ref(db,`baseClientes/${dni}`),datos);
         filasGuardadas++;
       }
     }
-
-    if(status)status.textContent=`💾 Guardando ${filasGuardadas} clientes en la base...`;
-
-    // Guardamos en bloques para evitar que el navegador quede eternamente en “Leyendo Excel”.
-    const entradas=Object.entries(updates);
-    const bloque=500;
-    for(let i=0;i<entradas.length;i+=bloque){
-      const parcial=Object.fromEntries(entradas.slice(i,i+bloque));
-      await update(ref(db),parcial);
-      const procesados=Math.min(i+bloque,entradas.length);
-      if(status)status.textContent=`💾 Guardando clientes... ${procesados} de ${entradas.length}`;
-      await new Promise(r=>setTimeout(r,0));
-    }
-
-    await set(ref(db,`importacionesExcel/${importId}`),{
-      archivo:file.name,
-      fecha:Date.now(),
-      usuario:nombreActual,
-      email:usuarioActual?.email||"",
-      filasTotales,
-      filasGuardadas,
-      sinDni
-    });
-
-    if(status)status.textContent="☁️ Guardando copia del Excel...";
+    await set(ref(db,`importacionesExcel/${importId}`),{archivo:file.name,fecha:Date.now(),usuario:nombreActual,email:usuarioActual?.email||"",filasTotales,filasGuardadas,sinDni});
     try{
       const path=`basesClientes/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g,"_")}`;
-      const sr=storageRef(storage,path);
-      await uploadBytes(sr,file);
-      const url=await getDownloadURL(sr);
+      const sr=storageRef(storage,path); await uploadBytes(sr,file); const url=await getDownloadURL(sr);
       await update(ref(db,`importacionesExcel/${importId}`),{archivoStorage:url});
-    }catch(storageError){
-      console.warn("Excel importado, pero no se pudo guardar el original en Storage:",storageError);
-    }
-
-    if(status)status.textContent="🔄 Actualizando la vista de clientes...";
+    }catch(storageError){ console.warn("Excel importado, pero no se pudo guardar el original en Storage:",storageError); }
     await cargarBaseClientes();
-
-    if(status){
-      status.textContent=`✅ LISTO. Se cargaron ${filasGuardadas} clientes. ${sinDni} filas fueron omitidas porque no tenían DNI.`;
-      status.style.color="#087443";
-      status.style.fontWeight="700";
-    }
+    if(status)status.textContent=`✅ Listo. Se cargaron ${filasGuardadas} clientes. ${sinDni} filas fueron omitidas porque no tenían DNI.`;
     input.value="";
   }catch(e){
     console.error("Error al importar Excel:",e);
-    if(status){
-      status.textContent="❌ Error al cargar el Excel. Revisá que tenga una columna DNI y volvé a intentar.";
-      status.style.color="#b42318";
-      status.style.fontWeight="700";
-    }
-    alert("No se pudo importar el Excel. Revisá la consola para ver el detalle.");
-  }finally{
-    excelImportando=false;
-    if(boton){ boton.disabled=false; boton.style.opacity="1"; boton.textContent="📥 Importar Excel"; }
-  }
+    if(status)status.textContent="❌ No se pudo importar el Excel. Revisá que tenga una columna DNI.";
+    alert("No se pudo importar el Excel.");
+  }finally{excelImportando=false;}
 }
 function renderizarBaseClientes(){
   const table=$("baseClientesTable"),count=$("baseClientesCount"); if(!table)return;
@@ -1474,7 +1394,7 @@ function renderizarBaseClientes(){
   if(!filtrados.length){table.innerHTML='<div class="empty">No hay clientes para mostrar.</div>';return;}
   const muestra=filtrados.slice(0,200);
   table.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr>
-  <th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">DNI</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">Nombre</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">Teléfono</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">Estado</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">Monto</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">Pago cancelatorio</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">3 cuotas</th></tr></thead><tbody>
+  <th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">DNI</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">Nombre</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">Teléfono</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">Estado</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">Monto</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">PQ</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">3 cuotas</th></tr></thead><tbody>
   ${muestra.map(r=>`<tr><td style="padding:7px;border-bottom:1px solid #eef1f4">${escapeHtml(r.dni||"")}</td><td style="padding:7px;border-bottom:1px solid #eef1f4">${escapeHtml(r.nombre||"")}</td><td style="padding:7px;border-bottom:1px solid #eef1f4">${escapeHtml(r.telefono||"")}</td><td style="padding:7px;border-bottom:1px solid #eef1f4">${escapeHtml(r.estado||"")}</td><td style="padding:7px;border-bottom:1px solid #eef1f4">${escapeHtml(r.monto||"")}</td><td style="padding:7px;border-bottom:1px solid #eef1f4">${escapeHtml(r.pq||"")}</td><td style="padding:7px;border-bottom:1px solid #eef1f4">${escapeHtml(r.tresCuotas||"")}</td></tr>`).join("")}</tbody></table>
   ${filtrados.length>200?`<div class="small" style="margin-top:8px">Se muestran 200 de ${filtrados.length}. Usá el buscador para encontrar un cliente.</div>`:""}`;
 }
@@ -1701,8 +1621,8 @@ function renderizarPlanPago(c){
       <div class="plan-grid">
         ${p.solicitado ? `<div class="plan-item"><div class="info-label">Solicitud</div><div class="info-value">${escapeHtml(String(p.solicitado))}</div></div>` : ""}
         ${p.deuda ? `<div class="plan-item"><div class="info-label">Deuda según base</div><div class="info-value">${escapeHtml(String(p.deuda))}</div></div>` : ""}
-        ${p.pq ? `<div class="plan-item"><div class="info-label">Pago cancelatorio</div><div class="info-value">${escapeHtml(String(p.pq))}</div></div>` : ""}
-        ${p.respuestaPQ || p.resp || p.op ? `<div class="plan-item"><div class="info-label">Respuesta al pago cancelatorio</div><div class="info-value">${etiquetaRespuestaPlan(p.respuestaPQ || p.resp || p.op)}</div></div>` : ""}
+        ${p.pq ? `<div class="plan-item"><div class="info-label">Pago cancelatorio (PQ)</div><div class="info-value">${escapeHtml(String(p.pq))}</div></div>` : ""}
+        ${p.respuestaPQ || p.resp || p.op ? `<div class="plan-item"><div class="info-label">Respuesta al PQ</div><div class="info-value">${etiquetaRespuestaPlan(p.respuestaPQ || p.resp || p.op)}</div></div>` : ""}
         ${p.tres ? `<div class="plan-item"><div class="info-label">3 cuotas</div><div class="info-value">${escapeHtml(String(p.tres))}</div></div>` : ""}
         ${p.respuestaTres ? `<div class="plan-item"><div class="info-label">Respuesta 3 cuotas</div><div class="info-value">${etiquetaRespuestaPlan(p.respuestaTres)}</div></div>` : ""}
         ${p.op && !p.resp ? `<div class="plan-item"><div class="info-label">Opción elegida</div><div class="info-value">${escapeHtml(String(p.op))}</div></div>` : ""}
@@ -2482,6 +2402,9 @@ const iaProcesandoAhora=new Set();
 
 async function procesarIAAutomatica(id,c){
   if(!IA_AUTOMATICA_HABILITADA || !id || !c || !estaActiva(c)) return;
+  // Los chats creados desde index.html ya tienen su propia IA de cliente.
+  // El panel asesor NO debe volver a contestar el mismo mensaje.
+  if(c.iaMotor === "cliente_web" || c.origen === "web_cliente") return;
   // La IA solo interviene en conversaciones sin asignar. Una vez tomada por un asesor, se retira.
   if(!estaSinAsignar(c)) return;
   const arr=Object.entries(c.mensajes||{}).map(([mid,m])=>({...m,_id:mid})).sort((a,b)=>(a.fecha||0)-(b.fecha||0));
@@ -2513,6 +2436,13 @@ async function procesarIAAutomatica(id,c){
 
   try{
     const r=ref(db,`conversaciones/${id}/mensajes`);
+    // Revalidamos antes de escribir: otra pestaña/proceso puede haber contestado.
+    const ultimoSnap=await get(ref(db,`conversaciones/${id}/mensajes/${ultimo._id}`));
+    const ultimoActual=ultimoSnap.exists() ? (ultimoSnap.val()||{}) : {};
+    if(ultimoActual.iaProcesado===true || ultimoActual.iaRespuestaGenerada===true){
+      return;
+    }
+
     await push(r,{
       tipo:"texto",
       texto,
@@ -2520,11 +2450,12 @@ async function procesarIAAutomatica(id,c){
       remitenteEmail:"",
       fecha:ahora,
       generadoPorIA:true,
-      iaTipo:tipo
+      iaTipo:tipo,
+      respondeA:ultimo._id
     });
 
-    // Marcamos el mensaje del cliente para que Firebase no dispare otra respuesta.
-    await update(ref(db,`conversaciones/${id}/mensajes/${ultimo._id}`),{iaProcesado:true,iaProcesadoFecha:ahora});
+    // Marcamos el mensaje del cliente de forma permanente.
+    await update(ref(db,`conversaciones/${id}/mensajes/${ultimo._id}`),{iaProcesado:true,iaRespuestaGenerada:true,iaProcesadoFecha:ahora});
     await update(ref(db,`conversaciones/${id}`),{
       iaActiva:true,
       iaUltimoMensajeProcesado:ultimo._id,
