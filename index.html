@@ -495,7 +495,6 @@
     let iaProcesando = false;
     let iaUltimoMensajeProcesado = "";
     let iaDerivada = false;
-    const iaMensajesMostrados = new Set();
 
     /* =========================================================
        UTILIDADES
@@ -556,8 +555,6 @@
           iaEstado: "activa",
           iaDerivada: false,
           iaPaso: "esperando_opcion",
-          iaMotor: "cliente_web",
-          origen: "web_cliente",
           fechaCreacion: Date.now()
         });
       }
@@ -599,13 +596,6 @@
       onChildAdded(mensajesRef, async (snapshot) => {
         const mensaje = snapshot.val();
         if (!mensaje) return;
-
-        const esIA = mensaje.remitente === "ia" || mensaje.generadoPorIA === true || normalizarTexto(mensaje.remitente) === "asistente virtual";
-        const claveVista = esIA ? normalizarTexto(`${mensaje.tipo||"ia"}|${mensaje.texto||""}`) : "";
-        if (esIA && claveVista && iaMensajesMostrados.has(claveVista)) {
-          return;
-        }
-        if (esIA && claveVista) iaMensajesMostrados.add(claveVista);
 
         mostrarMensaje(
           mensaje.texto || "",
@@ -681,8 +671,6 @@
           iaActiva: true,
           iaEstado: "activa",
           iaDerivada: false,
-          iaMotor: "cliente_web",
-          origen: "web_cliente",
 
           // Sin asignar al comenzar.
           equipo: null,
@@ -723,20 +711,15 @@
         }
 
         // PRIMERA respuesta de la IA: saludo + botones.
-        // Nunca se vuelve a insertar si esta conversación ya tiene mensajes.
-        const mensajesExistentes = await get(mensajesRef);
-        if (!mensajesExistentes.exists()) {
-          const saludoInicial = "Buen día. Soy el asistente virtual del Estudio Mansilla Garzon y asociados. ¿En qué podemos ayudarte?";
-          await push(mensajesRef, {
+        // Después de esto la IA queda esperando la elección del cliente.
+        const saludoInicial = "Buen día. Soy el asistente virtual del Estudio Mansilla Garzon y asociados. ¿En qué podemos ayudarte?";
+        await push(mensajesRef, {
           texto: saludoInicial,
           remitente: "ia",
           nombreRemitente: IA_NOMBRE,
           fecha: Date.now(),
-          tipo: "saludo_automatico",
-          generadoPorIA: true,
-          iaTipo: "saludo"
-          });
-        }
+          tipo: "saludo_automatico"
+        });
 
         document.getElementById("mensajeInput").focus();
 
@@ -751,8 +734,8 @@
     ========================================================= */
 
     window.volverInicio = function () {
-      sessionStorage.removeItem("conversacionId");
-      window.location.reload();
+      document.getElementById("chat").style.display = "none";
+      document.getElementById("inicio").style.display = "block";
     };
 
     /* =========================================================
@@ -836,6 +819,9 @@
         n.includes("pagar en cuotas") ||
         n.includes("formas de pago") ||
         n.includes("acuerdo de pago") ||
+        n.includes("quiero un acuerdo") ||
+        n.includes("quiero acuerdo") ||
+        n === "acuerdo" ||
         n === "pq" ||
         n.includes("pago cancelatorio") ||
         n.includes("3 cuotas") ||
@@ -995,45 +981,24 @@
       return (partes.length?partes.join(" "):"Encontré tu registro en nuestra base de clientes.")+" ¿En qué podemos ayudarte?";
     }
 
-    async function obtenerDatosBaseParaConversacion(dni){
-      const dniLimpio = String(dni || datosClienteActual.dni || "").replace(/\D/g, "");
-      if (dniLimpio) {
-        const porDni = await buscarClienteEnBasePorDni(dniLimpio);
-        if (porDni) return porDni;
-      }
-
-      // Respaldo: si el cliente fue cargado en el formulario por nombre/teléfono
-      // pero el DNI no coincide exactamente, buscamos en la base.
-      if (!db) return null;
-      try {
-        const snap = await get(ref(db, "baseClientes"));
-        if (!snap.exists()) return null;
-        const todos = snap.val() || {};
-        const nombreBuscado = normalizarTexto(datosClienteActual.nombre || "");
-        const telefonoBuscado = String(datosClienteActual.telefono || "").replace(/\D/g, "");
-        const registros = Object.values(todos);
-        return registros.find(r => {
-          const rn = normalizarTexto(r?.nombre || r?.NOMBRE || "");
-          const rt = String(r?.telefono || r?.celular || "").replace(/\D/g, "");
-          const coincideNombre = nombreBuscado && rn && (rn === nombreBuscado || rn.includes(nombreBuscado) || nombreBuscado.includes(rn));
-          const coincideTelefono = telefonoBuscado && rt && (rt === telefonoBuscado || rt.endsWith(telefonoBuscado) || telefonoBuscado.endsWith(rt));
-          return Boolean(coincideNombre || coincideTelefono);
-        }) || null;
-      } catch (e) {
-        console.warn("No se pudo buscar el cliente por nombre/teléfono:", e);
-        return null;
-      }
+    function claveBaseNormalizada(v){
+      return String(v ?? "")
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase().replace(/[^a-z0-9]+/g, "");
     }
-
-    function extraerPropuestaMontoFecha(texto){
-      const t = String(texto || "").trim();
-      const montoMatch = t.match(/(?:\$|ars\.?\s*)\s*([0-9][0-9.\s]*(?:,[0-9]{1,2})?)/i) || t.match(/\b[0-9]{4,}\b/);
-      const fechaMatch = t.match(/\b([0-3]?\d[\/\-][0-1]?\d(?:[\/\-]\d{2,4})?)\b/) || t.match(/\b([0-3]?\d\s+de\s+[a-záéíóú]+(?:\s+de\s+\d{4})?)\b/i);
-      return {
-        monto: montoMatch ? String(montoMatch[1] || montoMatch[0]).trim() : "",
-        fecha: fechaMatch ? String(fechaMatch[1] || "").trim() : "",
-        texto: t
-      };
+    function obtenerCampoBase(registro, alias){
+      if(!registro) return "";
+      const aliases=Array.isArray(alias)?alias:[alias];
+      const entradas=Object.entries(registro);
+      for(const a of aliases){
+        const objetivo=claveBaseNormalizada(a);
+        const hit=entradas.find(([k,v])=>claveBaseNormalizada(k)===objetivo && v!==undefined && v!==null && String(v).trim()!=="");
+        if(hit) return hit[1];
+      }
+      return "";
+    }
+    function obtenerDatosBaseParaConversacion(dni){
+      return buscarClienteEnBasePorDni(dni || datosClienteActual.dni);
     }
 
     async function derivarAAsesor(datos = {}){
@@ -1064,27 +1029,14 @@
         planPagoSolicitado: true,
         planPagoOpcion: datos.opcion || null,
         planPagoRespuesta: datos.respuesta || null,
-        respuestaPQ: datos.respuestaPQ || null,
-        respuesta3Cuotas: datos.respuesta3Cuotas || null,
+        planPagoRespuestaPQ: datos.respuestaPQ || null,
+        planPagoRespuestaTresCuotas: datos.respuestaTresCuotas || null,
         planPagoDeuda: datos.deuda || null,
         planPagoPQ: datos.pq || null,
         planPagoTresCuotas: datos.tresCuotas || null,
         propuestaCliente: datos.propuesta || null,
         propuestaMonto: datos.propuestaMonto || null,
         propuestaFecha: datos.propuestaFecha || null,
-        planPago: {
-          solicitado: true,
-          deuda: datos.deuda || null,
-          pq: datos.pq || null,
-          tresCuotas: datos.tresCuotas || null,
-          opcion: datos.opcion || null,
-          respuesta: datos.respuesta || null,
-          respuestaPQ: datos.respuestaPQ || null,
-          respuesta3Cuotas: datos.respuesta3Cuotas || null,
-          propuestaCliente: datos.propuesta || null,
-          propuestaMonto: datos.propuestaMonto || null,
-          propuestaFecha: datos.propuestaFecha || null
-        },
         ultimaActividad: Date.now()
       });
       iaDerivada = true;
@@ -1163,7 +1115,7 @@
         // Mientras esperamos una opción, NO derivamos ni enviamos otro mensaje
         // automático por un texto libre. La IA espera la elección del cliente.
         const convSnap = await get(ref(db, `conversaciones/${conversacionId}`));
-        let convActual = convSnap.exists() ? (convSnap.val() || {}) : {};
+        const convActual = convSnap.exists() ? (convSnap.val() || {}) : {};
         if (convActual.iaPaso === "esperando_opcion") {
           const nTexto = normalizarTexto(texto);
           const esOpcion = [
@@ -1181,32 +1133,6 @@
               { iaProcesado: true, iaProcesando: false }
             );
             return;
-          }
-
-          // "Quiero un acuerdo" NO deriva. Es el inicio del flujo de plan de pago.
-          const pidePlan = nTexto.includes("quiero un acuerdo") ||
-            nTexto.includes("quiero acuerdo") ||
-            nTexto.includes("acuerdo de pago") ||
-            nTexto.includes("plan de pago") ||
-            nTexto.includes("quiero un plan") ||
-            nTexto.includes("pagar en cuotas") ||
-            nTexto === "pq" ||
-            nTexto.includes("pago cancelatorio") ||
-            nTexto.includes("3 cuotas") ||
-            nTexto.includes("tres cuotas");
-
-          if (pidePlan) {
-            await update(ref(db, `conversaciones/${conversacionId}`), {
-              iaActiva: true,
-              iaEstado: "activa",
-              iaDerivada: false,
-              iaPaso: "plan_pago_opciones",
-              planPagoSolicitado: true,
-              iaMotor: "cliente_web",
-              origen: "web_cliente",
-              ultimaActividad: Date.now()
-            });
-            convActual = { ...convActual, iaPaso: "plan_pago_opciones", planPagoSolicitado: true, iaDerivada: false };
           }
         }
 
@@ -1227,7 +1153,6 @@
                 texto: respuestaSinRegistro,
                 remitente: "ia",
                 nombreRemitente: IA_NOMBRE,
-                generadoPorIA: true,
                 fecha: Date.now(),
                 respondeA: messageKey,
                 tipo: "solicitar_dni_plan_pago"
@@ -1237,24 +1162,24 @@
               return;
             }
 
-            const deuda = registro.monto || "No informado";
-            const pq = registro.pq || registro.PQ || "No informado";
-            const nombre = registro.nombre || registro.NOMBRE || datosClienteActual.nombre || "";
+            const deuda = obtenerCampoBase(registro,["monto","deuda","saldo","capital"]) || "No informado";
+            const pq = obtenerCampoBase(registro,["pq","pago cancelatorio","pago cancelatorio (pq)","cancelatorio"]);
+            const tresCuotas = obtenerCampoBase(registro,["3 cuotas","3cuotas","tres cuotas","trescuotas"]);
+            const nombre = obtenerCampoBase(registro,["nombre","nombre y apellido","cliente","apellido y nombre","titular"]) || datosClienteActual.nombre || "";
 
             const respuestaPQ =
               `Perfecto${nombre ? `, ${nombre.split(/\s+/)[0]}` : ""}. Según nuestros registros, tu deuda es de ${deuda}. ` +
-              `Podemos ofrecerte un pago cancelatorio (PQ) por ${pq}. ¿Podés abonar el pago cancelatorio?`;
+              `Podemos ofrecerte un pago cancelatorio por ${pq || "el importe informado en nuestros registros"}. ¿Podés abonar el pago cancelatorio?`;
 
             await push(mensajesRef, {
               texto: respuestaPQ,
               remitente: "ia",
               nombreRemitente: IA_NOMBRE,
-              generadoPorIA: true,
               fecha: Date.now(),
               respondeA: messageKey,
               tipo: "pq_confirmacion",
               opciones: ["Sí", "No"],
-              datosPlan: { deuda, pq, tresCuotas: registro["3 cuotas"] || registro["3 CUOTAS"] || registro.tresCuotas || registro.tres_cuotas || "" }
+              datosPlan: { deuda, pq, tresCuotas }
             });
 
             await update(ref(db, `conversaciones/${conversacionId}/mensajes/${messageKey}`), { iaProcesado: true, iaProcesando: false });
@@ -1264,7 +1189,7 @@
               planPagoDeuda: deuda,
               planPagoPQ: pq,
               planPagoNombre: registro.nombre || registro.NOMBRE || "",
-              planPagoTresCuotas: registro["3 cuotas"] || registro["3 CUOTAS"] || registro.tresCuotas || registro.tres_cuotas || "",
+              planPagoTresCuotas: tresCuotas,
               ultimaActividad: Date.now(),
               ultimoMensaje: respuestaPQ,
               ultimoRemitente: "ia"
@@ -1279,20 +1204,26 @@
                 texto: respuestaSiPQ,
                 remitente: "ia",
                 nombreRemitente: IA_NOMBRE,
-                generadoPorIA: true,
                 fecha: Date.now(),
                 respondeA: messageKey,
                 tipo: "derivacion_plan_pago",
                 opcionPlan: "PQ — Pago cancelatorio"
               });
               await update(ref(db, `conversaciones/${conversacionId}/mensajes/${messageKey}`), { iaProcesado: true, iaProcesando: false });
-              await derivarAAsesor({ opcion:"PQ — Pago cancelatorio", respuesta:"Sí", respuestaPQ:"Sí", deuda:convActual.planPagoDeuda, pq:convActual.planPagoPQ, tresCuotas:convActual.planPagoTresCuotas, tipoDerivacion:"gestor", destinoDerivacion:"gestor", motivo:"Cliente acepta pago cancelatorio (PQ)" });
+              await derivarAAsesor({ opcion:"Pago cancelatorio", respuesta:"Sí", respuestaPQ:"Sí", deuda:convActual.planPagoDeuda, pq:convActual.planPagoPQ, tresCuotas:convActual.planPagoTresCuotas, tipoDerivacion:"gestor", motivo:"Cliente acepta pago cancelatorio" });
               await update(ref(db, `conversaciones/${conversacionId}`), { ultimoMensaje: respuestaSiPQ, ultimoRemitente:"ia" });
               return;
             }
 
             if (esRespuestaNo(nPlan)) {
-              const tres = convActual.planPagoTresCuotas || "No informado";
+              const tres = convActual.planPagoTresCuotas || "";
+              if(!tres){
+                const respuestaPropuesta = "Entiendo. En este caso, decime qué monto podrías abonar y en qué fecha podrías realizar el pago.";
+                await push(mensajesRef, { texto: respuestaPropuesta, remitente: "ia", nombreRemitente: IA_NOMBRE, fecha: Date.now(), respondeA: messageKey, tipo: "solicitar_monto_fecha" });
+                await update(ref(db, `conversaciones/${conversacionId}/mensajes/${messageKey}`), { iaProcesado: true, iaProcesando: false });
+                await update(ref(db, `conversaciones/${conversacionId}`), { iaPaso:"esperando_monto_fecha", planPagoOpcion:"propuesta_cliente", planPagoRespuestaTresCuotas:"No", ultimaActividad:Date.now(), ultimoMensaje:respuestaPropuesta, ultimoRemitente:"ia" });
+                return;
+              }
               const respuesta3 =
                 `Entendido. También podemos ofrecerte la opción de 3 cuotas por ${tres}. ¿Podés abonar la opción de 3 cuotas?`;
 
@@ -1300,7 +1231,6 @@
                 texto: respuesta3,
                 remitente: "ia",
                 nombreRemitente: IA_NOMBRE,
-                generadoPorIA: true,
                 fecha: Date.now(),
                 respondeA: messageKey,
                 tipo: "tres_cuotas_confirmacion",
@@ -1309,10 +1239,8 @@
               await update(ref(db, `conversaciones/${conversacionId}/mensajes/${messageKey}`), { iaProcesado: true, iaProcesando: false });
               await update(ref(db, `conversaciones/${conversacionId}`), {
                 iaPaso: "tres_cuotas_confirmacion",
+                planPagoRespuestaPQ: "No",
                 planPagoOpcion: "3 cuotas",
-                planPagoRespuesta: "No",
-                respuestaPQ: "No",
-                planPago: { ...(convActual.planPago || {}), solicitado:true, deuda:convActual.planPagoDeuda || null, pq:convActual.planPagoPQ || null, tresCuotas:tres, opcion:"3 cuotas", respuestaPQ:"No" },
                 ultimaActividad: Date.now(),
                 ultimoMensaje: respuesta3,
                 ultimoRemitente: "ia"
@@ -1328,14 +1256,13 @@
                 texto: respuestaSi3,
                 remitente: "ia",
                 nombreRemitente: IA_NOMBRE,
-                generadoPorIA: true,
                 fecha: Date.now(),
                 respondeA: messageKey,
                 tipo: "derivacion_plan_pago",
                 opcionPlan: "3 cuotas"
               });
               await update(ref(db, `conversaciones/${conversacionId}/mensajes/${messageKey}`), { iaProcesado: true, iaProcesando: false });
-              await derivarAAsesor({ opcion:"3 cuotas", respuesta:"Sí", respuestaPQ:"No", respuesta3Cuotas:"Sí", deuda:convActual.planPagoDeuda, pq:convActual.planPagoPQ, tresCuotas:convActual.planPagoTresCuotas, tipoDerivacion:"asesor", destinoDerivacion:"asesor", motivo:"Cliente acepta opción de 3 cuotas" });
+              await derivarAAsesor({ opcion:"3 cuotas", respuesta:"Sí", respuestaPQ:convActual.planPagoRespuestaPQ || "No", respuestaTresCuotas:"Sí", deuda:convActual.planPagoDeuda, pq:convActual.planPagoPQ, tresCuotas:convActual.planPagoTresCuotas, tipoDerivacion:"asesor", motivo:"Cliente acepta opción de 3 cuotas" });
               await update(ref(db, `conversaciones/${conversacionId}`), { ultimoMensaje: respuestaSi3, ultimoRemitente:"ia" });
               return;
             }
@@ -1346,7 +1273,6 @@
                 texto: respuestaPropuesta,
                 remitente: "ia",
                 nombreRemitente: IA_NOMBRE,
-                generadoPorIA: true,
                 fecha: Date.now(),
                 respondeA: messageKey,
                 tipo: "solicitar_monto_fecha"
@@ -1355,10 +1281,7 @@
               await update(ref(db, `conversaciones/${conversacionId}`), {
                 iaPaso: "esperando_monto_fecha",
                 planPagoOpcion: "propuesta_cliente",
-                planPagoRespuesta: "No",
-                respuestaPQ: convActual.respuestaPQ || "No",
-                respuesta3Cuotas: "No",
-                planPago: { ...(convActual.planPago || {}), solicitado:true, deuda:convActual.planPagoDeuda || null, pq:convActual.planPagoPQ || null, tresCuotas:convActual.planPagoTresCuotas || null, opcion:"propuesta_cliente", respuestaPQ:convActual.respuestaPQ || "No", respuesta3Cuotas:"No" },
+                planPagoRespuestaTresCuotas: "No",
                 ultimaActividad: Date.now(),
                 ultimoMensaje: respuestaPropuesta,
                 ultimoRemitente: "ia"
@@ -1369,13 +1292,15 @@
 
           if (convActual.iaPaso === "esperando_monto_fecha") {
             const propuesta = texto.trim();
-            const propuestaDatos = extraerPropuestaMontoFecha(propuesta);
+            const montoMatch = propuesta.match(/(?:\$\s*)?([0-9][0-9.\s]*(?:,[0-9]{1,2})?)/);
+            const fechaMatch = propuesta.match(/\b(?:0?[1-9]|[12]\d|3[01])(?:[\/.-])(?:0?[1-9]|1[0-2])(?:[\/.-]\d{2,4})?\b|\b(?:hoy|mañana|manana|lunes|martes|miércoles|miercoles|jueves|viernes|sábado|sabado|domingo)\b/i);
+            const propuestaMonto = montoMatch ? montoMatch[0].trim() : "";
+            const propuestaFecha = fechaMatch ? fechaMatch[0].trim() : "";
             const respuestaPropuestaGuardada = "Perfecto. Registramos tu propuesta de pago. Vamos a derivarte con un asesor para que pueda revisarla y continuar con la gestión.";
             await push(mensajesRef, {
               texto: respuestaPropuestaGuardada,
               remitente: "ia",
               nombreRemitente: IA_NOMBRE,
-              generadoPorIA: true,
               fecha: Date.now(),
               respondeA: messageKey,
               tipo: "derivacion_propuesta_cliente"
@@ -1385,15 +1310,14 @@
               opcion:"propuesta_cliente",
               respuesta:"No a 3 cuotas",
               propuesta,
-              propuestaMonto: propuestaDatos.monto,
-              propuestaFecha: propuestaDatos.fecha,
-              respuestaPQ: convActual.respuestaPQ || "No",
-              respuesta3Cuotas: "No",
-              deuda: convActual.planPagoDeuda,
-              pq: convActual.planPagoPQ,
-              tresCuotas: convActual.planPagoTresCuotas,
+              propuestaMonto,
+              propuestaFecha,
+              respuestaTresCuotas:"No",
+              respuestaPQ:convActual.planPagoRespuestaPQ || "No",
+              deuda:convActual.planPagoDeuda,
+              pq:convActual.planPagoPQ,
+              tresCuotas:convActual.planPagoTresCuotas,
               tipoDerivacion:"asesor",
-              destinoDerivacion:"asesor",
               motivo:"Cliente propone monto y fecha de pago"
             });
             await update(ref(db, `conversaciones/${conversacionId}`), { ultimoMensaje: respuestaPropuestaGuardada, ultimoRemitente:"ia" });
@@ -1415,7 +1339,6 @@
                 texto: respuestaCliente,
                 remitente: "ia",
                 nombreRemitente: IA_NOMBRE,
-                generadoPorIA: true,
                 fecha: Date.now(),
                 respondeA: messageKey,
                 tipo: "consulta_base_clientes",
@@ -1445,7 +1368,6 @@
               texto: respuestaSinRegistro,
               remitente: "ia",
               nombreRemitente: IA_NOMBRE,
-              generadoPorIA: true,
               fecha: Date.now(),
               respondeA: messageKey,
               tipo: "solicitar_dni_plan_pago"
@@ -1464,13 +1386,13 @@
             return;
           }
 
-          const deuda = registro.monto || registro.deuda || registro.DEUDA || "No informado";
-          const pq = registro.pq || registro.PQ || registro["Pago cancelatorio"] || registro["PAGO CANCELATORIO"] || "No informado";
-          const tresCuotas = registro["3 cuotas"] || registro["3 CUOTAS"] || registro.tresCuotas || registro.tres_cuotas || "";
-          const nombre = registro.nombre || registro.NOMBRE || datosClienteActual.nombre || "";
+          const deuda = obtenerCampoBase(registro,["monto","deuda","saldo","capital"]) || "No informado";
+          const pq = obtenerCampoBase(registro,["pq","pago cancelatorio","pago cancelatorio (pq)","cancelatorio"]);
+          const tresCuotas = obtenerCampoBase(registro,["3 cuotas","3cuotas","tres cuotas","trescuotas"]);
+          const nombre = obtenerCampoBase(registro,["nombre","nombre y apellido","cliente","apellido y nombre","titular"]) || datosClienteActual.nombre || "";
           const respuestaPQ =
             `Perfecto${nombre ? `, ${nombre.split(/\s+/)[0]}` : ""}. Según nuestros registros, tu deuda es de ${deuda}. ` +
-            `Podemos ofrecerte un pago cancelatorio (PQ) por ${pq}. ¿Podés abonar el pago cancelatorio?`;
+            `Podemos ofrecerte un pago cancelatorio por ${pq || "el importe informado en nuestros registros"}. ¿Podés abonar el pago cancelatorio?`;
 
           await new Promise(resolve => setTimeout(resolve, 350));
           const actualSnapPlan = await get(ref(db, `conversaciones/${conversacionId}/mensajes/${messageKey}`));
@@ -1480,7 +1402,6 @@
               texto: respuestaPQ,
               remitente: "ia",
               nombreRemitente: IA_NOMBRE,
-              generadoPorIA: true,
               fecha: Date.now(),
               respondeA: messageKey,
               tipo: "pq_confirmacion",
@@ -1498,19 +1419,6 @@
               planPagoPQ: pq,
               planPagoTresCuotas: tresCuotas,
               planPagoNombre: nombre,
-              planPago: {
-                solicitado: true,
-                deuda,
-                pq,
-                tresCuotas,
-                nombre,
-                opcion: "PQ — Pago cancelatorio",
-                respuestaPQ: null,
-                respuesta3Cuotas: null,
-                propuestaCliente: null,
-                propuestaMonto: null,
-                propuestaFecha: null
-              },
               ultimaActividad: Date.now(),
               ultimoMensaje: respuestaPQ,
               ultimoRemitente: "ia"
@@ -1580,7 +1488,7 @@
           tipo: "respuesta_automatica"
         });
 
-        if (["comprobante", "libre_deuda"].includes(intencion)) {
+        if (["comprobante", "acuerdo", "libre_deuda"].includes(intencion)) {
           iaDerivada = true;
           await update(ref(db, `conversaciones/${conversacionId}`), {
             iaActiva: false,
@@ -1603,7 +1511,7 @@
           iaActiva: true,
           iaEstado: "activa",
           iaDerivada: false,
-          iaPaso: (intencion === "comprobante" || intencion === "libre_deuda") ? "derivar" : "opcion",
+          iaPaso: (intencion === "comprobante" || intencion === "acuerdo" || intencion === "libre_deuda") ? "derivar" : "opcion",
           iaUltimoMensajeProcesado: messageKey,
           ultimaActividad: Date.now(),
           ultimoMensaje: respuesta,
