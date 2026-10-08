@@ -989,13 +989,35 @@
     function obtenerCampoBase(registro, alias){
       if(!registro) return "";
       const aliases=Array.isArray(alias)?alias:[alias];
-      const entradas=Object.entries(registro);
-      for(const a of aliases){
-        const objetivo=claveBaseNormalizada(a);
-        const hit=entradas.find(([k,v])=>claveBaseNormalizada(k)===objetivo && v!==undefined && v!==null && String(v).trim()!=="");
-        if(hit) return hit[1];
+      const candidatos=[registro, registro.fila || {}, registro.Fila || {}, registro.raw || {}];
+      for(const fuente of candidatos){
+        const entradas=Object.entries(fuente || {});
+        for(const a of aliases){
+          const objetivo=claveBaseNormalizada(a);
+          const hit=entradas.find(([k,v])=>claveBaseNormalizada(k)===objetivo && v!==undefined && v!==null && String(v).trim()!=="");
+          if(hit){
+            const valor=String(hit[1]).trim();
+            if(valor && !/^(no informado|no informa|n\/a|na|null|sin dato|s\/d|-)$/.test(claveBaseNormalizada(valor))) return hit[1];
+          }
+        }
       }
       return "";
+    }
+    function formatearImporteBase(valor){
+      if(valor===undefined || valor===null) return "";
+      let s=String(valor).trim();
+      if(!s || /^(no informado|no informa|n\/a|na|null|sin dato|s\/d|-)$/.test(claveBaseNormalizada(s))) return "";
+      const limpio=s.replace(/[$€£\s]/g,"");
+      if(/^[-+]?\d+(?:\.\d+)?$/.test(limpio) && !limpio.includes(",")){
+        const n=Number(limpio);
+        if(Number.isFinite(n)) return "$"+Math.round(n).toLocaleString("es-AR");
+      }
+      if(/^[-+]?\d{1,3}(?:\.\d{3})+(?:,\d+)?$/.test(limpio)) return "$"+limpio;
+      if(/^[-+]?\d+(?:,\d+)?$/.test(limpio)){
+        const n=Number(limpio.replace(/\./g,"").replace(",","."));
+        if(Number.isFinite(n)) return "$"+Math.round(n).toLocaleString("es-AR");
+      }
+      return s.startsWith("$") ? s : "$"+s;
     }
     function obtenerDatosBaseParaConversacion(dni){
       return buscarClienteEnBasePorDni(dni || datosClienteActual.dni);
@@ -1070,7 +1092,7 @@
           return "Entendido. Vamos a derivar tu solicitud a un asesor para que pueda verificar tu situación y gestionar el libre de deuda.";
 
         case "plan_pago":
-          return "Perfecto. Tenemos estas opciones de plan de pago. Elegí la que querés consultar:\n\n• PQ — Pago cancelatorio\n• 3 cuotas";
+          return "Perfecto. Tenemos estas opciones de plan de pago. Elegí la que querés consultar:\n\n• Pago cancelatorio\n• 3 cuotas";
 
         case "derivar":
         default:
@@ -1162,9 +1184,9 @@
               return;
             }
 
-            const deuda = obtenerCampoBase(registro,["monto","deuda","saldo","capital"]) || "No informado";
-            const pq = obtenerCampoBase(registro,["pq","pago cancelatorio","pago cancelatorio (pq)","cancelatorio"]);
-            const tresCuotas = obtenerCampoBase(registro,["3 cuotas","3cuotas","tres cuotas","trescuotas"]);
+            const deuda = formatearImporteBase(obtenerCampoBase(registro,["MONTO","monto"])) || formatearImporteBase(obtenerCampoBase(registro,["deuda actualizada","deuda","saldo","capital"]));
+            const pq = formatearImporteBase(obtenerCampoBase(registro,["PQ","pago cancelatorio","pago cancelatorio (pq)","cancelatorio"]));
+            const tresCuotas = formatearImporteBase(obtenerCampoBase(registro,["3 CUOTAS","3 cuotas","3cuotas","tres cuotas","trescuotas"]));
             const nombre = obtenerCampoBase(registro,["nombre","nombre y apellido","cliente","apellido y nombre","titular"]) || datosClienteActual.nombre || "";
 
             const respuestaPQ =
@@ -1207,7 +1229,7 @@
                 fecha: Date.now(),
                 respondeA: messageKey,
                 tipo: "derivacion_plan_pago",
-                opcionPlan: "PQ — Pago cancelatorio"
+                opcionPlan: "Pago cancelatorio"
               });
               await update(ref(db, `conversaciones/${conversacionId}/mensajes/${messageKey}`), { iaProcesado: true, iaProcesando: false });
               await derivarAAsesor({ opcion:"Pago cancelatorio", respuesta:"Sí", respuestaPQ:"Sí", deuda:convActual.planPagoDeuda, pq:convActual.planPagoPQ, tresCuotas:convActual.planPagoTresCuotas, tipoDerivacion:"gestor", motivo:"Cliente acepta pago cancelatorio" });
@@ -1217,7 +1239,7 @@
 
             if (esRespuestaNo(nPlan)) {
               const tres = convActual.planPagoTresCuotas || "";
-              if(!tres){
+              if(!tres || /^(no informado|no disponible|sin dato)$/i.test(String(tres).trim())){
                 const respuestaPropuesta = "Entiendo. En este caso, decime qué monto podrías abonar y en qué fecha podrías realizar el pago.";
                 await push(mensajesRef, { texto: respuestaPropuesta, remitente: "ia", nombreRemitente: IA_NOMBRE, fecha: Date.now(), respondeA: messageKey, tipo: "solicitar_monto_fecha" });
                 await update(ref(db, `conversaciones/${conversacionId}/mensajes/${messageKey}`), { iaProcesado: true, iaProcesando: false });
@@ -1386,9 +1408,9 @@
             return;
           }
 
-          const deuda = obtenerCampoBase(registro,["monto","deuda","saldo","capital"]) || "No informado";
-          const pq = obtenerCampoBase(registro,["pq","pago cancelatorio","pago cancelatorio (pq)","cancelatorio"]);
-          const tresCuotas = obtenerCampoBase(registro,["3 cuotas","3cuotas","tres cuotas","trescuotas"]);
+          const deuda = formatearImporteBase(obtenerCampoBase(registro,["MONTO","monto"])) || formatearImporteBase(obtenerCampoBase(registro,["deuda actualizada","deuda","saldo","capital"]));
+          const pq = formatearImporteBase(obtenerCampoBase(registro,["PQ","pago cancelatorio","pago cancelatorio (pq)","cancelatorio"]));
+          const tresCuotas = formatearImporteBase(obtenerCampoBase(registro,["3 CUOTAS","3 cuotas","3cuotas","tres cuotas","trescuotas"]));
           const nombre = obtenerCampoBase(registro,["nombre","nombre y apellido","cliente","apellido y nombre","titular"]) || datosClienteActual.nombre || "";
           const respuestaPQ =
             `Perfecto${nombre ? `, ${nombre.split(/\s+/)[0]}` : ""}. Según nuestros registros, tu deuda es de ${deuda}. ` +
@@ -1613,7 +1635,7 @@
         mensajeMeta.tipo !== "pq_confirmacion";
 
       if (esOpcionesPlan) {
-        agregarBotones(["PQ — Pago cancelatorio", "3 cuotas"], "plan-opciones");
+        agregarBotones(["Pago cancelatorio", "3 cuotas"], "plan-opciones");
       }
 
       contenedor.scrollTop = contenedor.scrollHeight;
