@@ -1347,47 +1347,123 @@ async function importarExcelClientes(){
   if(!file){ alert("Seleccioná un archivo Excel."); return; }
   if(typeof XLSX==="undefined"){ alert("No se pudo cargar el lector de Excel. Actualizá la página e intentá nuevamente."); return; }
   if(excelImportando)return;
+
   excelImportando=true;
   const status=$("excelClientesStatus");
-  if(status)status.textContent="Leyendo Excel...";
+  const boton=input?.parentElement?.querySelector('button.btn.green');
+  if(boton){ boton.disabled=true; boton.style.opacity=".6"; boton.textContent="⏳ Procesando..."; }
+  if(status)status.textContent="📂 Leyendo Excel...";
+
   try{
     const buffer=await file.arrayBuffer();
+    if(status)status.textContent="📊 Analizando filas del Excel...";
+
     const workbook=XLSX.read(buffer,{type:"array",cellDates:true});
     let filasTotales=0,filasGuardadas=0,sinDni=0;
     const importId=`${Date.now()}_${normalizarTexto(file.name).replace(/[^a-z0-9]+/g,"_").slice(0,50)}`;
+    const updates={};
+
     for(const sheetName of workbook.SheetNames){
       const rows=XLSX.utils.sheet_to_json(workbook.Sheets[sheetName],{defval:""});
+
       for(const row of rows){
         filasTotales++;
+
         const dniCol=encontrarColumna(row,["dni","documento","documento de identidad","nro dni","numero dni"]);
         const dni=normalizarDniBase(dniCol?row[dniCol]:"");
         if(!dni){sinDni++;continue;}
+
         const nombreCol=encontrarColumna(row,["nombre","nombre y apellido","cliente","apellido y nombre","titular"]);
         const telefonoCol=encontrarColumna(row,["telefono","teléfono","celular","movil","móvil"]);
         const emailCol=encontrarColumna(row,["email","correo","correo electronico","correo electrónico"]);
-        const montoCol=encontrarColumna(row,["monto","deuda","saldo","capital"]);
-        const pqCol=encontrarColumna(row,["pq","pago cancelatorio","pago cancelatorio (pq)","cancelatorio"]);
-        const tresCuotasCol=encontrarColumna(row,["3 cuotas","3cuotas","tres cuotas","trescuotas"]);
+
+        // CAMPOS DE LA BASE:
+        // MONTO = deuda actualizada
+        // PQ = pago cancelatorio
+        // 3 CUOTAS = importe del plan de 3 cuotas
+        const montoCol=encontrarColumna(row,["MONTO","monto"]);
+        const pqCol=encontrarColumna(row,["PQ","pago cancelatorio","pago cancelatorio (pq)","cancelatorio"]);
+        const tresCuotasCol=encontrarColumna(row,["3 CUOTAS","3 cuotas","3cuotas","tres cuotas","trescuotas"]);
         const estadoCol=encontrarColumna(row,["estado","situacion","situación"]);
-        const datos={dni,nombre:nombreCol?String(row[nombreCol]||"").trim():"",telefono:telefonoCol?String(row[telefonoCol]||"").trim():"",email:emailCol?String(row[emailCol]||"").trim():"",monto:montoCol?String(row[montoCol]||"").trim():"",pq:pqCol?String(row[pqCol]||"").trim():"",tresCuotas:tresCuotasCol?String(row[tresCuotasCol]||"").trim():"",estado:estadoCol?String(row[estadoCol]||"").trim():"",fila:row,hoja:sheetName,archivo:file.name,importadoPor:nombreActual,importadoPorEmail:usuarioActual?.email||"",fechaImportacion:Date.now(),importId};
-        await set(ref(db,`baseClientes/${dni}`),datos);
+
+        const datos={
+          dni,
+          nombre:nombreCol?String(row[nombreCol]||"").trim():"",
+          telefono:telefonoCol?String(row[telefonoCol]||"").trim():"",
+          email:emailCol?String(row[emailCol]||"").trim():"",
+          monto:montoCol?String(row[montoCol]||"").trim():"",
+          pq:pqCol?String(row[pqCol]||"").trim():"",
+          tresCuotas:tresCuotasCol?String(row[tresCuotasCol]||"").trim():"",
+          estado:estadoCol?String(row[estadoCol]||"").trim():"",
+          fila:row,
+          hoja:sheetName,
+          archivo:file.name,
+          importadoPor:nombreActual,
+          importadoPorEmail:usuarioActual?.email||"",
+          fechaImportacion:Date.now(),
+          importId
+        };
+
+        updates[`baseClientes/${dni}`]=datos;
         filasGuardadas++;
       }
     }
-    await set(ref(db,`importacionesExcel/${importId}`),{archivo:file.name,fecha:Date.now(),usuario:nombreActual,email:usuarioActual?.email||"",filasTotales,filasGuardadas,sinDni});
+
+    if(status)status.textContent=`💾 Guardando ${filasGuardadas} clientes en la base...`;
+
+    // Guardamos en bloques para evitar que el navegador quede eternamente en “Leyendo Excel”.
+    const entradas=Object.entries(updates);
+    const bloque=500;
+    for(let i=0;i<entradas.length;i+=bloque){
+      const parcial=Object.fromEntries(entradas.slice(i,i+bloque));
+      await update(ref(db),parcial);
+      const procesados=Math.min(i+bloque,entradas.length);
+      if(status)status.textContent=`💾 Guardando clientes... ${procesados} de ${entradas.length}`;
+      await new Promise(r=>setTimeout(r,0));
+    }
+
+    await set(ref(db,`importacionesExcel/${importId}`),{
+      archivo:file.name,
+      fecha:Date.now(),
+      usuario:nombreActual,
+      email:usuarioActual?.email||"",
+      filasTotales,
+      filasGuardadas,
+      sinDni
+    });
+
+    if(status)status.textContent="☁️ Guardando copia del Excel...";
     try{
       const path=`basesClientes/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g,"_")}`;
-      const sr=storageRef(storage,path); await uploadBytes(sr,file); const url=await getDownloadURL(sr);
+      const sr=storageRef(storage,path);
+      await uploadBytes(sr,file);
+      const url=await getDownloadURL(sr);
       await update(ref(db,`importacionesExcel/${importId}`),{archivoStorage:url});
-    }catch(storageError){ console.warn("Excel importado, pero no se pudo guardar el original en Storage:",storageError); }
+    }catch(storageError){
+      console.warn("Excel importado, pero no se pudo guardar el original en Storage:",storageError);
+    }
+
+    if(status)status.textContent="🔄 Actualizando la vista de clientes...";
     await cargarBaseClientes();
-    if(status)status.textContent=`✅ Listo. Se cargaron ${filasGuardadas} clientes. ${sinDni} filas fueron omitidas porque no tenían DNI.`;
+
+    if(status){
+      status.textContent=`✅ LISTO. Se cargaron ${filasGuardadas} clientes. ${sinDni} filas fueron omitidas porque no tenían DNI.`;
+      status.style.color="#087443";
+      status.style.fontWeight="700";
+    }
     input.value="";
   }catch(e){
     console.error("Error al importar Excel:",e);
-    if(status)status.textContent="❌ No se pudo importar el Excel. Revisá que tenga una columna DNI.";
-    alert("No se pudo importar el Excel.");
-  }finally{excelImportando=false;}
+    if(status){
+      status.textContent="❌ Error al cargar el Excel. Revisá que tenga una columna DNI y volvé a intentar.";
+      status.style.color="#b42318";
+      status.style.fontWeight="700";
+    }
+    alert("No se pudo importar el Excel. Revisá la consola para ver el detalle.");
+  }finally{
+    excelImportando=false;
+    if(boton){ boton.disabled=false; boton.style.opacity="1"; boton.textContent="📥 Importar Excel"; }
+  }
 }
 function renderizarBaseClientes(){
   const table=$("baseClientesTable"),count=$("baseClientesCount"); if(!table)return;
