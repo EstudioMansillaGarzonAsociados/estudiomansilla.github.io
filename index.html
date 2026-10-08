@@ -597,6 +597,11 @@
         const mensaje = snapshot.val();
         if (!mensaje) return;
 
+        // Nunca mostrar al cliente el mensaje genérico de derivación.
+        // Se filtra también si quedó grabado por una versión anterior del panel asesor.
+        const mensajeGenericoDerivacion = "Gracias por tu mensaje. Para darte una respuesta correcta sobre tu caso, voy a derivar esta conversación con un asesor del Centro de Atención. Por favor, aguardá un momento.";
+        if (String(mensaje.texto || "").trim() === mensajeGenericoDerivacion) return;
+
         mostrarMensaje(
           mensaje.texto || "",
           mensaje.remitente || "asesor",
@@ -1039,7 +1044,7 @@
           return "Entendido. Vamos a derivar tu solicitud a un asesor para que pueda verificar tu situación y gestionar el libre de deuda.";
 
         case "plan_pago":
-          return "Perfecto. Tenemos estas opciones de plan de pago. Elegí la que querés consultar:\n\n• PQ — Pago cancelatorio\n• 3 cuotas";
+          return "Perfecto. Tenemos estas opciones de plan de pago. Elegí la que querés consultar:\n\n• Pago cancelatorio\n• 3 cuotas";
 
         case "derivar":
         default:
@@ -1522,7 +1527,7 @@
         mensajeMeta.tipo !== "pq_confirmacion";
 
       if (esOpcionesPlan) {
-        agregarBotones(["PQ — Pago cancelatorio", "3 cuotas"], "plan-opciones");
+        agregarBotones(["Pago cancelatorio", "3 cuotas"], "plan-opciones");
       }
 
       contenedor.scrollTop = contenedor.scrollHeight;
