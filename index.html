@@ -1110,10 +1110,13 @@
         // 2) Si PQ = NO, ofrece 3 cuotas.
         // 3) Si 3 cuotas = NO, pide monto + fecha.
         // 4) Si acepta cualquiera, deriva a un gestor/asesor.
-        if (["plan_pago_opciones","pq_confirmacion","tres_cuotas_confirmacion","esperando_monto_fecha"].includes(convActual.iaPaso)) {
-          const nPlan = normalizarTexto(texto);
+        const nPlan = normalizarTexto(texto);
+        const iniciaAcuerdo = convActual.iaPaso === "esperando_opcion" &&
+          /\bquiero\s+(un\s+)?acuerdo\b/.test(nPlan);
 
-          if (convActual.iaPaso === "plan_pago_opciones") {
+        if (iniciaAcuerdo || ["plan_pago_opciones","pq_confirmacion","tres_cuotas_confirmacion","esperando_monto_fecha"].includes(convActual.iaPaso)) {
+
+          if (iniciaAcuerdo || convActual.iaPaso === "plan_pago_opciones") {
             const registro = await obtenerDatosBaseParaConversacion(datosClienteActual.dni || extraerDniDeTexto(texto));
 
             if (!registro) {
@@ -1305,7 +1308,7 @@
         }
 
         // Plan de pago: mostramos las opciones y dejamos la IA activa para que el cliente elija.
-        if (intencion === "plan_pago" || intencion === "acuerdo") {
+        if (intencion === "plan_pago") {
           const respuestaPlan = respuestaIA(intencion, texto);
           await new Promise(resolve => setTimeout(resolve, 400));
           const actualSnapPlan = await get(ref(db, `conversaciones/${conversacionId}/mensajes/${messageKey}`));
