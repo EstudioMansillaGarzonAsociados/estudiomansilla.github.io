@@ -1133,6 +1133,13 @@
       try {
         let intencion = detectarIntencionIA(texto);
 
+        // REGLA PRIORITARIA: "Quiero un acuerdo" siempre inicia el flujo de
+        // propuesta de pago. Nunca debe caer en la respuesta genérica de derivación.
+        const textoNormalizadoPrioritario = normalizarTexto(texto);
+        if (textoNormalizadoPrioritario.includes("quiero un acuerdo") || textoNormalizadoPrioritario.includes("quiero acuerdo")) {
+          intencion = "plan_pago";
+        }
+
         // La primera respuesta ya fue enviada al iniciar el chat: saludo + botones.
         // Mientras esperamos una opción, NO derivamos ni enviamos otro mensaje
         // automático por un texto libre. La IA espera la elección del cliente.
@@ -1191,7 +1198,7 @@
 
             const respuestaPQ =
               `Perfecto${nombre ? `, ${nombre.split(/\s+/)[0]}` : ""}. Según nuestros registros, tu deuda es de ${deuda}. ` +
-              `Podemos ofrecerte un pago cancelatorio por ${pq || "el importe informado en nuestros registros"}. ¿Podés abonar el pago cancelatorio?`;
+              `Podemos ofrecerte un pago cancelatorio por ${pq || "el importe disponible en nuestros registros"}. ¿Podés abonar el pago cancelatorio?`;
 
             await push(mensajesRef, {
               texto: respuestaPQ,
@@ -1414,7 +1421,7 @@
           const nombre = obtenerCampoBase(registro,["nombre","nombre y apellido","cliente","apellido y nombre","titular"]) || datosClienteActual.nombre || "";
           const respuestaPQ =
             `Perfecto${nombre ? `, ${nombre.split(/\s+/)[0]}` : ""}. Según nuestros registros, tu deuda es de ${deuda}. ` +
-            `Podemos ofrecerte un pago cancelatorio por ${pq || "el importe informado en nuestros registros"}. ¿Podés abonar el pago cancelatorio?`;
+            `Podemos ofrecerte un pago cancelatorio por ${pq || "el importe disponible en nuestros registros"}. ¿Podés abonar el pago cancelatorio?`;
 
           await new Promise(resolve => setTimeout(resolve, 350));
           const actualSnapPlan = await get(ref(db, `conversaciones/${conversacionId}/mensajes/${messageKey}`));
@@ -1627,12 +1634,12 @@
         agregarBotones(["Sí", "No"], "tres-cuotas-confirmacion");
       }
 
-      // Compatibilidad con conversaciones anteriores que ya tenían el menú PQ/3 cuotas.
+      // Compatibilidad con conversaciones anteriores. Nunca mostramos "PQ" al cliente.
       const esOpcionesPlan = remitente === "ia" &&
-        textoMenu.includes("PQ") &&
         textoMenu.includes("Pago cancelatorio") &&
         textoMenu.includes("3 cuotas") &&
-        mensajeMeta.tipo !== "pq_confirmacion";
+        mensajeMeta.tipo !== "pq_confirmacion" &&
+        mensajeMeta.tipo !== "tres_cuotas_confirmacion";
 
       if (esOpcionesPlan) {
         agregarBotones(["Pago cancelatorio", "3 cuotas"], "plan-opciones");
