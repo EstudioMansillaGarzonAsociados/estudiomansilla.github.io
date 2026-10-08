@@ -1573,17 +1573,17 @@ function obtenerPlanPago(c){
   const p=c?.planPago || {};
   const pick=(...vals)=>{ for(const v of vals){ if(v!==undefined && v!==null && String(v).trim()!=="") return v; } return ""; };
   const mensajes=Object.values(c?.mensajes||{}).sort((a,b)=>(a?.fecha||0)-(b?.fecha||0));
-  let respuestaPQMensaje="";
-  let respuestaTresMensaje="";
+  let respuestaPQ="";
+  let respuestaTres="";
   for(let i=0;i<mensajes.length;i++){
     const m=mensajes[i];
     if(m?.tipo==="pq_confirmacion"){
       const siguiente=mensajes.slice(i+1).find(x=>x?.remitente==="cliente");
-      if(siguiente) respuestaPQMensaje=String(siguiente.texto||"").trim();
+      if(siguiente) respuestaPQ=String(siguiente.texto||"").trim();
     }
     if(m?.tipo==="tres_cuotas_confirmacion"){
       const siguiente=mensajes.slice(i+1).find(x=>x?.remitente==="cliente");
-      if(siguiente) respuestaTresMensaje=String(siguiente.texto||"").trim();
+      if(siguiente) respuestaTres=String(siguiente.texto||"").trim();
     }
   }
   const solicitado=pick(c?.planPagoSolicitado,p.solicitado);
@@ -1592,16 +1592,12 @@ function obtenerPlanPago(c){
   const tres=pick(c?.planPagoTresCuotas,p.tresCuotas,c?.tresCuotas,c?.tres_cuotas);
   const op=pick(c?.planPagoOpcion,p.opcion);
   const resp=pick(c?.planPagoRespuesta,p.respuesta);
-  const respuestaPQ=pick(c?.planPagoRespuestaPQ,p.respuestaPQ,respuestaPQMensaje);
-  const respuestaTres=pick(c?.planPagoRespuestaTresCuotas,p.respuestaTresCuotas,respuestaTresMensaje);
   const propuesta=pick(c?.propuestaCliente,p.propuestaCliente,c?.planPagoPropuesta);
-  const propuestaMonto=pick(c?.propuestaMonto,p.propuestaMonto);
-  const propuestaFecha=pick(c?.propuestaFecha,p.propuestaFecha);
   const motivo=pick(c?.motivoDerivacion,p.motivoDerivacion);
   const destino=pick(c?.destinoDerivacion,p.destinoDerivacion);
   const tipo=pick(c?.tipoDerivacion,p.tipoDerivacion);
-  const tiene=Boolean(solicitado||deuda||pq||tres||op||resp||respuestaPQ||respuestaTres||propuesta||propuestaMonto||propuestaFecha||motivo||destino||tipo);
-  return {solicitado,deuda,pq,tres,op,resp,respuestaPQ,respuestaTres,propuesta,propuestaMonto,propuestaFecha,motivo,destino,tipo,tiene};
+  const tiene=Boolean(solicitado||deuda||pq||tres||op||resp||respuestaPQ||respuestaTres||propuesta||motivo||destino||tipo);
+  return {solicitado,deuda,pq,tres,op,resp,respuestaPQ,respuestaTres,propuesta,motivo,destino,tipo,tiene};
 }
 
 function etiquetaRespuestaPlan(v){
@@ -1626,9 +1622,7 @@ function renderizarPlanPago(c){
         ${p.tres ? `<div class="plan-item"><div class="info-label">3 cuotas</div><div class="info-value">${escapeHtml(String(p.tres))}</div></div>` : ""}
         ${p.respuestaTres ? `<div class="plan-item"><div class="info-label">Respuesta 3 cuotas</div><div class="info-value">${etiquetaRespuestaPlan(p.respuestaTres)}</div></div>` : ""}
         ${p.op && !p.resp ? `<div class="plan-item"><div class="info-label">Opción elegida</div><div class="info-value">${escapeHtml(String(p.op))}</div></div>` : ""}
-        ${p.propuesta ? `<div class="plan-item plan-full"><div class="info-label">📝 Propuesta personalizada del cliente</div><div class="info-value">${escapeHtml(String(p.propuesta)).replace(/\n/g,"<br>")}</div></div>` : ""}
-        ${p.propuestaMonto ? `<div class="plan-item"><div class="info-label">💵 Monto propuesto</div><div class="info-value">${escapeHtml(String(p.propuestaMonto))}</div></div>` : ""}
-        ${p.propuestaFecha ? `<div class="plan-item"><div class="info-label">📅 Fecha propuesta</div><div class="info-value">${escapeHtml(String(p.propuestaFecha))}</div></div>` : ""}
+        ${p.propuesta ? `<div class="plan-item plan-full"><div class="info-label">Propuesta del cliente</div><div class="info-value">${escapeHtml(String(p.propuesta)).replace(/\n/g,"<br>")}</div></div>` : ""}
         ${p.tipo ? `<div class="plan-item"><div class="info-label">Derivación</div><div class="info-value">${escapeHtml(String(p.tipo))}${p.destino?` → ${escapeHtml(String(p.destino))}`:""}</div></div>` : ""}
         ${p.motivo ? `<div class="plan-item plan-full"><div class="info-label">Motivo de derivación</div><div class="info-value">${escapeHtml(String(p.motivo))}</div></div>` : ""}
       </div>
@@ -2342,7 +2336,7 @@ document.addEventListener("click",()=>{sonidoPermitido=true},{once:true});
 // ================= IA AUTOMATICA / PRIMERA LINEA =================
 // La IA automática responde únicamente consultas simples y deriva al equipo
 // cualquier caso que requiera revisión humana. No modifica montos, deudas ni convenios.
-const IA_AUTOMATICA_HABILITADA = false;
+const IA_AUTOMATICA_HABILITADA = true;
 const IA_AUTOMATICA_NOMBRE = "Asistente virtual";
 
 function emailEsPersonal(email){
@@ -2401,8 +2395,8 @@ function respuestaAutomaticaIA(tipo){
 const iaProcesandoAhora=new Set();
 
 async function procesarIAAutomatica(id,c){
-  // DESACTIVADO: las conversaciones creadas desde index.html tienen su propia IA.
-  // El panel de asesor nunca debe generar respuestas automáticas.
+  // DESACTIVADO: la IA de las conversaciones web pertenece exclusivamente a index.html.
+  // El panel de asesor solo recibe, muestra y permite responder conversaciones.
   return;
 }
 
