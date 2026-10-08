@@ -2336,6 +2336,79 @@ document.addEventListener("click",()=>{sonidoPermitido=true},{once:true});
 // ================= IA AUTOMATICA / PRIMERA LINEA =================
 // La IA automática responde únicamente consultas simples y deriva al equipo
 // cualquier caso que requiera revisión humana. No modifica montos, deudas ni convenios.
+const IA_AUTOMATICA_HABILITADA = true;
+const IA_AUTOMATICA_NOMBRE = "Asistente virtual";
+
+function emailEsPersonal(email){
+  const e=normalizarTexto(email);
+  return !!e && Object.prototype.hasOwnProperty.call(emailsPorNombre,e);
+}
+
+function mensajeEsDelCliente(m){
+  if(!m || normalizarTexto(m.tipo)==="interno") return false;
+  const email=normalizarTexto(m.remitenteEmail);
+  if(emailEsPersonal(email)) return false;
+  const rem=normalizarTexto(m.remitente);
+  if(rem && Object.values(emailsPorNombre).some(n=>normalizarTexto(n)===rem)) return false;
+  if(rem && ["asistente virtual","ia","sistema","bot"].includes(rem)) return false;
+  return true;
+}
+
+function clasificarConsultaIA(texto){
+  const n=normalizarTexto(texto);
+  if(!n) return "silencio";
+
+  // Casos que SIEMPRE pasan a una persona.
+  const derivar=[
+    "amenaza","denuncia","abogado","abogada","carta documento","defensa del consumidor",
+    "reclamo","reclamar","pague y figura","pague y aparece","pago no imputado","pago no figura",
+    "transferi","transferí","transferencia no figura","comprobante","convenio","refinanciacion",
+    "refinanciación","plan de pago","cuotas","cuota","descuento","quita","embargo",
+    "judicial","demanda","intimacion","intimación","libre deuda","cancelar deuda","desconozco",
+    "no soy","fraude","estafa","suplantacion","suplantación","datos personales","derecho",
+    "corresponde","error en mi deuda","monto incorrecto"
+  ];
+  if(derivar.some(x=>n.includes(x))) return "derivar";
+
+  if(/\b(hola|buen dia|buen día|buenas|buenas tardes|buenas noches)\b/.test(n) && n.length<90) return "saludo";
+  if(n.includes("horario") || n.includes("atienden") || n.includes("atencion") || n.includes("atención")) return "horarios";
+  if(n.includes("como contacto") || n.includes("cómo contacto") || n.includes("telefono") || n.includes("teléfono") || n.includes("whatsapp") || n.includes("contacto")) return "contacto";
+  if(n.includes("document") || n.includes("papel") || n.includes("enviar") || n.includes("mandar archivo") || n.includes("adjuntar")) return "documentacion";
+  if(n.includes("donde pago") || n.includes("dónde pago") || n.includes("medios de pago") || n.includes("medio de pago") || n.includes("como pago") || n.includes("cómo pago")) return "medios_pago";
+  return "derivar";
+}
+
+function respuestaAutomaticaIA(tipo){
+  const hora=new Date().getHours();
+  const saludo=hora<12?"Buen día":hora<19?"Buenas tardes":"Buenas noches";
+  const base=`${saludo}. Soy el asistente virtual del Centro de Atención. `;
+  const respuestas={
+    saludo:base+"¿En qué podemos ayudarte? Si tu consulta requiere revisar tu expediente, te voy a derivar con un asesor.",
+    horarios:base+"Nuestro equipo de atención revisará tu consulta. Si necesitás información específica de tu gestión, te voy a derivar con un asesor.",
+    contacto:base+"Estás conversando por este canal de atención. Si necesitás una gestión específica sobre tu caso, te voy a derivar con un asesor.",
+    documentacion:base+"Podés enviar la documentación por este mismo canal. Si necesitamos verificarla o incorporarla a tu expediente, te voy a derivar con un asesor.",
+    medios_pago:base+"Los medios de pago pueden depender de la situación de tu cuenta. Para indicarte una opción correcta y evitar información incorrecta, te voy a derivar con un asesor."
+  };
+  return respuestas[tipo]||null;
+}
+
+const iaProcesandoAhora=new Set();
+
+async function procesarIAAutomatica(id,c){
+  // DESACTIVADA: la IA del cliente se gestiona exclusivamente desde index.html.
+  // Este bloqueo evita que asesor.html genere respuestas automáticas duplicadas.
+  return;
+}
+
+function procesarIAAutomaticaParaTodas(data){
+  if(!IA_AUTOMATICA_HABILITADA) return;
+  Object.entries(data||{}).forEach(([id,c])=>{
+    if(c && estaActiva(c) && estaSinAsignar(c)) {
+      procesarIAAutomatica(id,c).catch(err=>console.warn("IA automática:",err));
+    }
+  });
+}
+
 let ultimosMensajesSnapshot={};
 
 function escucharConversaciones(){
@@ -2360,6 +2433,8 @@ function escucharConversaciones(){
     Object.keys(ultimosMensajesSnapshot).forEach(id=>{ if(!nuevos.has(id)) delete ultimosMensajesSnapshot[id]; });
 
     conversaciones=data;
+    // La IA funciona como primera línea para chats todavía sin asignar.
+    procesarIAAutomaticaParaTodas(data);
     ultimoSnapshotIds=nuevos;
     primerCargaConversaciones=false;
 
