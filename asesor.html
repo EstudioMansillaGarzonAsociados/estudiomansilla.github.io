@@ -230,6 +230,15 @@ button{cursor:pointer}
 .expediente-acuerdo textarea{width:100%;box-sizing:border-box;border:1px solid #cfd6df;border-radius:8px;padding:9px;resize:vertical;margin-top:6px;font:inherit;min-height:90px}
 .agreement-readonly{background:#f7f8fa;border-radius:8px;padding:9px;margin-top:6px;min-height:45px}
  .ai-box{margin:10px 0;padding:12px;border:1px solid #cfd8e3;border-radius:12px;background:#f8fbff}.ai-box h3{margin:0 0 7px;font-size:14px}.ai-actions{display:flex;gap:6px;flex-wrap:wrap}.ai-actions button{border:1px solid #c7d2e0;background:white;border-radius:8px;padding:7px 9px;font-size:11px;font-weight:700}.ai-result{margin-top:9px;background:white;border:1px solid #dfe5ec;border-radius:9px;padding:9px;font-size:12px;line-height:1.45;white-space:pre-wrap}.ai-note{font-size:10px;color:#667085;margin-top:7px}
+
+.plan-box{margin-top:12px;padding:12px;border:1px solid #cfe3d7;border-radius:12px;background:#f6fbf8}
+.plan-box h3{margin:0 0 9px;font-size:14px;color:#176b4d}
+.plan-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.plan-item{background:white;border:1px solid #e2e8e5;border-radius:9px;padding:8px}
+.plan-item .info-label{font-size:9px}
+.plan-item .info-value{font-size:12px;font-weight:700}
+.plan-full{grid-column:1/-1}
+.plan-yes{color:#15803d;font-weight:800}.plan-no{color:#b42318;font-weight:800}.plan-pending{color:#b45309;font-weight:800}
 </style>
 </head>
 
@@ -1111,6 +1120,7 @@ function crearCardCliente(c,finalizada=false){
     ${ultimoMensajeEsDelCliente(c)?`<div class="card-sub" style="color:#b42318;font-weight:800">🔔 Nuevo mensaje del cliente · ${formatFecha(ultima?.fecha)}</div>`:""}
     ${contarMensajesNoLeidosCliente(c)>0?`<div class="card-sub" style="color:#176b4d;font-weight:800">● ${contarMensajesNoLeidosCliente(c)} mensaje/s sin leer</div>`:""}
     ${(c.acuerdo||c.acuerdos||c.compromiso)?`<div class="card-sub" style="color:#176b3a;font-weight:700">🤝 Acuerdo: ${escapeHtml(String(c.acuerdo||c.acuerdos||c.compromiso).slice(0,110))}${String(c.acuerdo||c.acuerdos||c.compromiso).length>110?"…":""}</div>`:""}
+    ${obtenerPlanPago(c).tiene?`<div class="card-sub" style="color:#176b4d;font-weight:800">💰 Plan de pago registrado${obtenerPlanPago(c).propuesta?" · propuesta del cliente":""}</div>`:""}
   `;
   div.onclick=()=>abrirConversacion(c._id,finalizada);
   return div;
@@ -1352,8 +1362,10 @@ async function importarExcelClientes(){
         const telefonoCol=encontrarColumna(row,["telefono","teléfono","celular","movil","móvil"]);
         const emailCol=encontrarColumna(row,["email","correo","correo electronico","correo electrónico"]);
         const montoCol=encontrarColumna(row,["monto","deuda","saldo","capital"]);
+        const pqCol=encontrarColumna(row,["pq","pago cancelatorio","pago cancelatorio (pq)","cancelatorio"]);
+        const tresCuotasCol=encontrarColumna(row,["3 cuotas","3cuotas","tres cuotas","trescuotas"]);
         const estadoCol=encontrarColumna(row,["estado","situacion","situación"]);
-        const datos={dni,nombre:nombreCol?String(row[nombreCol]||"").trim():"",telefono:telefonoCol?String(row[telefonoCol]||"").trim():"",email:emailCol?String(row[emailCol]||"").trim():"",monto:montoCol?String(row[montoCol]||"").trim():"",estado:estadoCol?String(row[estadoCol]||"").trim():"",fila:row,hoja:sheetName,archivo:file.name,importadoPor:nombreActual,importadoPorEmail:usuarioActual?.email||"",fechaImportacion:Date.now(),importId};
+        const datos={dni,nombre:nombreCol?String(row[nombreCol]||"").trim():"",telefono:telefonoCol?String(row[telefonoCol]||"").trim():"",email:emailCol?String(row[emailCol]||"").trim():"",monto:montoCol?String(row[montoCol]||"").trim():"",pq:pqCol?String(row[pqCol]||"").trim():"",tresCuotas:tresCuotasCol?String(row[tresCuotasCol]||"").trim():"",estado:estadoCol?String(row[estadoCol]||"").trim():"",fila:row,hoja:sheetName,archivo:file.name,importadoPor:nombreActual,importadoPorEmail:usuarioActual?.email||"",fechaImportacion:Date.now(),importId};
         await set(ref(db,`baseClientes/${dni}`),datos);
         filasGuardadas++;
       }
@@ -1378,12 +1390,12 @@ function renderizarBaseClientes(){
   const registros=Object.values(baseClientes||{});
   if(count)count.textContent=`${registros.length} registros`;
   const q=normalizarTexto($("baseClientesSearch")?.value||"");
-  const filtrados=q?registros.filter(r=>normalizarTexto(`${r.dni} ${r.nombre} ${r.telefono} ${r.email} ${r.estado}`).includes(q)):registros;
+  const filtrados=q?registros.filter(r=>normalizarTexto(`${r.dni} ${r.nombre} ${r.telefono} ${r.email} ${r.monto} ${r.pq} ${r.tresCuotas} ${r.estado}`).includes(q)):registros;
   if(!filtrados.length){table.innerHTML='<div class="empty">No hay clientes para mostrar.</div>';return;}
   const muestra=filtrados.slice(0,200);
   table.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr>
-  <th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">DNI</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">Nombre</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">Teléfono</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">Estado</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">Monto</th></tr></thead><tbody>
-  ${muestra.map(r=>`<tr><td style="padding:7px;border-bottom:1px solid #eef1f4">${escapeHtml(r.dni||"")}</td><td style="padding:7px;border-bottom:1px solid #eef1f4">${escapeHtml(r.nombre||"")}</td><td style="padding:7px;border-bottom:1px solid #eef1f4">${escapeHtml(r.telefono||"")}</td><td style="padding:7px;border-bottom:1px solid #eef1f4">${escapeHtml(r.estado||"")}</td><td style="padding:7px;border-bottom:1px solid #eef1f4">${escapeHtml(r.monto||"")}</td></tr>`).join("")}</tbody></table>
+  <th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">DNI</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">Nombre</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">Teléfono</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">Estado</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">Monto</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">PQ</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">3 cuotas</th></tr></thead><tbody>
+  ${muestra.map(r=>`<tr><td style="padding:7px;border-bottom:1px solid #eef1f4">${escapeHtml(r.dni||"")}</td><td style="padding:7px;border-bottom:1px solid #eef1f4">${escapeHtml(r.nombre||"")}</td><td style="padding:7px;border-bottom:1px solid #eef1f4">${escapeHtml(r.telefono||"")}</td><td style="padding:7px;border-bottom:1px solid #eef1f4">${escapeHtml(r.estado||"")}</td><td style="padding:7px;border-bottom:1px solid #eef1f4">${escapeHtml(r.monto||"")}</td><td style="padding:7px;border-bottom:1px solid #eef1f4">${escapeHtml(r.pq||"")}</td><td style="padding:7px;border-bottom:1px solid #eef1f4">${escapeHtml(r.tresCuotas||"")}</td></tr>`).join("")}</tbody></table>
   ${filtrados.length>200?`<div class="small" style="margin-top:8px">Se muestran 200 de ${filtrados.length}. Usá el buscador para encontrar un cliente.</div>`:""}`;
 }
 
@@ -1557,6 +1569,66 @@ async function abrirConversacion(id,finalizada=false){
   escucharTyping(id);
 }
 
+function obtenerPlanPago(c){
+  const p=c?.planPago || {};
+  const pick=(...vals)=>{ for(const v of vals){ if(v!==undefined && v!==null && String(v).trim()!=="") return v; } return ""; };
+  const mensajes=Object.values(c?.mensajes||{}).sort((a,b)=>(a?.fecha||0)-(b?.fecha||0));
+  let respuestaPQ="";
+  let respuestaTres="";
+  for(let i=0;i<mensajes.length;i++){
+    const m=mensajes[i];
+    if(m?.tipo==="pq_confirmacion"){
+      const siguiente=mensajes.slice(i+1).find(x=>x?.remitente==="cliente");
+      if(siguiente) respuestaPQ=String(siguiente.texto||"").trim();
+    }
+    if(m?.tipo==="tres_cuotas_confirmacion"){
+      const siguiente=mensajes.slice(i+1).find(x=>x?.remitente==="cliente");
+      if(siguiente) respuestaTres=String(siguiente.texto||"").trim();
+    }
+  }
+  const solicitado=pick(c?.planPagoSolicitado,p.solicitado);
+  const deuda=pick(c?.planPagoDeuda,p.deuda);
+  const pq=pick(c?.planPagoPQ,p.pq,c?.pq);
+  const tres=pick(c?.planPagoTresCuotas,p.tresCuotas,c?.tresCuotas,c?.tres_cuotas);
+  const op=pick(c?.planPagoOpcion,p.opcion);
+  const resp=pick(c?.planPagoRespuesta,p.respuesta);
+  const propuesta=pick(c?.propuestaCliente,p.propuestaCliente,c?.planPagoPropuesta);
+  const motivo=pick(c?.motivoDerivacion,p.motivoDerivacion);
+  const destino=pick(c?.destinoDerivacion,p.destinoDerivacion);
+  const tipo=pick(c?.tipoDerivacion,p.tipoDerivacion);
+  const tiene=Boolean(solicitado||deuda||pq||tres||op||resp||respuestaPQ||respuestaTres||propuesta||motivo||destino||tipo);
+  return {solicitado,deuda,pq,tres,op,resp,respuestaPQ,respuestaTres,propuesta,motivo,destino,tipo,tiene};
+}
+
+function etiquetaRespuestaPlan(v){
+  const n=normalizarTexto(v);
+  if(["si","sí","yes","acepta","aceptado","aceptó","acepto"].includes(n)) return '<span class="plan-yes">Sí</span>';
+  if(["no","rechaza","rechazado","rechazó","rechazo"].includes(n)) return '<span class="plan-no">No</span>';
+  if(!n) return '<span class="plan-pending">Pendiente</span>';
+  return escapeHtml(String(v));
+}
+
+function renderizarPlanPago(c){
+  const p=obtenerPlanPago(c);
+  if(!p.tiene) return "";
+  return `
+    <div class="plan-box">
+      <h3>💰 Plan de pago / gestión registrada</h3>
+      <div class="plan-grid">
+        ${p.solicitado ? `<div class="plan-item"><div class="info-label">Solicitud</div><div class="info-value">${escapeHtml(String(p.solicitado))}</div></div>` : ""}
+        ${p.deuda ? `<div class="plan-item"><div class="info-label">Deuda según base</div><div class="info-value">${escapeHtml(String(p.deuda))}</div></div>` : ""}
+        ${p.pq ? `<div class="plan-item"><div class="info-label">Pago cancelatorio (PQ)</div><div class="info-value">${escapeHtml(String(p.pq))}</div></div>` : ""}
+        ${p.respuestaPQ || p.resp || p.op ? `<div class="plan-item"><div class="info-label">Respuesta al PQ</div><div class="info-value">${etiquetaRespuestaPlan(p.respuestaPQ || p.resp || p.op)}</div></div>` : ""}
+        ${p.tres ? `<div class="plan-item"><div class="info-label">3 cuotas</div><div class="info-value">${escapeHtml(String(p.tres))}</div></div>` : ""}
+        ${p.respuestaTres ? `<div class="plan-item"><div class="info-label">Respuesta 3 cuotas</div><div class="info-value">${etiquetaRespuestaPlan(p.respuestaTres)}</div></div>` : ""}
+        ${p.op && !p.resp ? `<div class="plan-item"><div class="info-label">Opción elegida</div><div class="info-value">${escapeHtml(String(p.op))}</div></div>` : ""}
+        ${p.propuesta ? `<div class="plan-item plan-full"><div class="info-label">Propuesta del cliente</div><div class="info-value">${escapeHtml(String(p.propuesta)).replace(/\n/g,"<br>")}</div></div>` : ""}
+        ${p.tipo ? `<div class="plan-item"><div class="info-label">Derivación</div><div class="info-value">${escapeHtml(String(p.tipo))}${p.destino?` → ${escapeHtml(String(p.destino))}`:""}</div></div>` : ""}
+        ${p.motivo ? `<div class="plan-item plan-full"><div class="info-label">Motivo de derivación</div><div class="info-value">${escapeHtml(String(p.motivo))}</div></div>` : ""}
+      </div>
+    </div>`;
+}
+
 function renderizarFicha(c,finalizada){
   const d=obtenerDatosCliente(c);
   const equipo=obtenerEquipoDeConversacion(c);
@@ -1564,6 +1636,7 @@ function renderizarFicha(c,finalizada){
   const estado=finalizada?"Finalizada":(c.estado||"Activa");
   const acuerdo=c.acuerdo || c.acuerdos || c.compromiso || c.observacionAcuerdo || c.acuerdoCliente || c.compromisoCliente || c.observacionesAcuerdo || c.observacion || "";
   const puedeEditar=!finalizada && puedeGestionarConversacion(c);
+  const planHtml=renderizarPlanPago(c);
 
   const html=`
     <h2>📁 Expediente del cliente</h2>
@@ -1575,6 +1648,7 @@ function renderizarFicha(c,finalizada){
     ${info("Equipo",equipo || "Sin asignar")}
     ${info("Gestor",gestor || "Sin asignar")}
     ${info("Estado",estado)}
+    ${planHtml}
     <div class="expediente-acuerdo">
       <div class="info-label">🤝 Acuerdo / compromiso con el cliente</div>
       ${puedeEditar ? `<textarea id="acuerdoCliente" rows="5" placeholder="Escribí qué se acordó con el cliente, monto, fecha de pago, compromiso, próxima acción, etc.">${escapeHtml(acuerdo)}</textarea>
