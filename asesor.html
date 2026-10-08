@@ -2401,71 +2401,9 @@ function respuestaAutomaticaIA(tipo){
 const iaProcesandoAhora=new Set();
 
 async function procesarIAAutomatica(id,c){
-  if(!IA_AUTOMATICA_HABILITADA || !id || !c || !estaActiva(c)) return;
-  // Los chats creados desde index.html ya tienen su propia IA de cliente.
-  // El panel asesor NO debe volver a contestar el mismo mensaje.
-  if(c.iaMotor === "cliente_web" || c.origen === "web_cliente") return;
-  // La IA solo interviene en conversaciones sin asignar. Una vez tomada por un asesor, se retira.
-  if(!estaSinAsignar(c)) return;
-  const arr=Object.entries(c.mensajes||{}).map(([mid,m])=>({...m,_id:mid})).sort((a,b)=>(a.fecha||0)-(b.fecha||0));
-  const ultimo=arr[arr.length-1];
-  if(!mensajeEsDelCliente(ultimo)) return;
-  // Evita duplicar respuestas ante múltiples eventos de Firebase.
-  if(ultimo.iaProcesado===true || ultimo.iaRespuestaGenerada===true) return;
-  if(c.iaUltimoMensajeProcesado===ultimo._id) return;
-
-  // Firebase puede disparar varios onValue casi al mismo tiempo.
-  // Este bloqueo evita que dos ejecuciones creen la misma respuesta de IA.
-  const clave=`${id}:${ultimo._id}`;
-  if(iaProcesandoAhora.has(clave)) return;
-  iaProcesandoAhora.add(clave);
-
-  const tipo=clasificarConsultaIA(ultimo.texto||"");
-  if(tipo==="silencio"){ iaProcesandoAhora.delete(clave); return; }
-
-  const ahora=Date.now();
-  let texto="";
-  let deriva=false;
-  if(tipo==="derivar") {
-    deriva=true;
-    texto="Gracias por tu mensaje. Para darte una respuesta correcta sobre tu caso, voy a derivar esta conversación con un asesor del Centro de Atención. Por favor, aguardá un momento.";
-  } else {
-    texto=respuestaAutomaticaIA(tipo);
-  }
-  if(!texto){ iaProcesandoAhora.delete(clave); return; }
-
-  try{
-    const r=ref(db,`conversaciones/${id}/mensajes`);
-    // Revalidamos antes de escribir: otra pestaña/proceso puede haber contestado.
-    const ultimoSnap=await get(ref(db,`conversaciones/${id}/mensajes/${ultimo._id}`));
-    const ultimoActual=ultimoSnap.exists() ? (ultimoSnap.val()||{}) : {};
-    if(ultimoActual.iaProcesado===true || ultimoActual.iaRespuestaGenerada===true){
-      return;
-    }
-
-    await push(r,{
-      tipo:"texto",
-      texto,
-      remitente:IA_AUTOMATICA_NOMBRE,
-      remitenteEmail:"",
-      fecha:ahora,
-      generadoPorIA:true,
-      iaTipo:tipo,
-      respondeA:ultimo._id
-    });
-
-    // Marcamos el mensaje del cliente de forma permanente.
-    await update(ref(db,`conversaciones/${id}/mensajes/${ultimo._id}`),{iaProcesado:true,iaRespuestaGenerada:true,iaProcesadoFecha:ahora});
-    await update(ref(db,`conversaciones/${id}`),{
-      iaActiva:true,
-      iaUltimoMensajeProcesado:ultimo._id,
-      iaUltimaRespuesta:ahora,
-      iaDerivada:deriva,
-      iaEstado:deriva?"derivada":"atendiendo"
-    });
-  }finally{
-    iaProcesandoAhora.delete(clave);
-  }
+  // DESACTIVADO: las conversaciones creadas desde index.html tienen su propia IA.
+  // El panel de asesor nunca debe generar respuestas automáticas.
+  return;
 }
 
 function procesarIAAutomaticaParaTodas(data){
