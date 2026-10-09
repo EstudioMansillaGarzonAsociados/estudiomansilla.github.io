@@ -224,6 +224,12 @@ button{cursor:pointer}
 .attendance-table th{background:#f8fafc;font-size:10px;text-transform:uppercase;color:#667085}
 .attendance-ok{font-weight:800;color:#15803d}.attendance-break{font-weight:800;color:#b45309}.attendance-open{font-weight:800;color:#2563eb}.attendance-muted{color:#98a2b3}
 .attendance-day{font-weight:800;white-space:nowrap}
+.attendance-filters{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 12px}
+.attendance-filters input,.attendance-filters select{border:1px solid #d7dde3;border-radius:8px;padding:8px;background:#fff;min-width:150px}
+.attendance-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:10px 0}
+.attendance-kpi{border:1px solid #e2e8f0;border-radius:10px;padding:10px;background:#f8fafc}
+.attendance-kpi span{display:block;color:#667085;font-size:11px}
+.attendance-kpi b{display:block;font-size:18px;margin-top:4px}
 
 .sos-panel{margin:12px;position:relative;z-index:5;border:2px solid #dc2626;background:#fff5f5;border-radius:12px;padding:10px;box-shadow:0 4px 14px rgba(180,35,24,.12)}
 .sos-title{font-weight:900;color:#b42318;font-size:14px;margin-bottom:7px}
@@ -2720,8 +2726,12 @@ function agruparJornadaMensual(){
         if(e.tipo==="finBreak" && breakInicio){ breakMs+=Math.max(0,e.timestamp-breakInicio); breakInicio=null; }
         if(e.tipo==="egreso") egreso=e.timestamp;
       }
-      if(breakInicio) breakMs+=Math.max(0,Date.now()-breakInicio);
-      salida.push({fecha,nombre:nombres.get(nombreNorm)||nombre,ingreso,egreso,breakMs,enBreak:!!breakInicio});
+      const ahora=Date.now();
+      if(breakInicio) breakMs+=Math.max(0,ahora-breakInicio);
+      const finCalculo=egreso || ahora;
+      const tiempoTotal=ingreso?Math.max(0,finCalculo-ingreso):0;
+      const trabajoMs=Math.max(0,tiempoTotal-breakMs);
+      salida.push({fecha,nombre:nombres.get(nombreNorm)||nombre,ingreso,egreso,breakMs,trabajoMs,enBreak:!!breakInicio});
     });
   });
   return salida.sort((a,b)=>a.fecha.localeCompare(b.fecha)||a.nombre.localeCompare(b.nombre));
@@ -2735,26 +2745,79 @@ function formatoDuracion(ms){
   return h?`${h} h ${m} min`:`${m} min`;
 }
 
+let filtroJornadaNombre="";
+let filtroJornadaEstado="todos";
+let filtroJornadaTexto="";
+
+function actualizarFiltrosJornada(){
+  filtroJornadaNombre=$("filtroJornadaNombre")?.value||"";
+  filtroJornadaEstado=$("filtroJornadaEstado")?.value||"todos";
+  filtroJornadaTexto=$("filtroJornadaTexto")?.value||"";
+  dibujarControlJornada();
+}
+
 function dibujarControlJornada(){
   const root=$("attendanceControl");
   if(!root) return;
-  const filas=agruparJornadaMensual();
+  const todas=agruparJornadaMensual();
+  const nombres=[...new Set(todas.map(f=>f.nombre))].sort((a,b)=>a.localeCompare(b,"es"));
+  const filas=todas.filter(f=>{
+    if(filtroJornadaNombre && f.nombre!==filtroJornadaNombre) return false;
+    if(filtroJornadaEstado==="finalizada" && !f.egreso) return false;
+    if(filtroJornadaEstado==="abierta" && f.egreso) return false;
+    if(filtroJornadaEstado==="break" && !f.enBreak) return false;
+    if(filtroJornadaTexto && !(`${f.nombre} ${f.fecha}`).toLowerCase().includes(filtroJornadaTexto.toLowerCase())) return false;
+    return true;
+  });
+  const totalTrabajo=filas.reduce((n,f)=>n+(f.trabajoMs||0),0);
+  const totalBreak=filas.reduce((n,f)=>n+(f.breakMs||0),0);
+  const finalizadas=filas.filter(f=>!!f.egreso).length;
+  const abiertas=filas.filter(f=>!f.egreso).length;
   root.innerHTML=`
     <div class="attendance-wrap">
       <div class="attendance-title">🕐 Control de jornada — ingresos, breaks y egresos</div>
+      <div class="attendance-summary">
+        <div class="attendance-kpi"><span>Registros del filtro</span><b>${filas.length}</b></div>
+        <div class="attendance-kpi"><span>Tiempo trabajado estimado</span><b>${formatoDuracion(totalTrabajo)}</b></div>
+        <div class="attendance-kpi"><span>Tiempo total en break</span><b>${formatoDuracion(totalBreak)}</b></div>
+        <div class="attendance-kpi"><span>Finalizadas / abiertas</span><b>${finalizadas} / ${abiertas}</b></div>
+      </div>
+      <div class="attendance-filters">
+        <input id="filtroJornadaTexto" type="search" placeholder="Buscar gestor o fecha..." value="${escapeHtml(filtroJornadaTexto)}" oninput="actualizarFiltrosJornada()">
+        <select id="filtroJornadaNombre" onchange="actualizarFiltrosJornada()">
+          <option value="">Todos los gestores visibles</option>
+          ${nombres.map(n=>`<option value="${escapeHtml(n)}" ${filtroJornadaNombre===n?"selected":""}>${escapeHtml(n)}</option>`).join("")}
+        </select>
+        <select id="filtroJornadaEstado" onchange="actualizarFiltrosJornada()">
+          <option value="todos" ${filtroJornadaEstado==="todos"?"selected":""}>Todos los estados</option>
+          <option value="finalizada" ${filtroJornadaEstado==="finalizada"?"selected":""}>Finalizadas</option>
+          <option value="abierta" ${filtroJornadaEstado==="abierta"?"selected":""}>Jornadas abiertas</option>
+          <option value="break" ${filtroJornadaEstado==="break"?"selected":""}>En break</option>
+        </select>
+        <button class="btn" onclick="limpiarFiltrosJornada()">Limpiar filtros</button>
+      </div>
       ${filas.length?`<table class="attendance-table">
-        <thead><tr><th>Fecha</th><th>Gestor</th><th>Ingreso</th><th>Break</th><th>Duración break</th><th>Egreso</th><th>Estado</th></tr></thead>
+        <thead><tr><th>Fecha</th><th>Gestor</th><th>Ingreso</th><th>Break actual</th><th>Duración break</th><th>Tiempo trabajado</th><th>Egreso</th><th>Estado</th></tr></thead>
         <tbody>${filas.map(f=>`<tr>
           <td class="attendance-day">${new Date(`${f.fecha}T12:00:00`).toLocaleDateString("es-AR")}</td>
           <td><b>${escapeHtml(f.nombre)}</b></td>
           <td>${horaLocal(f.ingreso)}</td>
           <td class="${f.enBreak?"attendance-break":"attendance-muted"}">${f.enBreak?"En break":"—"}</td>
           <td>${formatoDuracion(f.breakMs)}</td>
+          <td><b>${formatoDuracion(f.trabajoMs)}</b></td>
           <td>${horaLocal(f.egreso)}</td>
           <td class="${f.egreso?"attendance-ok":f.enBreak?"attendance-break":"attendance-open"}">${f.egreso?"Finalizada":f.enBreak?"En break":"Jornada abierta"}</td>
         </tr>`).join("")}</tbody>
-      </table>`:`<div class="attendance-muted">Todavía no hay registros de jornada para ${new Date(agendaAnio,agendaMes,1).toLocaleDateString("es-AR",{month:"long",year:"numeric"})}.</div>`}
+      </table>`:`<div class="attendance-muted">${todas.length?"No hay registros que coincidan con los filtros.":`Todavía no hay registros de jornada para ${new Date(agendaAnio,agendaMes,1).toLocaleDateString("es-AR",{month:"long",year:"numeric"})}.`}</div>`}
+      <div class="small" style="margin-top:8px">El tiempo trabajado es una estimación: desde el ingreso hasta el egreso (o la hora actual si sigue abierta), descontando los breaks registrados. Los datos se limitan a los gestores que tu perfil tiene permiso para ver.</div>
     </div>`;
+}
+
+function limpiarFiltrosJornada(){
+  filtroJornadaNombre="";
+  filtroJornadaEstado="todos";
+  filtroJornadaTexto="";
+  dibujarControlJornada();
 }
 
 
@@ -3221,6 +3284,8 @@ window.editarEvento=editarEvento;
 window.cerrarModalEvento=cerrarModalEvento;
 window.guardarEventoAgenda=guardarEventoAgenda;
 window.dibujarControlJornada=dibujarControlJornada;
+window.actualizarFiltrosJornada=actualizarFiltrosJornada;
+window.limpiarFiltrosJornada=limpiarFiltrosJornada;
 window.cambiarMesVenc=cambiarMesVenc;
 window.cargarGestoresVencimiento=cargarGestoresVencimiento;
 window.abrirModalVencimiento=abrirModalVencimiento;
