@@ -108,6 +108,13 @@ button{cursor:pointer}
 .empty{padding:35px 15px;text-align:center;color:var(--muted);font-size:13px}
 .back{border:0;background:#eef5f0;color:var(--verde);border-radius:8px;padding:8px 10px;margin-bottom:10px;font-weight:700}
 
+
+/* ALERTAS DE DEMORA DE RESPUESTA */
+.demora-alerta{display:block;margin-top:7px;padding:6px 8px;border-radius:7px;font-size:11px;font-weight:800;border:1px solid transparent;line-height:1.35}
+.demora-verde{background:#e8f7ee;color:#176b3a;border-color:#9bd7b2}
+.demora-amarillo{background:#fff5d6;color:#875b00;border-color:#f0cf71}
+.demora-rojo{background:#fde8e8;color:#a61b1b;border-color:#f2aaaa}
+
 /* CHAT */
 .chat-panel{flex:1;display:flex;min-width:0;flex-direction:column;min-width:0;background:#f7f8fa;min-width:0}
 .chat-header{
@@ -1127,6 +1134,40 @@ function mostrarNombreCliente(c){
   return d.nombre || "Cliente";
 }
 
+
+function textoDemora(ms){
+  const totalMin=Math.max(0,Math.floor(ms/60000));
+  if(totalMin<60) return `${totalMin} min sin respuesta`;
+  const horas=Math.floor(totalMin/60),minutos=totalMin%60;
+  if(horas<24) return `${horas} h ${minutos} min sin respuesta`;
+  const dias=Math.floor(horas/24),horasRestantes=horas%24;
+  return `${dias} d ${horasRestantes} h sin respuesta`;
+}
+function claseDemora(ms){
+  if(ms<2*60*60*1000) return 'demora-verde';
+  if(ms<24*60*60*1000) return 'demora-amarillo';
+  return 'demora-rojo';
+}
+function htmlAlertaDemora(c,finalizada=false){
+  if(finalizada || !estaActiva(c) || !ultimoMensajeEsDelCliente(c)) return '';
+  const fecha=Number(obtenerUltimoMensaje(c)?.fecha||0);
+  if(!fecha) return '';
+  const ms=Math.max(0,Date.now()-fecha);
+  return `<div class="demora-alerta ${claseDemora(ms)}" data-demora-fecha="${fecha}">⏱️ ${textoDemora(ms)}</div>`;
+}
+function actualizarEtiquetasDemora(){
+  document.querySelectorAll('.demora-alerta[data-demora-fecha]').forEach(el=>{
+    const fecha=Number(el.dataset.demoraFecha||0);
+    if(!fecha) return;
+    const ms=Math.max(0,Date.now()-fecha);
+    el.classList.remove('demora-verde','demora-amarillo','demora-rojo');
+    el.classList.add(claseDemora(ms));
+    el.textContent=`⏱️ ${textoDemora(ms)}`;
+  });
+}
+
+setInterval(actualizarEtiquetasDemora,60000);
+
 function crearCardCliente(c,finalizada=false){
   const div=document.createElement("div");
   div.className="card"+(c._id===conversacionSeleccionada?" selected":"");
@@ -1147,6 +1188,7 @@ function crearCardCliente(c,finalizada=false){
     ${finalizada?`<div class="card-sub">📚 Finalizada ${formatFecha(c.fechaFinalizacion)}</div>`:""}
     ${interno?`<div class="card-sub">🔒 ${interno} indicación/es interna/s</div>`:""}
     ${ultimoMensajeEsDelCliente(c)?`<div class="card-sub" style="color:#b42318;font-weight:800">🔔 Nuevo mensaje del cliente · ${formatFecha(ultima?.fecha)}</div>`:""}
+    ${htmlAlertaDemora(c,finalizada)}
     ${contarMensajesNoLeidosCliente(c)>0?`<div class="card-sub" style="color:#176b4d;font-weight:800">● ${contarMensajesNoLeidosCliente(c)} mensaje/s sin leer</div>`:""}
     ${(c.acuerdo||c.acuerdos||c.compromiso)?`<div class="card-sub" style="color:#176b3a;font-weight:700">🤝 Acuerdo: ${escapeHtml(String(c.acuerdo||c.acuerdos||c.compromiso).slice(0,110))}${String(c.acuerdo||c.acuerdos||c.compromiso).length>110?"…":""}</div>`:""}
     ${obtenerPlanPago(c).tiene?`<div class="card-sub" style="color:#176b4d;font-weight:800">💰 Plan de pago registrado${obtenerPlanPago(c).propuesta?" · propuesta del cliente":""}</div>`:""}
