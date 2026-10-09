@@ -2749,24 +2749,45 @@ let filtroJornadaNombre="";
 let filtroJornadaEstado="todos";
 let filtroJornadaTexto="";
 
+function normalizarBusquedaJornada(valor){
+  return String(valor ?? "").trim().toLocaleLowerCase("es-AR").normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+}
+
 function actualizarFiltrosJornada(){
+  const campoTexto=$("filtroJornadaTexto");
+  const mantieneFoco=!!campoTexto && document.activeElement===campoTexto;
+  const cursor=mantieneFoco ? campoTexto.selectionStart : null;
   filtroJornadaNombre=$("filtroJornadaNombre")?.value||"";
   filtroJornadaEstado=$("filtroJornadaEstado")?.value||"todos";
-  filtroJornadaTexto=$("filtroJornadaTexto")?.value||"";
+  filtroJornadaTexto=campoTexto?.value||"";
   dibujarControlJornada();
+  // El panel se vuelve a dibujar para actualizar los totales. Restauramos el foco
+  // y el cursor para que el campo no pierda el foco después de la primera letra.
+  if(mantieneFoco){
+    const nuevoCampo=$("filtroJornadaTexto");
+    if(nuevoCampo){
+      nuevoCampo.focus();
+      try{ nuevoCampo.setSelectionRange(cursor,cursor); }catch(_){ }
+    }
+  }
 }
 
 function dibujarControlJornada(){
   const root=$("attendanceControl");
   if(!root) return;
   const todas=agruparJornadaMensual();
-  const nombres=[...new Set(todas.map(f=>f.nombre))].sort((a,b)=>a.localeCompare(b,"es"));
+  // Mostrar todos los gestores que el perfil puede ver, incluso si todavía no
+  // tienen registros en el mes seleccionado.
+  const nombres=[...new Set([...(gestoresVisibles()||[]), ...todas.map(f=>f.nombre)].filter(Boolean))].sort((a,b)=>a.localeCompare(b,"es"));
+  const consulta=normalizarBusquedaJornada(filtroJornadaTexto);
   const filas=todas.filter(f=>{
     if(filtroJornadaNombre && f.nombre!==filtroJornadaNombre) return false;
     if(filtroJornadaEstado==="finalizada" && !f.egreso) return false;
     if(filtroJornadaEstado==="abierta" && f.egreso) return false;
     if(filtroJornadaEstado==="break" && !f.enBreak) return false;
-    if(filtroJornadaTexto && !(`${f.nombre} ${f.fecha}`).toLowerCase().includes(filtroJornadaTexto.toLowerCase())) return false;
+    const fechaAR=new Date(`${f.fecha}T12:00:00`).toLocaleDateString("es-AR");
+    const textoFila=normalizarBusquedaJornada(`${f.nombre} ${f.fecha} ${fechaAR}`);
+    if(consulta && !textoFila.includes(consulta)) return false;
     return true;
   });
   const totalTrabajo=filas.reduce((n,f)=>n+(f.trabajoMs||0),0);
