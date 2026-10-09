@@ -239,6 +239,32 @@ button{cursor:pointer}
 .plan-item .info-value{font-size:12px;font-weight:700}
 .plan-full{grid-column:1/-1}
 .plan-yes{color:#15803d;font-weight:800}.plan-no{color:#b42318;font-weight:800}.plan-pending{color:#b45309;font-weight:800}
+
+/* PANEL DE SUPERVISION */
+body.dashboard-mode .main{display:block;overflow:auto;background:#f4f6f8}
+body.dashboard-mode .list-panel{width:100%;height:100%;border-right:0;background:#f4f6f8}
+body.dashboard-mode .list-header{background:#fff;position:sticky;top:0;z-index:3}
+body.dashboard-mode .list-header .search,body.dashboard-mode .list-header .list-tools{display:none}
+body.dashboard-mode .items{padding:18px;overflow:visible}
+body.dashboard-mode .chat-panel,body.dashboard-mode .client-panel{display:none!important}
+.supervision-wrap{max-width:1500px;margin:0 auto;color:#1f2933}
+.sup-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.sup-head h2{margin:0 0 5px;font-size:22px}.sup-muted{color:#667085;font-size:12px}
+.sup-filters{display:flex;gap:8px;flex-wrap:wrap;background:#fff;border:1px solid #e1e6eb;border-radius:12px;padding:12px;margin-bottom:15px}
+.sup-filters label{display:flex;flex-direction:column;gap:5px;font-size:11px;color:#667085;font-weight:700}
+.sup-filters select{min-width:135px;border:1px solid #d7dde3;border-radius:8px;padding:9px;background:#fff;color:#1f2933}
+.sup-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:15px}
+.sup-kpi{background:#fff;border:1px solid #e1e6eb;border-radius:13px;padding:15px;min-width:0}
+.sup-kpi-label{font-size:12px;color:#667085;font-weight:700}.sup-kpi-value{font-size:27px;font-weight:800;margin:8px 0 5px}.sup-kpi-foot{font-size:11px;color:#667085}
+.sup-panels{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-bottom:15px}
+.sup-panel{background:#fff;border:1px solid #e1e6eb;border-radius:13px;padding:15px;min-width:0;overflow:hidden}
+.sup-panel h3{margin:0 0 13px;font-size:14px}.sup-table-wrap{overflow:auto;max-width:100%}
+.sup-table{width:100%;border-collapse:collapse;font-size:12px}.sup-table th,.sup-table td{text-align:left;padding:9px 8px;border-bottom:1px solid #eef1f4;white-space:nowrap}.sup-table th{color:#667085;font-size:10px;text-transform:uppercase;letter-spacing:.03em}
+.sup-bar-row{display:grid;grid-template-columns:minmax(80px,130px) 1fr 36px;gap:8px;align-items:center;margin:11px 0;font-size:12px}.sup-bar-track{height:9px;border-radius:9px;background:#edf0f2;overflow:hidden}.sup-bar{height:100%;border-radius:9px;background:#176b4d;min-width:0}.sup-empty{color:#667085;font-size:12px;padding:10px 0}
+.sup-tag{display:inline-block;border-radius:20px;padding:3px 7px;font-size:10px;font-weight:800;background:#e9f6ef;color:#176b4d}
+@media(max-width:1000px){.sup-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.sup-panels{grid-template-columns:1fr}}
+@media(max-width:560px){.sup-grid{grid-template-columns:1fr 1fr}.sup-kpi{padding:11px}.sup-kpi-value{font-size:22px}.sup-filters label,.sup-filters select{width:100%}}
+
 </style>
 </head>
 
@@ -289,6 +315,9 @@ button{cursor:pointer}
     </div>
 
     <nav class="nav">
+      <button id="navSupervision" class="hidden" onclick="mostrarVista('supervision')">
+        <span>📈 Panel de supervisión</span><span class="badge">KPI</span>
+      </button>
       <button id="navPrincipal" onclick="mostrarVista('principal')">
         <span>🏠 Principal</span><span id="badgePrincipal" class="badge">0</span>
       </button>
@@ -1170,6 +1199,84 @@ function contarMensajesNoLeidosCliente(c){
   return Object.values(c?.mensajes||{}).filter(m=>mensajeEsDelCliente(m)&&m?.noLeido===true).length;
 }
 
+const SUPERVISION_FILTROS={periodo:"30",equipo:"todos",gestor:"todos",estado:"todos"};
+function supFechaBase(c){return Number(c?.fechaCreacion||c?.createdAt||c?.fecha||fechaUltimoMensaje(c)||0)}
+function supNombreGestor(c){return obtenerGestorDeConversacion(c)||"Sin asignar"}
+function supFechaDentro(c,periodo){
+  if(periodo==="todo") return true;
+  const ts=supFechaBase(c); if(!ts) return false;
+  const ahora=new Date();
+  if(periodo==="hoy") return new Date(ts).toDateString()===ahora.toDateString();
+  if(periodo==="mes") return new Date(ts).getMonth()===ahora.getMonth()&&new Date(ts).getFullYear()===ahora.getFullYear();
+  const dias=Number(periodo)||30; return ts>=Date.now()-dias*86400000;
+}
+function supEquipo(c){return obtenerEquipoDeConversacion(c)||obtenerEquipoDeGestor(supNombreGestor(c))[0]||"Sin equipo"}
+function supDuracionPrimeraRespuesta(c){
+  const arr=Object.entries(c?.mensajes||{}).map(([id,m])=>({...m,_id:id})).filter(m=>m?.tipo!=="interno"&&Number(m?.fecha)>0).sort((a,b)=>a.fecha-b.fecha);
+  let inicio=null;
+  for(const m of arr){
+    if(mensajeEsDelCliente(m)){if(inicio===null) inicio=Number(m.fecha);}
+    else if(inicio!==null){const d=Number(m.fecha)-inicio;return d>=0&&d<30*86400000?d:null;}
+  }
+  return null;
+}
+function supPlanAceptado(c){
+  const p=obtenerPlanPago(c)||{};
+  const txt=normalizarTexto([c?.planPagoRespuesta,c?.respuestaPlanPago,c?.respuestaPQ,c?.respuestaPagoCancelatorio,c?.respuestaTresCuotas,p?.respuesta,p?.opcion].filter(Boolean).join(" "));
+  return /acepta|aceptado|si|sí|acuerdo confirmado/.test(txt) && !/no acepta|no acept|rechaz/.test(txt);
+}
+function supMoney(v){const n=Number(String(v??"").replace(/[^0-9,.-]/g,"").replace(/\.(?=.*\.)/g,"").replace(",","."));return Number.isFinite(n)?n:0}
+function supDuracion(ms){if(ms==null)return "—";const m=Math.round(ms/60000);return m<60?`${m} min`:m<1440?`${Math.floor(m/60)} h ${m%60} min`:`${Math.floor(m/1440)} d ${Math.floor((m%1440)/60)} h`}
+function supTabla(headers,rows){return `<div class="sup-table-wrap"><table class="sup-table"><thead><tr>${headers.map(h=>`<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.length?rows.join(""):`<tr><td colspan="${headers.length}" class="sup-empty">Sin datos para estos filtros.</td></tr>`}</tbody></table></div>`}
+function supFiltradas(){
+  return Object.entries(conversaciones||{}).map(([id,c])=>({...c,_id:id})).filter(c=>supFechaDentro(c,SUPERVISION_FILTROS.periodo)).filter(c=>SUPERVISION_FILTROS.equipo==="todos"||normalizarTexto(supEquipo(c))===normalizarTexto(SUPERVISION_FILTROS.equipo)).filter(c=>SUPERVISION_FILTROS.gestor==="todos"||normalizarTexto(supNombreGestor(c))===normalizarTexto(SUPERVISION_FILTROS.gestor)).filter(c=>SUPERVISION_FILTROS.estado==="todos"||(SUPERVISION_FILTROS.estado==="activas"?estaActiva(c):!estaActiva(c)));
+}
+function supCambiarFiltro(k,v){SUPERVISION_FILTROS[k]=v;if(k==="equipo")SUPERVISION_FILTROS.gestor="todos";renderizarSupervision()}
+function renderizarSupervision(){
+  if(!esSupervisor()){document.body.classList.remove("dashboard-mode");return;}
+  const todos=supFiltradas(),activas=todos.filter(estaActiva),finalizadas=todos.filter(c=>!estaActiva(c));
+  const sinAsignar=activas.filter(estaSinAsignar),conRespuesta= todos.map(c=>supDuracionPrimeraRespuesta(c)).filter(v=>v!==null);
+  const prom=conRespuesta.length?conRespuesta.reduce((a,b)=>a+b,0)/conRespuesta.length:null;
+  const aceptados=todos.filter(supPlanAceptado).length;
+  const ratio=todos.length?Math.round(finalizadas.length/todos.length*100):0;
+  const equiposLista=[...new Set([...Object.keys(equipos||{}),...todos.map(supEquipo)])].filter(Boolean).sort((a,b)=>a.localeCompare(b,"es"));
+  const gestoresLista=[...new Set([...todos.map(supNombreGestor),...obtenerTodosLosGestores()])].filter(n=>n&&n!=="Sin asignar").sort((a,b)=>a.localeCompare(b,"es"));
+  const equipoOpts=equiposLista.map(e=>`<option value="${escapeHtml(e)}" ${SUPERVISION_FILTROS.equipo===e?"selected":""}>${escapeHtml(e)}</option>`).join("");
+  const gestorOpts=gestoresLista.filter(g=>SUPERVISION_FILTROS.equipo==="todos"||todos.some(c=>normalizarTexto(supNombreGestor(c))===normalizarTexto(g)&&normalizarTexto(supEquipo(c))===normalizarTexto(SUPERVISION_FILTROS.equipo))).map(g=>`<option value="${escapeHtml(g)}" ${SUPERVISION_FILTROS.gestor===g?"selected":""}>${escapeHtml(g)}</option>`).join("");
+  const porEquipo={};todos.forEach(c=>porEquipo[supEquipo(c)]=(porEquipo[supEquipo(c)]||0)+1);
+  const maxEquipo=Math.max(1,...Object.values(porEquipo));
+  const barrasEquipo=Object.entries(porEquipo).sort((a,b)=>b[1]-a[1]).map(([n,v])=>`<div class="sup-bar-row"><span title="${escapeHtml(n)}">${escapeHtml(n)}</span><div class="sup-bar-track"><div class="sup-bar" style="width:${Math.round(v/maxEquipo*100)}%"></div></div><b>${v}</b></div>`).join("")||`<div class="sup-empty">Sin datos para estos filtros.</div>`;
+  const stats={};todos.forEach(c=>{const n=supNombreGestor(c);if(!stats[n])stats[n]={activas:0,cerradas:0,total:0,aceptados:0,resp:[]};stats[n].total++;if(estaActiva(c))stats[n].activas++;else stats[n].cerradas++;if(supPlanAceptado(c))stats[n].aceptados++;const d=supDuracionPrimeraRespuesta(c);if(d!==null)stats[n].resp.push(d)});
+  const filasGestores=Object.entries(stats).sort((a,b)=>b[1].total-a[1].total).map(([n,x])=>`<tr><td>${escapeHtml(n)}</td><td>${x.total}</td><td>${x.activas}</td><td>${x.cerradas}</td><td>${x.aceptados}</td><td>${supDuracion(x.resp.length?x.resp.reduce((a,b)=>a+b,0)/x.resp.length:null)}</td></tr>`);
+  const motivos={};finalizadas.forEach(c=>{const m=c.motivoFinalizacion||c.motivoCierre||"Sin motivo registrado";motivos[m]=(motivos[m]||0)+1});
+  const filasMotivos=Object.entries(motivos).sort((a,b)=>b[1]-a[1]).map(([m,n])=>`<tr><td>${escapeHtml(m)}</td><td>${n}</td></tr>`);
+  const tiempos=activas.map(c=>({c,ms:ultimoMensajeEsDelCliente(c)&&obtenerUltimoMensaje(c)?.fecha?Date.now()-Number(obtenerUltimoMensaje(c).fecha):null})).filter(x=>x.ms!==null).sort((a,b)=>b.ms-a.ms).slice(0,8);
+  const filasEspera=tiempos.map(({c,ms})=>`<tr><td>${escapeHtml(mostrarNombreCliente(c))}</td><td>${escapeHtml(obtenerDatosCliente(c).dni||"—")}</td><td>${escapeHtml(supNombreGestor(c))}</td><td><span class="sup-tag">${supDuracion(ms)}</span></td></tr>`);
+  $("sectionTitle").textContent="Panel de supervisión";
+  $("items").innerHTML=`<div class="supervision-wrap">
+    <div class="sup-head"><div><h2>Panel de supervisión</h2><div class="sup-muted">Indicadores del Centro de Atención · los datos se actualizan con Firebase.</div></div><button class="btn" onclick="renderizarSupervision()">↻ Actualizar indicadores</button></div>
+    <div class="sup-filters">
+      <label>Período<select onchange="supCambiarFiltro('periodo',this.value)"><option value="hoy" ${SUPERVISION_FILTROS.periodo==="hoy"?"selected":""}>Hoy</option><option value="7" ${SUPERVISION_FILTROS.periodo==="7"?"selected":""}>Últimos 7 días</option><option value="30" ${SUPERVISION_FILTROS.periodo==="30"?"selected":""}>Últimos 30 días</option><option value="mes" ${SUPERVISION_FILTROS.periodo==="mes"?"selected":""}>Mes actual</option><option value="todo" ${SUPERVISION_FILTROS.periodo==="todo"?"selected":""}>Todo el historial</option></select></label>
+      <label>Equipo<select onchange="supCambiarFiltro('equipo',this.value)"><option value="todos">Todos los equipos</option>${equipoOpts}</select></label>
+      <label>Gestor<select onchange="supCambiarFiltro('gestor',this.value)"><option value="todos">Todos los gestores</option>${gestorOpts}</select></label>
+      <label>Estado<select onchange="supCambiarFiltro('estado',this.value)"><option value="todos" ${SUPERVISION_FILTROS.estado==="todos"?"selected":""}>Todos</option><option value="activas" ${SUPERVISION_FILTROS.estado==="activas"?"selected":""}>Activas</option><option value="finalizadas" ${SUPERVISION_FILTROS.estado==="finalizadas"?"selected":""}>Finalizadas</option></select></label>
+    </div>
+    <div class="sup-grid">
+      <div class="sup-kpi"><div class="sup-kpi-label">Conversaciones en período</div><div class="sup-kpi-value">${todos.length}</div><div class="sup-kpi-foot">Según fecha de creación registrada</div></div>
+      <div class="sup-kpi"><div class="sup-kpi-label">Activas</div><div class="sup-kpi-value">${activas.length}</div><div class="sup-kpi-foot">${sinAsignar.length} sin asignar</div></div>
+      <div class="sup-kpi"><div class="sup-kpi-label">Finalizadas</div><div class="sup-kpi-value">${finalizadas.length}</div><div class="sup-kpi-foot">${ratio}% del total filtrado</div></div>
+      <div class="sup-kpi"><div class="sup-kpi-label">Primera respuesta promedio</div><div class="sup-kpi-value" style="font-size:22px">${supDuracion(prom)}</div><div class="sup-kpi-foot">${conRespuesta.length} conversaciones con tiempos calculables</div></div>
+      <div class="sup-kpi"><div class="sup-kpi-label">Planes aceptados</div><div class="sup-kpi-value">${aceptados}</div><div class="sup-kpi-foot">Según respuestas guardadas en la conversación</div></div>
+      <div class="sup-kpi"><div class="sup-kpi-label">SOS pendientes</div><div class="sup-kpi-value">${Object.values(urgencias||{}).filter(u=>normalizarTexto(u?.estado)==="pendiente").length}</div><div class="sup-kpi-foot">Avisos de ayuda aún abiertos</div></div>
+      <div class="sup-kpi"><div class="sup-kpi-label">Gestores con actividad</div><div class="sup-kpi-value">${Object.keys(stats).filter(n=>n!=="Sin asignar").length}</div><div class="sup-kpi-foot">Con conversaciones en el período</div></div>
+      <div class="sup-kpi"><div class="sup-kpi-label">Conversaciones sin asignar</div><div class="sup-kpi-value">${sinAsignar.length}</div><div class="sup-kpi-foot">Requieren distribución</div></div>
+    </div>
+    <div class="sup-panels"><section class="sup-panel"><h3>Volumen por equipo</h3>${barrasEquipo}</section><section class="sup-panel"><h3>Conversaciones que esperan respuesta</h3>${supTabla(["Cliente","DNI","Responsable","Espera actual"],filasEspera)}</section></div>
+    <div class="sup-panels"><section class="sup-panel"><h3>Rendimiento por gestor</h3>${supTabla(["Gestor","Total","Activas","Cerradas","Planes aceptados","1.ª respuesta"],filasGestores)}</section><section class="sup-panel"><h3>Motivos de finalización</h3>${supTabla(["Motivo","Cantidad"],filasMotivos)}</section></div>
+    <div class="sup-muted">Nota: los indicadores dependen de los campos que cada conversación tenga guardados. Si una conversación antigua no tiene fecha, responsable, motivo o respuesta registrados, ese dato no se puede reconstruir y no se inventa.</div>
+  </div>`;
+}
+
 function renderizarPrincipal(){
   const items=$("items");
   items.innerHTML="";
@@ -1420,11 +1527,17 @@ function mostrarVista(vista){
   vistaActual=vista;
   gestorSeleccionado=null;
   document.querySelectorAll(".nav button").forEach(b=>b.classList.remove("active"));
-  const mapa={principal:"navPrincipal",agentes:"navAgentes",sos:"navSOS",sinAsignar:"navSinAsignar",historial:"navHistorial",agenda:"navAgenda",vencimientos:"navVencimientos",baseClientes:"navBaseClientes"};
+  const mapa={supervision:"navSupervision",principal:"navPrincipal",agentes:"navAgentes",sos:"navSOS",sinAsignar:"navSinAsignar",historial:"navHistorial",agenda:"navAgenda",vencimientos:"navVencimientos",baseClientes:"navBaseClientes"};
   $(mapa[vista])?.classList.add("active");
 
   $("listSearch").value="";
   $("items").innerHTML="";
+  document.body.classList.toggle("dashboard-mode",vista==="supervision");
+  if(vista==="supervision"){
+    if(!esSupervisor()) return mostrarVista("principal");
+    renderizarSupervision();
+    return;
+  }
 
   if(vista==="agenda"){
     renderizarAgenda();
@@ -1448,7 +1561,8 @@ function mostrarVista(vista){
 }
 
 function refrescarVistaActual(){
-  if(vistaActual==="principal") renderizarPrincipal();
+  if(vistaActual==="supervision") renderizarSupervision();
+  else if(vistaActual==="principal") renderizarPrincipal();
   else if(vistaActual==="agentes") renderizarAgentes();
   else if(vistaActual==="sinAsignar") renderizarSinAsignar();
   else if(vistaActual==="historial") renderizarHistorial();
@@ -2924,6 +3038,7 @@ onAuthStateChanged(auth,async user=>{
   // SOS: solamente el senior correspondiente al equipo puede verlo.
   $("navSOS").classList.toggle("hidden",!esSenior());
   $("navBaseClientes").classList.toggle("hidden",!esSupervisor());
+  $("navSupervision").classList.toggle("hidden",!esSupervisor());
   renderizarPanelSOS();
   if(esSupervisor()) cargarBaseClientes();
 
