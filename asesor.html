@@ -350,7 +350,7 @@ body.dashboard-mode .chat-panel,body.dashboard-mode .client-panel{display:none!i
         <span>📅 Agenda gestores</span>
       </button>
       <button id="navVencimientos" onclick="mostrarVista('vencimientos')">
-        <span>📆 Vencimientos</span>
+        <span>📆 Vencimientos</span><span id="badgeVencimientos" class="badge">0</span>
       </button>
       <button id="navBaseClientes" class="hidden" onclick="mostrarVista('baseClientes')">
         <span>📊 Base de clientes</span>
@@ -2685,7 +2685,7 @@ function dibujarCalendarioAgenda(){
     const day=i-start+1;
     const date=new Date(agendaAnio,agendaMes,day);
     const other=date.getMonth()!==agendaMes;
-    const iso=date.toISOString().slice(0,10);
+    const iso=fechaLocalISOCalendario(date);
     h+=`<div class="day ${other?"other":""}">
       <div class="day-number">${date.getDate()}</div>
       ${Object.values(eventosAgenda).filter(e=>e?.fecha===iso && gestorPermitidoCalendario(e.gestor))
@@ -2904,6 +2904,58 @@ function puedeAdministrarVencimientos(){
   return esSenior()||esSupervisor();
 }
 
+function fechaLocalISOCalendario(d=new Date()){
+  const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,"0"),dia=String(d.getDate()).padStart(2,"0");
+  return `${y}-${m}-${dia}`;
+}
+
+function vencimientosVisiblesPorPermiso(){
+  const equiposPermitidos=equiposCalendarioVencimientos().map(normalizarTexto);
+  return Object.values(vencimientos).filter(e=>equiposPermitidos.includes(normalizarTexto(e?.equipo)));
+}
+
+function actualizarAvisosVencimientos(){
+  const hoy=new Date();hoy.setHours(0,0,0,0);
+  const visibles=vencimientosVisiblesPorPermiso();
+  const pendientes=visibles.filter(e=>normalizarTexto(e?.estado||"pendiente")!=="gestionado" && e?.fecha);
+  const avisos=pendientes.map(e=>{
+    const fecha=new Date(`${e.fecha}T00:00:00`);
+    const dias=Math.round((fecha-hoy)/86400000);
+    let tipo="",etiqueta="";
+    if(dias<0 || normalizarTexto(e.estado)==="vencido"){tipo="red";etiqueta="VENCIDO";}
+    else if(dias<=3){tipo="red";etiqueta=dias===0?"VENCE HOY":`VENCE EN ${dias} DÍA${dias===1?"":"S"}`;}
+    else if(dias<=7){tipo="client";etiqueta=`VENCE EN ${dias} DÍAS`;}
+    else return null;
+    return {...e,dias,tipo,etiqueta};
+  }).filter(Boolean).sort((a,b)=>a.dias-b.dias);
+
+  const badge=$("badgeVencimientos");
+  if(badge){badge.textContent=String(avisos.length);badge.style.display=avisos.length?"inline-flex":"none";badge.title=`${avisos.length} vencimiento(s) que requieren atención`;}
+
+  const root=$("vencAlerts");
+  if(!root) return;
+  if(!avisos.length){
+    root.innerHTML=`<div style="padding:12px 14px;border:1px solid #b8dfc5;border-radius:10px;background:#effaf2;color:#21643a;font-size:13px">✓ No hay vencimientos atrasados ni próximos dentro de los próximos 7 días para los equipos que podés ver.</div>`;
+    return;
+  }
+  const vencidosLista=avisos.filter(a=>a.dias<0||normalizarTexto(a.estado)==="vencido");
+  const hoyLista=avisos.filter(a=>a.dias===0&&normalizarTexto(a.estado)!=="vencido");
+  const proximos3Lista=avisos.filter(a=>a.dias>=1&&a.dias<=3&&normalizarTexto(a.estado)!=="vencido");
+  const proximosLista=avisos.filter(a=>a.dias>=4&&a.dias<=7);
+  const dibujarGrupo=(titulo,lista,colorFondo,colorBorde,colorTexto,vacio)=>`<div style="margin-top:10px;border:1px solid ${colorBorde};border-radius:10px;overflow:hidden">
+    <div style="padding:9px 11px;background:${colorFondo};color:${colorTexto};font-weight:800;font-size:13px">${titulo} <span style="float:right">${lista.length}</span></div>
+    ${lista.length?`<div style="display:grid;gap:0">${lista.slice(0,8).map(e=>`<button type="button" onclick="editarVencimiento('${escapeHtml(e.id)}')" style="display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:left;border:0;border-top:1px solid ${colorBorde};background:#fff;padding:9px 11px;cursor:pointer;color:#253044"><span><b>${escapeHtml(e.nombre||('DNI '+(e.dni||'sin DNI')))}</b><span style="display:block;font-size:11px;color:#667085">${escapeHtml(e.equipo||'')} · ${escapeHtml(e.gestor||'Sin gestor')} · ${escapeHtml(e.fecha||'')}</span></span><b style="font-size:10px;white-space:nowrap;color:${colorTexto}">${escapeHtml(e.etiqueta)}</b></button>`).join("")}</div>${lista.length>8?`<div class="small" style="padding:7px 11px">Se muestran 8 de ${lista.length}. Revisá el calendario para ver los demás.</div>`:""}`:`<div class="small" style="padding:10px 11px;color:#667085">${vacio}</div>`}
+  </div>`;
+  root.innerHTML=`<div style="border:1px solid #e5e7eb;border-radius:12px;padding:12px;background:#fff">
+    <div style="font-weight:800;margin-bottom:2px">Avisos de vencimiento</div>
+    <div class="small" style="margin-bottom:4px">Los vencimientos de hoy están separados de los que vencen en los próximos 3 días.</div>
+    ${dibujarGrupo("🔴 VENCIDOS",vencidosLista,"#fdeaea","#f2aaaa","#a61b1b","No hay vencimientos atrasados.")}
+    ${dibujarGrupo("🚨 VENCEN HOY",hoyLista,"#fff0f0","#f2aaaa","#a61b1b","No hay vencimientos para hoy.")}
+    ${dibujarGrupo("⏰ VENCEN EN LOS PRÓXIMOS 3 DÍAS",proximos3Lista,"#fff5e8","#f2c48d","#9a4b00","No hay vencimientos para los próximos 3 días.")}
+    ${dibujarGrupo("🟡 VENCEN EN 4 A 7 DÍAS",proximosLista,"#fff8df","#f0cf71","#875b00","No hay vencimientos entre 4 y 7 días.")}
+  </div>`;
+}
+
 function renderizarVencimientos(){
   $("sectionTitle").textContent="Vencimientos de clientes";
   $("listSearch").style.display="none";
@@ -2921,10 +2973,12 @@ function renderizarVencimientos(){
           ${puedeAdministrarVencimientos()?`<button class="btn green" onclick="abrirModalVencimiento()">+ Vencimiento</button>`:""}
         </div>
       </div>
-      <div class="small" style="margin-bottom:10px">🟢 pendiente · 🟡 próximo · 🔴 vencido</div>
+      <div class="small" style="margin-bottom:10px">🟢 Pendiente · 🟡 Vence dentro de 4 a 7 días · 🔴 Vence hoy, dentro de 3 días o ya venció</div>
+      <div id="vencAlerts" aria-live="polite" style="margin-bottom:14px"></div>
       <div id="vencCalendar"></div>
     </div>
   `;
+  actualizarAvisosVencimientos();
   dibujarCalendarioVencimientos();
 }
 
@@ -2965,7 +3019,7 @@ function dibujarCalendarioVencimientos(){
     const day=i-start+1;
     const date=new Date(vencAnio,vencMes,day);
     const other=date.getMonth()!==vencMes;
-    const iso=date.toISOString().slice(0,10);
+    const iso=fechaLocalISOCalendario(date);
 
     const eventos=Object.values(vencimientos).filter(e=>{
       return e?.fecha===iso &&
@@ -3051,6 +3105,7 @@ function escucharVencimientos(){
     const data=snap.val()||{};
     vencimientos={};
     Object.entries(data).forEach(([id,v])=>vencimientos[id]={...v,id});
+    actualizarAvisosVencimientos();
     if(vistaActual==="vencimientos") dibujarCalendarioVencimientos();
   });
 }
