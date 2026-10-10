@@ -108,13 +108,6 @@ button{cursor:pointer}
 .empty{padding:35px 15px;text-align:center;color:var(--muted);font-size:13px}
 .back{border:0;background:#eef5f0;color:var(--verde);border-radius:8px;padding:8px 10px;margin-bottom:10px;font-weight:700}
 
-
-/* ALERTAS DE DEMORA DE RESPUESTA */
-.demora-alerta{display:block;margin-top:7px;padding:6px 8px;border-radius:7px;font-size:11px;font-weight:800;border:1px solid transparent;line-height:1.35}
-.demora-verde{background:#e8f7ee;color:#176b3a;border-color:#9bd7b2}
-.demora-amarillo{background:#fff5d6;color:#875b00;border-color:#f0cf71}
-.demora-rojo{background:#fde8e8;color:#a61b1b;border-color:#f2aaaa}
-
 /* CHAT */
 .chat-panel{flex:1;display:flex;min-width:0;flex-direction:column;min-width:0;background:#f7f8fa;min-width:0}
 .chat-header{
@@ -224,12 +217,6 @@ button{cursor:pointer}
 .attendance-table th{background:#f8fafc;font-size:10px;text-transform:uppercase;color:#667085}
 .attendance-ok{font-weight:800;color:#15803d}.attendance-break{font-weight:800;color:#b45309}.attendance-open{font-weight:800;color:#2563eb}.attendance-muted{color:#98a2b3}
 .attendance-day{font-weight:800;white-space:nowrap}
-.attendance-filters{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 12px}
-.attendance-filters input,.attendance-filters select{border:1px solid #d7dde3;border-radius:8px;padding:8px;background:#fff;min-width:150px}
-.attendance-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:10px 0}
-.attendance-kpi{border:1px solid #e2e8f0;border-radius:10px;padding:10px;background:#f8fafc}
-.attendance-kpi span{display:block;color:#667085;font-size:11px}
-.attendance-kpi b{display:block;font-size:18px;margin-top:4px}
 
 .sos-panel{margin:12px;position:relative;z-index:5;border:2px solid #dc2626;background:#fff5f5;border-radius:12px;padding:10px;box-shadow:0 4px 14px rgba(180,35,24,.12)}
 .sos-title{font-weight:900;color:#b42318;font-size:14px;margin-bottom:7px}
@@ -350,10 +337,13 @@ body.dashboard-mode .chat-panel,body.dashboard-mode .client-panel{display:none!i
         <span>📅 Agenda gestores</span>
       </button>
       <button id="navVencimientos" onclick="mostrarVista('vencimientos')">
-        <span>📆 Vencimientos</span><span id="badgeVencimientos" class="badge">0</span>
+        <span>📆 Vencimientos</span>
       </button>
       <button id="navBaseClientes" class="hidden" onclick="mostrarVista('baseClientes')">
         <span>📊 Base de clientes</span>
+      </button>
+      <button id="navLibreDeuda" class="hidden" onclick="mostrarVista('libreDeuda')">
+        <span>📄 Libre de deuda</span><span class="badge">Excel</span>
       </button>
     </nav>
 
@@ -565,6 +555,34 @@ body.dashboard-mode .chat-panel,body.dashboard-mode .client-panel{display:none!i
   </div>
 </div>
 
+<!-- LIBRE DE DEUDA: base diaria separada de la base general de clientes -->
+<div id="libreDeudaView" class="hidden" style="position:fixed;inset:0;background:#f7f8fa;z-index:41;overflow:auto;padding:24px;">
+  <div style="max-width:1150px;margin:0 auto;background:white;border:1px solid #e1e6eb;border-radius:16px;padding:20px;box-shadow:0 8px 28px rgba(0,0,0,.08)">
+    <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap">
+      <div><h2 style="margin:0">📄 Libre de deuda</h2>
+      <div class="small" style="margin-top:5px">Cargá cada día el Excel actualizado. Esta base es independiente de la base general de clientes.</div></div>
+      <button class="btn" onclick="mostrarVista('principal')">← Volver</button>
+    </div>
+    <div style="margin-top:16px;padding:14px;border:1px solid #f0d9a8;border-radius:12px;background:#fffaf0;color:#704b00;font-size:13px;line-height:1.5">
+      <b>Importante:</b> el Excel debe incluir DNI y una columna con el enlace al PDF o documento (por ejemplo PDF_URL, URL, enlace o link). La carga actualiza la base independiente de Libre de Deuda, sin modificar conversaciones, vencimientos ni la base general. Cuando el cliente lo solicite en el chat web, el sistema buscará su DNI y enviará el enlace disponible; si no hay documento o se requiere validación, derivará la consulta a un asesor.
+    </div>
+    <div style="margin-top:14px;padding:16px;border:1px solid #dce3e8;border-radius:12px;background:#f8fafb">
+      <div style="font-weight:800;margin-bottom:8px">1. Actualizar Excel del día</div>
+      <input id="excelLibreDeudaInput" type="file" accept=".xlsx,.xls,.csv" style="display:block;margin-bottom:10px">
+      <button class="btn green" id="btnImportarLibreDeuda" onclick="importarExcelLibreDeuda()">📥 Cargar Excel actualizado</button>
+      <div id="excelLibreDeudaStatus" class="small" style="margin-top:10px" role="status"></div>
+      <div id="excelLibreDeudaMeta" class="small" style="margin-top:6px;color:#667085"></div>
+    </div>
+    <div style="margin-top:16px;padding:16px;border:1px solid #dce3e8;border-radius:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+        <div><div style="font-weight:800">2. Registros cargados</div><div id="libreDeudaCount" class="small">0 registros</div></div>
+        <input id="libreDeudaSearch" placeholder="Buscar por DNI o nombre..." style="max-width:360px;width:100%;padding:9px;border:1px solid #d7dde3;border-radius:9px" oninput="renderizarLibreDeuda()">
+      </div>
+      <div id="libreDeudaTable" style="margin-top:12px;overflow:auto"></div>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <script type="module">
@@ -704,6 +722,8 @@ const emailsPorNombre = {
 let usuarioActual = null;
 let nombreActual = "";
 let baseClientes = {};
+let baseLibresDeuda = {};
+let excelLibreDeudaImportando = false;
 let excelImportando = false;
 let perfilActual = "";
 let conversaciones = {};
@@ -1140,40 +1160,6 @@ function mostrarNombreCliente(c){
   return d.nombre || "Cliente";
 }
 
-
-function textoDemora(ms){
-  const totalMin=Math.max(0,Math.floor(ms/60000));
-  if(totalMin<60) return `${totalMin} min sin respuesta`;
-  const horas=Math.floor(totalMin/60),minutos=totalMin%60;
-  if(horas<24) return `${horas} h ${minutos} min sin respuesta`;
-  const dias=Math.floor(horas/24),horasRestantes=horas%24;
-  return `${dias} d ${horasRestantes} h sin respuesta`;
-}
-function claseDemora(ms){
-  if(ms<2*60*60*1000) return 'demora-verde';
-  if(ms<24*60*60*1000) return 'demora-amarillo';
-  return 'demora-rojo';
-}
-function htmlAlertaDemora(c,finalizada=false){
-  if(finalizada || !estaActiva(c) || !ultimoMensajeEsDelCliente(c)) return '';
-  const fecha=Number(obtenerUltimoMensaje(c)?.fecha||0);
-  if(!fecha) return '';
-  const ms=Math.max(0,Date.now()-fecha);
-  return `<div class="demora-alerta ${claseDemora(ms)}" data-demora-fecha="${fecha}">⏱️ ${textoDemora(ms)}</div>`;
-}
-function actualizarEtiquetasDemora(){
-  document.querySelectorAll('.demora-alerta[data-demora-fecha]').forEach(el=>{
-    const fecha=Number(el.dataset.demoraFecha||0);
-    if(!fecha) return;
-    const ms=Math.max(0,Date.now()-fecha);
-    el.classList.remove('demora-verde','demora-amarillo','demora-rojo');
-    el.classList.add(claseDemora(ms));
-    el.textContent=`⏱️ ${textoDemora(ms)}`;
-  });
-}
-
-setInterval(actualizarEtiquetasDemora,60000);
-
 function crearCardCliente(c,finalizada=false){
   const div=document.createElement("div");
   div.className="card"+(c._id===conversacionSeleccionada?" selected":"");
@@ -1194,7 +1180,6 @@ function crearCardCliente(c,finalizada=false){
     ${finalizada?`<div class="card-sub">📚 Finalizada ${formatFecha(c.fechaFinalizacion)}</div>`:""}
     ${interno?`<div class="card-sub">🔒 ${interno} indicación/es interna/s</div>`:""}
     ${ultimoMensajeEsDelCliente(c)?`<div class="card-sub" style="color:#b42318;font-weight:800">🔔 Nuevo mensaje del cliente · ${formatFecha(ultima?.fecha)}</div>`:""}
-    ${htmlAlertaDemora(c,finalizada)}
     ${contarMensajesNoLeidosCliente(c)>0?`<div class="card-sub" style="color:#176b4d;font-weight:800">● ${contarMensajesNoLeidosCliente(c)} mensaje/s sin leer</div>`:""}
     ${(c.acuerdo||c.acuerdos||c.compromiso)?`<div class="card-sub" style="color:#176b3a;font-weight:700">🤝 Acuerdo: ${escapeHtml(String(c.acuerdo||c.acuerdos||c.compromiso).slice(0,110))}${String(c.acuerdo||c.acuerdos||c.compromiso).length>110?"…":""}</div>`:""}
     ${obtenerPlanPago(c).tiene?`<div class="card-sub" style="color:#176b4d;font-weight:800">💰 Plan de pago registrado${obtenerPlanPago(c).propuesta?" · propuesta del cliente":""}</div>`:""}
@@ -1554,6 +1539,88 @@ function renderizarBaseClientes(){
   ${filtrados.length>200?`<div class="small" style="margin-top:8px">Se muestran 200 de ${filtrados.length}. Usá el buscador para encontrar un cliente.</div>`:""}`;
 }
 
+
+/* =========================
+   LIBRE DE DEUDA — IMPORTACIÓN DIARIA
+   Base independiente: /libresDeudaBase
+========================= */
+async function cargarBaseLibreDeuda(){
+  try{
+    const snap=await get(ref(db,"libresDeudaBase"));
+    baseLibresDeuda=snap.exists()?(snap.val()||{}):{};
+    renderizarLibreDeuda();
+    const metaSnap=await get(ref(db,"libresDeudaImportacionActual"));
+    const meta=metaSnap.exists()?metaSnap.val():null;
+    const el=$("excelLibreDeudaMeta");
+    if(el) el.textContent=meta?`Última carga: ${formatFecha(meta.fecha)} · Archivo: ${meta.archivo||"—"} · Por: ${meta.usuario||"—"}`:"Todavía no se cargó un Excel de Libre de Deuda.";
+  }catch(e){console.error("No se pudo cargar la base de Libre de Deuda:",e);}
+}
+function valorTextoColumna(row,patrones){
+  const col=encontrarColumna(row,patrones);
+  return col?String(row[col]??"").trim():"";
+}
+function urlDocumentoLibreDeuda(row){
+  const v=valorTextoColumna(row,["pdf_url","pdf url","url pdf","url","enlace","link","documento","archivo pdf","libre de deuda pdf","libre_de_deuda_url"]);
+  return /^https?:\/\//i.test(v)?v:"";
+}
+async function importarExcelLibreDeuda(){
+  if(!esSupervisor()){alert("Solo un supervisor puede actualizar la base de Libre de Deuda.");return;}
+  const input=$("excelLibreDeudaInput"),file=input?.files?.[0];
+  if(!file){alert("Seleccioná el Excel actualizado.");return;}
+  if(typeof XLSX==="undefined"){alert("No se pudo cargar el lector de Excel. Actualizá la página e intentá nuevamente.");return;}
+  if(excelLibreDeudaImportando)return;
+  if(!confirm("Se actualizará la base de Libre de Deuda con los registros del Excel seleccionado. La base anterior de Libre de Deuda será reemplazada, pero no se tocarán conversaciones ni otras bases. ¿Continuar?"))return;
+  excelLibreDeudaImportando=true;
+  const btn=$("btnImportarLibreDeuda"),status=$("excelLibreDeudaStatus");
+  if(btn)btn.disabled=true;
+  if(status)status.textContent="Leyendo y validando el Excel...";
+  try{
+    const buffer=await file.arrayBuffer();
+    const workbook=XLSX.read(buffer,{type:"array",cellDates:true});
+    const nuevos={};let filasTotales=0,sinDni=0,duplicados=0,conPdf=0;
+    for(const sheetName of workbook.SheetNames){
+      const rows=XLSX.utils.sheet_to_json(workbook.Sheets[sheetName],{defval:""});
+      for(const row of rows){
+        filasTotales++;
+        const dni=normalizarDniBase(valorTextoColumna(row,["dni","documento","documento de identidad","nro dni","numero dni","número de documento"]));
+        if(!dni){sinDni++;continue;}
+        const nombre=valorTextoColumna(row,["nombre","nombre y apellido","cliente","apellido y nombre","titular"]);
+        const telefono=valorTextoColumna(row,["telefono","teléfono","celular","movil","móvil"]);
+        const estado=valorTextoColumna(row,["estado","situacion","situación","estado del documento","habilitado","aprobado"]);
+        const pdfUrl=urlDocumentoLibreDeuda(row);
+        if(nuevos[dni])duplicados++;
+        nuevos[dni]={dni,nombre,telefono,estado,pdfUrl,documentoDisponible:!!pdfUrl,hoja:sheetName,archivo:file.name,fechaImportacion:Date.now()};
+        if(pdfUrl)conPdf++;
+      }
+    }
+    if(!Object.keys(nuevos).length)throw new Error("No se encontraron filas con DNI. No se modificó la base anterior.");
+    // Reemplazo atómico del nodo dedicado para que no queden documentos obsoletos de días anteriores.
+    const importId=`${Date.now()}_${normalizarTexto(file.name).replace(/[^a-z0-9]+/g,"_").slice(0,40)}`;
+    const meta={archivo:file.name,fecha:Date.now(),usuario:nombreActual,email:usuarioActual?.email||"",filasTotales,registros:Object.keys(nuevos).length,sinDni,duplicados,conPdf,importId};
+    await set(ref(db,"libresDeudaBase"),nuevos);
+    await set(ref(db,"libresDeudaImportacionActual"),meta);
+    await set(ref(db,`historialImportacionesLibreDeuda/${importId}`),meta);
+    baseLibresDeuda=nuevos;
+    renderizarLibreDeuda();
+    const m=$("excelLibreDeudaMeta");if(m)m.textContent=`Última carga: ${formatFecha(meta.fecha)} · Archivo: ${file.name} · Por: ${nombreActual}`;
+    if(status)status.textContent=`✅ Actualización completa: ${meta.registros} registros; ${conPdf} con enlace al documento; ${sinDni} filas sin DNI omitidas${duplicados?`; ${duplicados} DNI repetidos (se conservó el último registro)`:""}.`;
+    input.value="";
+  }catch(e){
+    console.error("Error al importar Libre de Deuda:",e);
+    if(status)status.textContent="❌ No se pudo actualizar. Verificá que el Excel tenga una columna DNI y volvé a intentar. La base anterior se conserva si el archivo no contiene DNI válidos.";
+    alert("No se pudo importar el Excel de Libre de Deuda.");
+  }finally{excelLibreDeudaImportando=false;if(btn)btn.disabled=false;}
+}
+function renderizarLibreDeuda(){
+  const table=$("libreDeudaTable"),count=$("libreDeudaCount");if(!table)return;
+  const registros=Object.values(baseLibresDeuda||{});
+  if(count)count.textContent=`${registros.length} registros`;
+  const q=normalizarTexto($("libreDeudaSearch")?.value||"");
+  const filtrados=q?registros.filter(r=>normalizarTexto(`${r.dni||""} ${r.nombre||""} ${r.telefono||""}`).includes(q)):registros;
+  if(!filtrados.length){table.innerHTML='<div class="empty">No hay registros para mostrar. Cargá el Excel actualizado o cambiá la búsqueda.</div>';return;}
+  table.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:12px;min-width:720px"><thead><tr><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">DNI</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">Nombre</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">Teléfono</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">Estado</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">Documento</th></tr></thead><tbody>${filtrados.slice(0,300).map(r=>`<tr><td style="padding:7px;border-bottom:1px solid #eef1f4">${escapeHtml(r.dni||"")}</td><td style="padding:7px;border-bottom:1px solid #eef1f4">${escapeHtml(r.nombre||"")}</td><td style="padding:7px;border-bottom:1px solid #eef1f4">${escapeHtml(r.telefono||"")}</td><td style="padding:7px;border-bottom:1px solid #eef1f4">${escapeHtml(r.estado||"Sin estado")}</td><td style="padding:7px;border-bottom:1px solid #eef1f4">${r.pdfUrl?`<a href="${escapeHtml(r.pdfUrl)}" target="_blank" rel="noopener noreferrer">Abrir documento</a>`:'<span style="color:#a15c00">Falta enlace</span>'}</td></tr>`).join("")}</tbody></table>${filtrados.length>300?`<div class="small" style="margin-top:8px">Se muestran 300 de ${filtrados.length}. Usá el buscador para encontrar un DNI.</div>`:""}`;
+}
+
 function mostrarVista(vista){
   // Seguridad de interfaz: un asesor nunca puede abrir la Agenda de gestores.
   if(vista==="agenda" && !puedeVerAgendaGestores()){
@@ -1572,10 +1639,11 @@ function mostrarVista(vista){
   }
 
   document.getElementById("baseClientesView")?.classList.add("hidden");
+  document.getElementById("libreDeudaView")?.classList.add("hidden");
   vistaActual=vista;
   gestorSeleccionado=null;
   document.querySelectorAll(".nav button").forEach(b=>b.classList.remove("active"));
-  const mapa={supervision:"navSupervision",principal:"navPrincipal",agentes:"navAgentes",sos:"navSOS",sinAsignar:"navSinAsignar",historial:"navHistorial",agenda:"navAgenda",vencimientos:"navVencimientos",baseClientes:"navBaseClientes"};
+  const mapa={supervision:"navSupervision",principal:"navPrincipal",agentes:"navAgentes",sos:"navSOS",sinAsignar:"navSinAsignar",historial:"navHistorial",agenda:"navAgenda",vencimientos:"navVencimientos",baseClientes:"navBaseClientes",libreDeuda:"navLibreDeuda"};
   $(mapa[vista])?.classList.add("active");
 
   $("listSearch").value="";
@@ -1599,6 +1667,12 @@ function mostrarVista(vista){
     if(!esSupervisor()) return mostrarVista("principal");
     document.getElementById("baseClientesView")?.classList.remove("hidden");
     cargarBaseClientes();
+    return;
+  }
+  if(vista==="libreDeuda"){
+    if(!esSupervisor()) return mostrarVista("principal");
+    document.getElementById("libreDeudaView")?.classList.remove("hidden");
+    cargarBaseLibreDeuda();
     return;
   }
   if(vista==="principal") renderizarPrincipal();
@@ -2685,7 +2759,7 @@ function dibujarCalendarioAgenda(){
     const day=i-start+1;
     const date=new Date(agendaAnio,agendaMes,day);
     const other=date.getMonth()!==agendaMes;
-    const iso=fechaLocalISOCalendario(date);
+    const iso=date.toISOString().slice(0,10);
     h+=`<div class="day ${other?"other":""}">
       <div class="day-number">${date.getDate()}</div>
       ${Object.values(eventosAgenda).filter(e=>e?.fecha===iso && gestorPermitidoCalendario(e.gestor))
@@ -2726,12 +2800,8 @@ function agruparJornadaMensual(){
         if(e.tipo==="finBreak" && breakInicio){ breakMs+=Math.max(0,e.timestamp-breakInicio); breakInicio=null; }
         if(e.tipo==="egreso") egreso=e.timestamp;
       }
-      const ahora=Date.now();
-      if(breakInicio) breakMs+=Math.max(0,ahora-breakInicio);
-      const finCalculo=egreso || ahora;
-      const tiempoTotal=ingreso?Math.max(0,finCalculo-ingreso):0;
-      const trabajoMs=Math.max(0,tiempoTotal-breakMs);
-      salida.push({fecha,nombre:nombres.get(nombreNorm)||nombre,ingreso,egreso,breakMs,trabajoMs,enBreak:!!breakInicio});
+      if(breakInicio) breakMs+=Math.max(0,Date.now()-breakInicio);
+      salida.push({fecha,nombre:nombres.get(nombreNorm)||nombre,ingreso,egreso,breakMs,enBreak:!!breakInicio});
     });
   });
   return salida.sort((a,b)=>a.fecha.localeCompare(b.fecha)||a.nombre.localeCompare(b.nombre));
@@ -2745,100 +2815,26 @@ function formatoDuracion(ms){
   return h?`${h} h ${m} min`:`${m} min`;
 }
 
-let filtroJornadaNombre="";
-let filtroJornadaEstado="todos";
-let filtroJornadaTexto="";
-
-function normalizarBusquedaJornada(valor){
-  return String(valor ?? "").trim().toLocaleLowerCase("es-AR").normalize("NFD").replace(/[\u0300-\u036f]/g,"");
-}
-
-function actualizarFiltrosJornada(){
-  const campoTexto=$("filtroJornadaTexto");
-  const mantieneFoco=!!campoTexto && document.activeElement===campoTexto;
-  const cursor=mantieneFoco ? campoTexto.selectionStart : null;
-  filtroJornadaNombre=$("filtroJornadaNombre")?.value||"";
-  filtroJornadaEstado=$("filtroJornadaEstado")?.value||"todos";
-  filtroJornadaTexto=campoTexto?.value||"";
-  dibujarControlJornada();
-  // El panel se vuelve a dibujar para actualizar los totales. Restauramos el foco
-  // y el cursor para que el campo no pierda el foco después de la primera letra.
-  if(mantieneFoco){
-    const nuevoCampo=$("filtroJornadaTexto");
-    if(nuevoCampo){
-      nuevoCampo.focus();
-      try{ nuevoCampo.setSelectionRange(cursor,cursor); }catch(_){ }
-    }
-  }
-}
-
 function dibujarControlJornada(){
   const root=$("attendanceControl");
   if(!root) return;
-  const todas=agruparJornadaMensual();
-  // Mostrar todos los gestores que el perfil puede ver, incluso si todavía no
-  // tienen registros en el mes seleccionado.
-  const nombres=[...new Set([...(gestoresVisibles()||[]), ...todas.map(f=>f.nombre)].filter(Boolean))].sort((a,b)=>a.localeCompare(b,"es"));
-  const consulta=normalizarBusquedaJornada(filtroJornadaTexto);
-  const filas=todas.filter(f=>{
-    if(filtroJornadaNombre && f.nombre!==filtroJornadaNombre) return false;
-    if(filtroJornadaEstado==="finalizada" && !f.egreso) return false;
-    if(filtroJornadaEstado==="abierta" && f.egreso) return false;
-    if(filtroJornadaEstado==="break" && !f.enBreak) return false;
-    const fechaAR=new Date(`${f.fecha}T12:00:00`).toLocaleDateString("es-AR");
-    const textoFila=normalizarBusquedaJornada(`${f.nombre} ${f.fecha} ${fechaAR}`);
-    if(consulta && !textoFila.includes(consulta)) return false;
-    return true;
-  });
-  const totalTrabajo=filas.reduce((n,f)=>n+(f.trabajoMs||0),0);
-  const totalBreak=filas.reduce((n,f)=>n+(f.breakMs||0),0);
-  const finalizadas=filas.filter(f=>!!f.egreso).length;
-  const abiertas=filas.filter(f=>!f.egreso).length;
+  const filas=agruparJornadaMensual();
   root.innerHTML=`
     <div class="attendance-wrap">
       <div class="attendance-title">🕐 Control de jornada — ingresos, breaks y egresos</div>
-      <div class="attendance-summary">
-        <div class="attendance-kpi"><span>Registros del filtro</span><b>${filas.length}</b></div>
-        <div class="attendance-kpi"><span>Tiempo trabajado estimado</span><b>${formatoDuracion(totalTrabajo)}</b></div>
-        <div class="attendance-kpi"><span>Tiempo total en break</span><b>${formatoDuracion(totalBreak)}</b></div>
-        <div class="attendance-kpi"><span>Finalizadas / abiertas</span><b>${finalizadas} / ${abiertas}</b></div>
-      </div>
-      <div class="attendance-filters">
-        <input id="filtroJornadaTexto" type="search" placeholder="Buscar gestor o fecha..." value="${escapeHtml(filtroJornadaTexto)}" oninput="actualizarFiltrosJornada()">
-        <select id="filtroJornadaNombre" onchange="actualizarFiltrosJornada()">
-          <option value="">Todos los gestores visibles</option>
-          ${nombres.map(n=>`<option value="${escapeHtml(n)}" ${filtroJornadaNombre===n?"selected":""}>${escapeHtml(n)}</option>`).join("")}
-        </select>
-        <select id="filtroJornadaEstado" onchange="actualizarFiltrosJornada()">
-          <option value="todos" ${filtroJornadaEstado==="todos"?"selected":""}>Todos los estados</option>
-          <option value="finalizada" ${filtroJornadaEstado==="finalizada"?"selected":""}>Finalizadas</option>
-          <option value="abierta" ${filtroJornadaEstado==="abierta"?"selected":""}>Jornadas abiertas</option>
-          <option value="break" ${filtroJornadaEstado==="break"?"selected":""}>En break</option>
-        </select>
-        <button class="btn" onclick="limpiarFiltrosJornada()">Limpiar filtros</button>
-      </div>
       ${filas.length?`<table class="attendance-table">
-        <thead><tr><th>Fecha</th><th>Gestor</th><th>Ingreso</th><th>Break actual</th><th>Duración break</th><th>Tiempo trabajado</th><th>Egreso</th><th>Estado</th></tr></thead>
+        <thead><tr><th>Fecha</th><th>Gestor</th><th>Ingreso</th><th>Break</th><th>Duración break</th><th>Egreso</th><th>Estado</th></tr></thead>
         <tbody>${filas.map(f=>`<tr>
           <td class="attendance-day">${new Date(`${f.fecha}T12:00:00`).toLocaleDateString("es-AR")}</td>
           <td><b>${escapeHtml(f.nombre)}</b></td>
           <td>${horaLocal(f.ingreso)}</td>
           <td class="${f.enBreak?"attendance-break":"attendance-muted"}">${f.enBreak?"En break":"—"}</td>
           <td>${formatoDuracion(f.breakMs)}</td>
-          <td><b>${formatoDuracion(f.trabajoMs)}</b></td>
           <td>${horaLocal(f.egreso)}</td>
           <td class="${f.egreso?"attendance-ok":f.enBreak?"attendance-break":"attendance-open"}">${f.egreso?"Finalizada":f.enBreak?"En break":"Jornada abierta"}</td>
         </tr>`).join("")}</tbody>
-      </table>`:`<div class="attendance-muted">${todas.length?"No hay registros que coincidan con los filtros.":`Todavía no hay registros de jornada para ${new Date(agendaAnio,agendaMes,1).toLocaleDateString("es-AR",{month:"long",year:"numeric"})}.`}</div>`}
-      <div class="small" style="margin-top:8px">El tiempo trabajado es una estimación: desde el ingreso hasta el egreso (o la hora actual si sigue abierta), descontando los breaks registrados. Los datos se limitan a los gestores que tu perfil tiene permiso para ver.</div>
+      </table>`:`<div class="attendance-muted">Todavía no hay registros de jornada para ${new Date(agendaAnio,agendaMes,1).toLocaleDateString("es-AR",{month:"long",year:"numeric"})}.</div>`}
     </div>`;
-}
-
-function limpiarFiltrosJornada(){
-  filtroJornadaNombre="";
-  filtroJornadaEstado="todos";
-  filtroJornadaTexto="";
-  dibujarControlJornada();
 }
 
 
@@ -2904,155 +2900,6 @@ function puedeAdministrarVencimientos(){
   return esSenior()||esSupervisor();
 }
 
-function fechaLocalISOCalendario(d=new Date()){
-  const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,"0"),dia=String(d.getDate()).padStart(2,"0");
-  return `${y}-${m}-${dia}`;
-}
-
-function vencimientosVisiblesPorPermiso(){
-  const equiposPermitidos=equiposCalendarioVencimientos().map(normalizarTexto);
-  return Object.values(vencimientos).filter(e=>equiposPermitidos.includes(normalizarTexto(e?.equipo)));
-}
-
-let idsVencimientosNotificados = new Set();
-let resumenVencimientosIntentadoHoy = "";
-
-function claveDiaVencimientos(){ return fechaLocalISOCalendario(new Date()); }
-
-// Los avisos tienen un alcance más estricto que la vista general del calendario.
-// Gestor: únicamente vencimientos asignados a su nombre o correo.
-// Senior: todos los vencimientos de su(s) equipo(s).
-// Supervisor: no recibe notificaciones de vencimientos.
-function vencimientosElegiblesParaAvisos(){
-  if(!usuarioActual || esSupervisor()) return [];
-  const email=normalizarTexto(usuarioActual.email);
-  const nombre=nombreCanonico(nombreActual);
-  const equiposPermitidos=equiposCalendarioVencimientos().map(normalizarTexto);
-  return Object.values(vencimientos).filter(e=>{
-    if(!e || !e.fecha || !equiposPermitidos.includes(normalizarTexto(e.equipo))) return false;
-    if(esSenior()) return true;
-    if(!esAsesor()) return false;
-    const gestorEmail=normalizarTexto(e.gestorEmail||e.asignadoEmail||e.emailGestor||"");
-    const gestor=normalizarTexto(nombreCanonico(e.gestor||e.gestorAsignado||e.asignadoA||""));
-    return (gestorEmail && email && gestorEmail===email) ||
-      (gestor && gestor===normalizarTexto(nombre));
-  });
-}
-
-function obtenerVencimientosDeHoyParaAvisos(){
-  const hoy=claveDiaVencimientos();
-  return vencimientosElegiblesParaAvisos().filter(e=>
-    e.fecha===hoy && normalizarTexto(e.estado||"pendiente")!=="gestionado"
-  );
-}
-
-function notificarNavegador(titulo,cuerpo,tag){
-  if(!('Notification' in window) || Notification.permission!=="granted") return false;
-  try{
-    const n=new Notification(titulo,{body:cuerpo,tag:tag||"mansilla-vencimientos"});
-    n.onclick=()=>{window.focus();mostrarVista('vencimientos');n.close();};
-    return true;
-  }catch(err){
-    console.warn("No se pudo mostrar la notificación del navegador",err);
-    return false;
-  }
-}
-
-async function activarNotificacionesVencimientos(){
-  if(esSupervisor()) return;
-  if(!('Notification' in window)){alert("Este navegador no admite notificaciones de escritorio.");return;}
-  try{
-    const permiso=await Notification.requestPermission();
-    if(permiso==="granted"){
-      alert("¡Notificaciones habilitadas! Recibirás un resumen de los vencimientos de hoy que te corresponden y avisos mientras el panel esté abierto.");
-      actualizarAvisosVencimientos();
-    }else{
-      alert("No se habilitaron las notificaciones. Permitilas desde los ajustes del navegador para este sitio.");
-    }
-  }catch(e){
-    alert("No se pudo solicitar permiso de notificaciones en este navegador.");
-  }
-}
-
-function procesarNotificacionesVencimientos(){
-  // Regla expresa: supervisores no reciben resumen ni avisos de vencimientos.
-  if(!usuarioActual || esSupervisor() || !('Notification' in window) || Notification.permission!=="granted") return;
-
-  const dia=claveDiaVencimientos();
-  const hoy=obtenerVencimientosDeHoyParaAvisos();
-  const emailKey=normalizarTexto(usuarioActual.email||nombreActual).replace(/[^a-z0-9_-]/g,"_");
-  const resumenKey=`mansilla-resumen-vencimientos-${emailKey}-${dia}`;
-
-  // Un resumen diario por persona, solo con vencimientos de hoy.
-  try{
-    if(localStorage.getItem(resumenKey)!=="1"){
-      const nombres=hoy.slice(0,5).map(e=>e.nombre||("DNI "+(e.dni||"sin DNI"))).join(", ");
-      const extra=hoy.length>5?` y ${hoy.length-5} más`:"";
-      const detalle=hoy.length?`${hoy.length} vencimiento(s) de hoy: ${nombres}${extra}`:"No tenés vencimientos pendientes para hoy.";
-      notificarNavegador("Vencimientos de hoy",detalle,`mansilla-resumen-${emailKey}-${dia}`);
-      localStorage.setItem(resumenKey,"1");
-    }
-  }catch(e){console.warn("No se pudo guardar el registro del resumen diario",e);}
-
-  // Alertar una sola vez por vencimiento/persona/día, aunque se actualice la base.
-  hoy.forEach(e=>{
-    const clave=`mansilla-venc-${emailKey}-${dia}-${e.id}`;
-    if(idsVencimientosNotificados.has(clave)) return;
-    let yaNotificado=false;
-    try{ yaNotificado=localStorage.getItem(clave)==="1"; }catch(e){}
-    if(yaNotificado){idsVencimientosNotificados.add(clave);return;}
-    idsVencimientosNotificados.add(clave);
-    const nombre=e.nombre||("Cliente DNI "+(e.dni||"sin DNI"));
-    const hora=e.hora?` · ${e.hora}`:"";
-    if(notificarNavegador("Vence hoy",`${nombre}${hora} · ${e.equipo||""}`,clave)){
-      try{localStorage.setItem(clave,"1");}catch(e){}
-    }
-  });
-}
-
-function actualizarAvisosVencimientos(){
-  const hoy=new Date();hoy.setHours(0,0,0,0);
-  const visibles=vencimientosVisiblesPorPermiso();
-  const pendientes=visibles.filter(e=>normalizarTexto(e?.estado||"pendiente")!=="gestionado" && e?.fecha);
-  const avisos=pendientes.map(e=>{
-    const fecha=new Date(`${e.fecha}T00:00:00`);
-    const dias=Math.round((fecha-hoy)/86400000);
-    let tipo="",etiqueta="";
-    if(dias<0 || normalizarTexto(e.estado)==="vencido"){tipo="red";etiqueta="VENCIDO";}
-    else if(dias<=3){tipo="red";etiqueta=dias===0?"VENCE HOY":`VENCE EN ${dias} DÍA${dias===1?"":"S"}`;}
-    else if(dias<=7){tipo="client";etiqueta=`VENCE EN ${dias} DÍAS`;}
-    else return null;
-    return {...e,dias,tipo,etiqueta};
-  }).filter(Boolean).sort((a,b)=>a.dias-b.dias);
-
-  procesarNotificacionesVencimientos();
-  const badge=$("badgeVencimientos");
-  if(badge){badge.textContent=String(avisos.length);badge.style.display=avisos.length?"inline-flex":"none";badge.title=`${avisos.length} vencimiento(s) que requieren atención`;}
-
-  const root=$("vencAlerts");
-  if(!root) return;
-  if(!avisos.length){
-    root.innerHTML=`<div style="padding:12px 14px;border:1px solid #b8dfc5;border-radius:10px;background:#effaf2;color:#21643a;font-size:13px">✓ No hay vencimientos atrasados ni próximos dentro de los próximos 7 días para los equipos que podés ver.</div>`;
-    return;
-  }
-  const vencidosLista=avisos.filter(a=>a.dias<0||normalizarTexto(a.estado)==="vencido");
-  const hoyLista=avisos.filter(a=>a.dias===0&&normalizarTexto(a.estado)!=="vencido");
-  const proximos3Lista=avisos.filter(a=>a.dias>=1&&a.dias<=3&&normalizarTexto(a.estado)!=="vencido");
-  const proximosLista=avisos.filter(a=>a.dias>=4&&a.dias<=7);
-  const dibujarGrupo=(titulo,lista,colorFondo,colorBorde,colorTexto,vacio)=>`<div style="margin-top:10px;border:1px solid ${colorBorde};border-radius:10px;overflow:hidden">
-    <div style="padding:9px 11px;background:${colorFondo};color:${colorTexto};font-weight:800;font-size:13px">${titulo} <span style="float:right">${lista.length}</span></div>
-    ${lista.length?`<div style="display:grid;gap:0">${lista.slice(0,8).map(e=>`<button type="button" onclick="editarVencimiento('${escapeHtml(e.id)}')" style="display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:left;border:0;border-top:1px solid ${colorBorde};background:#fff;padding:9px 11px;cursor:pointer;color:#253044"><span><b>${escapeHtml(e.nombre||('DNI '+(e.dni||'sin DNI')))}</b><span style="display:block;font-size:11px;color:#667085">${escapeHtml(e.equipo||'')} · ${escapeHtml(e.gestor||'Sin gestor')} · ${escapeHtml(e.fecha||'')}</span></span><b style="font-size:10px;white-space:nowrap;color:${colorTexto}">${escapeHtml(e.etiqueta)}</b></button>`).join("")}</div>${lista.length>8?`<div class="small" style="padding:7px 11px">Se muestran 8 de ${lista.length}. Revisá el calendario para ver los demás.</div>`:""}`:`<div class="small" style="padding:10px 11px;color:#667085">${vacio}</div>`}
-  </div>`;
-  root.innerHTML=`<div style="border:1px solid #e5e7eb;border-radius:12px;padding:12px;background:#fff">
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;font-weight:800;margin-bottom:6px"><span>🔔 Avisos de vencimiento</span><button type="button" onclick="activarNotificacionesVencimientos()" style="border:1px solid #cbd5e1;border-radius:8px;padding:7px 10px;background:#f8fafc;color:#253044;cursor:pointer;font-weight:700">Activar notificaciones de escritorio</button></div>
-    <div class="small" style="margin-bottom:4px">Los vencimientos de hoy están separados de los que vencen en los próximos 3 días.</div>
-    ${dibujarGrupo("🔴 VENCIDOS",vencidosLista,"#fdeaea","#f2aaaa","#a61b1b","No hay vencimientos atrasados.")}
-    ${dibujarGrupo("🚨 VENCEN HOY",hoyLista,"#fff0f0","#f2aaaa","#a61b1b","No hay vencimientos para hoy.")}
-    ${dibujarGrupo("⏰ VENCEN EN LOS PRÓXIMOS 3 DÍAS",proximos3Lista,"#fff5e8","#f2c48d","#9a4b00","No hay vencimientos para los próximos 3 días.")}
-    ${dibujarGrupo("🟡 VENCEN EN 4 A 7 DÍAS",proximosLista,"#fff8df","#f0cf71","#875b00","No hay vencimientos entre 4 y 7 días.")}
-  </div>`;
-}
-
 function renderizarVencimientos(){
   $("sectionTitle").textContent="Vencimientos de clientes";
   $("listSearch").style.display="none";
@@ -3067,16 +2914,13 @@ function renderizarVencimientos(){
           <button onclick="cambiarMesVenc(-1)">‹</button>
           <strong id="vencMesTitulo"></strong>
           <button onclick="cambiarMesVenc(1)">›</button>
-          ${!esSupervisor()?`<button class="btn" onclick="activarNotificacionesVencimientos()">🔔 Activar avisos</button>`:""}
           ${puedeAdministrarVencimientos()?`<button class="btn green" onclick="abrirModalVencimiento()">+ Vencimiento</button>`:""}
         </div>
       </div>
-      <div class="small" style="margin-bottom:10px">🟢 Pendiente · 🟡 Vence dentro de 4 a 7 días · 🔴 Vence hoy, dentro de 3 días o ya venció. Los avisos incluyen únicamente vencimientos de hoy: los gestores ven los propios y los seniors los de su equipo. Los supervisores no reciben avisos.</div>
-      <div id="vencAlerts" aria-live="polite" style="margin-bottom:14px"></div>
+      <div class="small" style="margin-bottom:10px">🟢 pendiente · 🟡 próximo · 🔴 vencido</div>
       <div id="vencCalendar"></div>
     </div>
   `;
-  actualizarAvisosVencimientos();
   dibujarCalendarioVencimientos();
 }
 
@@ -3117,7 +2961,7 @@ function dibujarCalendarioVencimientos(){
     const day=i-start+1;
     const date=new Date(vencAnio,vencMes,day);
     const other=date.getMonth()!==vencMes;
-    const iso=fechaLocalISOCalendario(date);
+    const iso=date.toISOString().slice(0,10);
 
     const eventos=Object.values(vencimientos).filter(e=>{
       return e?.fecha===iso &&
@@ -3203,7 +3047,6 @@ function escucharVencimientos(){
     const data=snap.val()||{};
     vencimientos={};
     Object.entries(data).forEach(([id,v])=>vencimientos[id]={...v,id});
-    actualizarAvisosVencimientos();
     if(vistaActual==="vencimientos") dibujarCalendarioVencimientos();
   });
 }
@@ -3317,6 +3160,7 @@ onAuthStateChanged(auth,async user=>{
   // SOS: solamente el senior correspondiente al equipo puede verlo.
   $("navSOS").classList.toggle("hidden",!esSenior());
   $("navBaseClientes").classList.toggle("hidden",!esSupervisor());
+  $("navLibreDeuda").classList.toggle("hidden",!esSupervisor());
   $("navSupervision").classList.toggle("hidden",!esSupervisor());
   renderizarPanelSOS();
   if(esSupervisor()) cargarBaseClientes();
@@ -3341,14 +3185,6 @@ onAuthStateChanged(auth,async user=>{
   escucharAgenda();
   escucharVencimientos();
   escucharUrgencias();
-
-  // Revisa periódicamente vencimientos nuevos mientras el panel esté abierto.
-  // No se generan avisos para supervisores.
-  if(!window.__mansillaTimerVencimientos){
-    window.__mansillaTimerVencimientos=setInterval(()=>{
-      if(usuarioActual && !esSupervisor()) procesarNotificacionesVencimientos();
-    },5*60*1000);
-  }
 
   mostrarVista("principal");
 });
@@ -3375,6 +3211,9 @@ async function cerrarSesion(){
 
 window.mostrarVista=mostrarVista;
 window.importarExcelClientes=importarExcelClientes;
+window.importarExcelLibreDeuda=importarExcelLibreDeuda;
+window.renderizarLibreDeuda=renderizarLibreDeuda;
+window.cargarBaseLibreDeuda=cargarBaseLibreDeuda;
 window.renderizarBaseClientes=renderizarBaseClientes;
 window.cargarBaseClientes=cargarBaseClientes;
 window.refrescarVistaActual=refrescarVistaActual;
@@ -3466,8 +3305,6 @@ window.editarEvento=editarEvento;
 window.cerrarModalEvento=cerrarModalEvento;
 window.guardarEventoAgenda=guardarEventoAgenda;
 window.dibujarControlJornada=dibujarControlJornada;
-window.actualizarFiltrosJornada=actualizarFiltrosJornada;
-window.limpiarFiltrosJornada=limpiarFiltrosJornada;
 window.cambiarMesVenc=cambiarMesVenc;
 window.cargarGestoresVencimiento=cargarGestoresVencimiento;
 window.abrirModalVencimiento=abrirModalVencimiento;
