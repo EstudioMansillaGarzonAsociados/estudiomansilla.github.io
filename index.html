@@ -957,6 +957,66 @@
     }
 
 
+    // Libre de Deuda: usa el DNI ya ingresado al comenzar el chat y la última base cargada por supervisión.
+    async function responderSolicitudLibreDeuda(messageKey, textoCliente, convActual){
+      const dniRegistrado=String(datosClienteActual.dni||convActual?.datosCliente?.dni||convActual?.dniCliente||"").replace(/\D/g,"");
+      const dniEnMensaje=extraerDniDeTexto(textoCliente);
+      const responder=async(texto,tipo="libre_deuda")=>push(mensajesRef,{
+        texto,remitente:"ia",nombreRemitente:IA_NOMBRE,fecha:Date.now(),respondeA:messageKey,tipo
+      });
+      const derivar=async(motivo, texto)=>{
+        await responder(texto,"libre_deuda_derivacion");
+        await update(ref(db,`conversaciones/${conversacionId}`),{
+          iaActiva:false,iaEstado:"derivada",iaDerivada:true,iaPaso:"derivar",estado:"pendiente",
+          tipoDerivacion:"asesor",destinoDerivacion:"asesor",motivoDerivacion:motivo,
+          libreDeudaSolicitado:true,ultimaActividad:Date.now(),ultimoMensaje:texto,ultimoRemitente:"ia"
+        });
+        iaDerivada=true;
+      };
+
+      if(!dniRegistrado || dniRegistrado.length<6){
+        await derivar("Libre de Deuda: no se pudo validar el DNI registrado.","Para proteger tus datos, necesitamos que un asesor verifique tu identidad antes de gestionar el Libre de Deuda.");
+      } else if(dniEnMensaje && dniEnMensaje!==dniRegistrado){
+        await derivar("Libre de Deuda: el DNI indicado en el mensaje no coincide con el DNI registrado al iniciar el chat.","El DNI que escribiste no coincide con el registrado al iniciar esta conversación. Por seguridad, voy a derivar tu solicitud a un asesor para que pueda verificar tus datos.");
+      } else {
+        const enviadosRef=ref(db,`libresDeudaEnvios/${conversacionId}`);
+        const envioSnap=await get(enviadosRef);
+        if(envioSnap.exists() && envioSnap.val()?.estado==="enviado"){
+          await responder("Según nuestros registros, el enlace del Libre de Deuda ya fue enviado en esta conversación. Si no podés abrirlo, te derivamos con un asesor para que te ayude.","libre_deuda_duplicado");
+          await update(ref(db,`conversaciones/${conversacionId}/mensajes/${messageKey}`),{iaProcesado:true,iaProcesando:false});
+          return;
+        }
+        const baseSnap=await get(ref(db,"libresDeudaBase"));
+        const base=baseSnap.exists()?(baseSnap.val()||{}):{};
+        const registro=base[dniRegistrado] || Object.values(base).find(r=>String(r?.dni||"").replace(/\D/g,"")===dniRegistrado);
+        if(!registro){
+          await derivar("Libre de Deuda: DNI no encontrado en la última base cargada.","No encontramos un Libre de Deuda disponible con el DNI registrado. Voy a derivar tu consulta a un asesor para que revise el caso.");
+        } else {
+          const estado=normalizarTexto(registro.estado||"");
+          const estadoNoDisponible=estado==="no" || ["pendiente","rechazado","no emitido","no habilitado","no disponible","sin aprobar","inactivo","baja","no corresponde"].some(x=>estado.includes(x));
+          const url=String(registro.pdfUrl||registro.pdf_url||registro.url||registro.enlace||"").trim();
+          if(estadoNoDisponible || !/^https?:\/\//i.test(url)){
+            await derivar(estadoNoDisponible?`Libre de Deuda: el estado del registro requiere revisión (${registro.estado}).`:"Libre de Deuda: el registro no tiene un enlace válido al documento.","Encontramos tu registro, pero el documento necesita revisión o todavía no tiene un enlace disponible. Voy a derivar tu solicitud a un asesor.");
+          } else {
+            const claim=await runTransaction(enviadosRef,actual=>{
+              if(actual && (actual.estado==="enviado" || actual.estado==="procesando")) return;
+              return {estado:"procesando",dni:dniRegistrado,fechaInicio:Date.now(),nombre:registro.nombre||datosClienteActual.nombre||""};
+            });
+            if(!claim.committed){
+              await responder("Estamos verificando tu solicitud. Para evitar enviarte enlaces duplicados, esperá un momento; si no recibís el documento, un asesor podrá ayudarte.","libre_deuda_en_proceso");
+            } else {
+              const textoRespuesta=`Encontramos tu registro${registro.nombre?` a nombre de ${registro.nombre}`:""}. Podés abrir o descargar tu Libre de Deuda desde este enlace:
+${url}`;
+              await responder(textoRespuesta,"libre_deuda_documento");
+              await update(enviadosRef,{estado:"enviado",dni:dniRegistrado,nombre:registro.nombre||datosClienteActual.nombre||"",url,fechaEnvio:Date.now(),conversacionId});
+              await update(ref(db,`conversaciones/${conversacionId}`),{libreDeudaSolicitado:true,libreDeudaEnviado:true,libreDeudaFechaEnvio:Date.now(),libreDeudaDni:dniRegistrado,ultimaActividad:Date.now(),ultimoMensaje:textoRespuesta,ultimoRemitente:"ia"});
+            }
+          }
+        }
+      }
+      await update(ref(db,`conversaciones/${conversacionId}/mensajes/${messageKey}`),{iaProcesado:true,iaProcesando:false});
+    }
+
     async function buscarClienteEnBasePorDni(dni){
       const limpio=String(dni||"").replace(/\D/g,"");
       if(!limpio || limpio.length<6 || !db) return null;
@@ -1090,6 +1150,10 @@
         // automático por un texto libre. La IA espera la elección del cliente.
         const convSnap = await get(ref(db, `conversaciones/${conversacionId}`));
         const convActual = convSnap.exists() ? (convSnap.val() || {}) : {};
+        if (detectarIntencionIA(texto) === "libre_deuda") {
+          await responderSolicitudLibreDeuda(messageKey, texto, convActual);
+          return;
+        }
         if (convActual.iaPaso === "esperando_opcion") {
           const nTexto = normalizarTexto(texto);
           const esOpcion = [
@@ -1464,7 +1528,24 @@
         div.classList.add("asesor");
       }
 
-      div.textContent = texto;
+      // Renderiza enlaces seguros como enlaces clicables (necesario para abrir el PDF del Libre de Deuda).
+      const fragmentos = String(texto).split(/(https?:\/\/[^\s]+)/g);
+      fragmentos.forEach(fragmento => {
+        if (/^https?:\/\//i.test(fragmento)) {
+          const enlace = document.createElement("a");
+          enlace.href = fragmento.replace(/[),.;!?]+$/, "");
+          enlace.textContent = enlace.href;
+          enlace.target = "_blank";
+          enlace.rel = "noopener noreferrer";
+          enlace.style.color = "#155eef";
+          enlace.style.textDecoration = "underline";
+          div.appendChild(enlace);
+          const sobrante = fragmento.slice(enlace.href.length);
+          if (sobrante) div.appendChild(document.createTextNode(sobrante));
+        } else {
+          div.appendChild(document.createTextNode(fragmento));
+        }
+      });
       contenedor.appendChild(div);
 
       const agregarBotones = (opciones, claseTipo = "") => {
