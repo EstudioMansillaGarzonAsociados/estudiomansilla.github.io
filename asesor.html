@@ -2914,6 +2914,102 @@ function vencimientosVisiblesPorPermiso(){
   return Object.values(vencimientos).filter(e=>equiposPermitidos.includes(normalizarTexto(e?.equipo)));
 }
 
+let idsVencimientosNotificados = new Set();
+let resumenVencimientosIntentadoHoy = "";
+
+function claveDiaVencimientos(){ return fechaLocalISOCalendario(new Date()); }
+
+// Los avisos tienen un alcance más estricto que la vista general del calendario.
+// Gestor: únicamente vencimientos asignados a su nombre o correo.
+// Senior: todos los vencimientos de su(s) equipo(s).
+// Supervisor: no recibe notificaciones de vencimientos.
+function vencimientosElegiblesParaAvisos(){
+  if(!usuarioActual || esSupervisor()) return [];
+  const email=normalizarTexto(usuarioActual.email);
+  const nombre=nombreCanonico(nombreActual);
+  const equiposPermitidos=equiposCalendarioVencimientos().map(normalizarTexto);
+  return Object.values(vencimientos).filter(e=>{
+    if(!e || !e.fecha || !equiposPermitidos.includes(normalizarTexto(e.equipo))) return false;
+    if(esSenior()) return true;
+    if(!esAsesor()) return false;
+    const gestorEmail=normalizarTexto(e.gestorEmail||e.asignadoEmail||e.emailGestor||"");
+    const gestor=normalizarTexto(nombreCanonico(e.gestor||e.gestorAsignado||e.asignadoA||""));
+    return (gestorEmail && email && gestorEmail===email) ||
+      (gestor && gestor===normalizarTexto(nombre));
+  });
+}
+
+function obtenerVencimientosDeHoyParaAvisos(){
+  const hoy=claveDiaVencimientos();
+  return vencimientosElegiblesParaAvisos().filter(e=>
+    e.fecha===hoy && normalizarTexto(e.estado||"pendiente")!=="gestionado"
+  );
+}
+
+function notificarNavegador(titulo,cuerpo,tag){
+  if(!('Notification' in window) || Notification.permission!=="granted") return false;
+  try{
+    const n=new Notification(titulo,{body:cuerpo,tag:tag||"mansilla-vencimientos"});
+    n.onclick=()=>{window.focus();mostrarVista('vencimientos');n.close();};
+    return true;
+  }catch(err){
+    console.warn("No se pudo mostrar la notificación del navegador",err);
+    return false;
+  }
+}
+
+async function activarNotificacionesVencimientos(){
+  if(esSupervisor()) return;
+  if(!('Notification' in window)){alert("Este navegador no admite notificaciones de escritorio.");return;}
+  try{
+    const permiso=await Notification.requestPermission();
+    if(permiso==="granted"){
+      alert("¡Notificaciones habilitadas! Recibirás un resumen de los vencimientos de hoy que te corresponden y avisos mientras el panel esté abierto.");
+      actualizarAvisosVencimientos();
+    }else{
+      alert("No se habilitaron las notificaciones. Permitilas desde los ajustes del navegador para este sitio.");
+    }
+  }catch(e){
+    alert("No se pudo solicitar permiso de notificaciones en este navegador.");
+  }
+}
+
+function procesarNotificacionesVencimientos(){
+  // Regla expresa: supervisores no reciben resumen ni avisos de vencimientos.
+  if(!usuarioActual || esSupervisor() || !('Notification' in window) || Notification.permission!=="granted") return;
+
+  const dia=claveDiaVencimientos();
+  const hoy=obtenerVencimientosDeHoyParaAvisos();
+  const emailKey=normalizarTexto(usuarioActual.email||nombreActual).replace(/[^a-z0-9_-]/g,"_");
+  const resumenKey=`mansilla-resumen-vencimientos-${emailKey}-${dia}`;
+
+  // Un resumen diario por persona, solo con vencimientos de hoy.
+  try{
+    if(localStorage.getItem(resumenKey)!=="1"){
+      const nombres=hoy.slice(0,5).map(e=>e.nombre||("DNI "+(e.dni||"sin DNI"))).join(", ");
+      const extra=hoy.length>5?` y ${hoy.length-5} más`:"";
+      const detalle=hoy.length?`${hoy.length} vencimiento(s) de hoy: ${nombres}${extra}`:"No tenés vencimientos pendientes para hoy.";
+      notificarNavegador("Vencimientos de hoy",detalle,`mansilla-resumen-${emailKey}-${dia}`);
+      localStorage.setItem(resumenKey,"1");
+    }
+  }catch(e){console.warn("No se pudo guardar el registro del resumen diario",e);}
+
+  // Alertar una sola vez por vencimiento/persona/día, aunque se actualice la base.
+  hoy.forEach(e=>{
+    const clave=`mansilla-venc-${emailKey}-${dia}-${e.id}`;
+    if(idsVencimientosNotificados.has(clave)) return;
+    let yaNotificado=false;
+    try{ yaNotificado=localStorage.getItem(clave)==="1"; }catch(e){}
+    if(yaNotificado){idsVencimientosNotificados.add(clave);return;}
+    idsVencimientosNotificados.add(clave);
+    const nombre=e.nombre||("Cliente DNI "+(e.dni||"sin DNI"));
+    const hora=e.hora?` · ${e.hora}`:"";
+    if(notificarNavegador("Vence hoy",`${nombre}${hora} · ${e.equipo||""}`,clave)){
+      try{localStorage.setItem(clave,"1");}catch(e){}
+    }
+  });
+}
+
 function actualizarAvisosVencimientos(){
   const hoy=new Date();hoy.setHours(0,0,0,0);
   const visibles=vencimientosVisiblesPorPermiso();
@@ -2929,6 +3025,7 @@ function actualizarAvisosVencimientos(){
     return {...e,dias,tipo,etiqueta};
   }).filter(Boolean).sort((a,b)=>a.dias-b.dias);
 
+  procesarNotificacionesVencimientos();
   const badge=$("badgeVencimientos");
   if(badge){badge.textContent=String(avisos.length);badge.style.display=avisos.length?"inline-flex":"none";badge.title=`${avisos.length} vencimiento(s) que requieren atención`;}
 
@@ -2947,7 +3044,7 @@ function actualizarAvisosVencimientos(){
     ${lista.length?`<div style="display:grid;gap:0">${lista.slice(0,8).map(e=>`<button type="button" onclick="editarVencimiento('${escapeHtml(e.id)}')" style="display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:left;border:0;border-top:1px solid ${colorBorde};background:#fff;padding:9px 11px;cursor:pointer;color:#253044"><span><b>${escapeHtml(e.nombre||('DNI '+(e.dni||'sin DNI')))}</b><span style="display:block;font-size:11px;color:#667085">${escapeHtml(e.equipo||'')} · ${escapeHtml(e.gestor||'Sin gestor')} · ${escapeHtml(e.fecha||'')}</span></span><b style="font-size:10px;white-space:nowrap;color:${colorTexto}">${escapeHtml(e.etiqueta)}</b></button>`).join("")}</div>${lista.length>8?`<div class="small" style="padding:7px 11px">Se muestran 8 de ${lista.length}. Revisá el calendario para ver los demás.</div>`:""}`:`<div class="small" style="padding:10px 11px;color:#667085">${vacio}</div>`}
   </div>`;
   root.innerHTML=`<div style="border:1px solid #e5e7eb;border-radius:12px;padding:12px;background:#fff">
-    <div style="font-weight:800;margin-bottom:2px">Avisos de vencimiento</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;font-weight:800;margin-bottom:6px"><span>🔔 Avisos de vencimiento</span><button type="button" onclick="activarNotificacionesVencimientos()" style="border:1px solid #cbd5e1;border-radius:8px;padding:7px 10px;background:#f8fafc;color:#253044;cursor:pointer;font-weight:700">Activar notificaciones de escritorio</button></div>
     <div class="small" style="margin-bottom:4px">Los vencimientos de hoy están separados de los que vencen en los próximos 3 días.</div>
     ${dibujarGrupo("🔴 VENCIDOS",vencidosLista,"#fdeaea","#f2aaaa","#a61b1b","No hay vencimientos atrasados.")}
     ${dibujarGrupo("🚨 VENCEN HOY",hoyLista,"#fff0f0","#f2aaaa","#a61b1b","No hay vencimientos para hoy.")}
@@ -2970,10 +3067,11 @@ function renderizarVencimientos(){
           <button onclick="cambiarMesVenc(-1)">‹</button>
           <strong id="vencMesTitulo"></strong>
           <button onclick="cambiarMesVenc(1)">›</button>
+          ${!esSupervisor()?`<button class="btn" onclick="activarNotificacionesVencimientos()">🔔 Activar avisos</button>`:""}
           ${puedeAdministrarVencimientos()?`<button class="btn green" onclick="abrirModalVencimiento()">+ Vencimiento</button>`:""}
         </div>
       </div>
-      <div class="small" style="margin-bottom:10px">🟢 Pendiente · 🟡 Vence dentro de 4 a 7 días · 🔴 Vence hoy, dentro de 3 días o ya venció</div>
+      <div class="small" style="margin-bottom:10px">🟢 Pendiente · 🟡 Vence dentro de 4 a 7 días · 🔴 Vence hoy, dentro de 3 días o ya venció. Los avisos incluyen únicamente vencimientos de hoy: los gestores ven los propios y los seniors los de su equipo. Los supervisores no reciben avisos.</div>
       <div id="vencAlerts" aria-live="polite" style="margin-bottom:14px"></div>
       <div id="vencCalendar"></div>
     </div>
@@ -3243,6 +3341,14 @@ onAuthStateChanged(auth,async user=>{
   escucharAgenda();
   escucharVencimientos();
   escucharUrgencias();
+
+  // Revisa periódicamente vencimientos nuevos mientras el panel esté abierto.
+  // No se generan avisos para supervisores.
+  if(!window.__mansillaTimerVencimientos){
+    window.__mansillaTimerVencimientos=setInterval(()=>{
+      if(usuarioActual && !esSupervisor()) procesarNotificacionesVencimientos();
+    },5*60*1000);
+  }
 
   mostrarVista("principal");
 });
