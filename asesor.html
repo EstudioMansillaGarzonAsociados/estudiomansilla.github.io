@@ -1546,11 +1546,14 @@ function renderizarBaseClientes(){
 ========================= */
 async function cargarBaseLibreDeuda(){
   try{
-    const snap=await get(ref(db,"libresDeudaBase"));
-    baseLibresDeuda=snap.exists()?(snap.val()||{}):{};
-    renderizarLibreDeuda();
     const metaSnap=await get(ref(db,"libresDeudaImportacionActual"));
     const meta=metaSnap.exists()?metaSnap.val():null;
+    // Las importaciones nuevas se guardan por bloques en una ruta versionada.
+    // Se conserva compatibilidad con la base anterior /libresDeudaBase.
+    const rutaBase=meta?.basePath || "libresDeudaBase";
+    const snap=await get(ref(db,rutaBase));
+    baseLibresDeuda=snap.exists()?(snap.val()||{}):{};
+    renderizarLibreDeuda();
     const el=$("excelLibreDeudaMeta");
     if(el) el.textContent=meta?`Última carga: ${formatFecha(meta.fecha)} · Archivo: ${meta.archivo||"—"} · Por: ${meta.usuario||"—"}`:"Todavía no se cargó un Excel de Libre de Deuda.";
   }catch(e){console.error("No se pudo cargar la base de Libre de Deuda:",e);}
@@ -1622,19 +1625,32 @@ async function importarExcelLibreDeuda(){
     }
     if(!Object.keys(nuevos).length)throw new Error("No se encontraron filas con una columna DNI/Nro_doc válida. No se modificó la base anterior.");
     const importId=`${Date.now()}_${normalizarTexto(file.name).replace(/[^a-z0-9]+/g,"_").slice(0,40)}`;
-    const meta={archivo:file.name,fecha:Date.now(),usuario:nombreActual,email:usuarioActual?.email||"",filasTotales,registros:Object.keys(nuevos).length,sinDni,duplicados,conPdf,importId};
-    await set(ref(db,"libresDeudaBase"),nuevos);
-    await set(ref(db,"libresDeudaImportacionActual"),meta);
+    const basePath=`libresDeudaImportaciones/${importId}/registros`;
+    const claves=Object.keys(nuevos);
+    // No enviar la base completa en una sola operación: el Excel genera más de 16 MB.
+    // Se carga en bloques a una ruta nueva y recién después se cambia la ruta activa.
+    const TAMANO_BLOQUE=300;
+    let bloquesSubidos=0;
+    for(let i=0;i<claves.length;i+=TAMANO_BLOQUE){
+      const bloque={};
+      for(const dni of claves.slice(i,i+TAMANO_BLOQUE)) bloque[dni]=nuevos[dni];
+      await update(ref(db,basePath),bloque);
+      bloquesSubidos++;
+      if(status)status.textContent=`Subiendo registros a Firebase: ${Math.min(i+TAMANO_BLOQUE,claves.length).toLocaleString("es-AR")} de ${claves.length.toLocaleString("es-AR")}...`;
+    }
+    const meta={archivo:file.name,fecha:Date.now(),usuario:nombreActual,email:usuarioActual?.email||"",filasTotales,registros:claves.length,sinDni,duplicados,conPdf,importId,basePath,bloquesSubidos};
+    // Activar la nueva base solo después de que todos los bloques se guardaron.
     await set(ref(db,`historialImportacionesLibreDeuda/${importId}`),meta);
+    await set(ref(db,"libresDeudaImportacionActual"),meta);
     baseLibresDeuda=nuevos;
     renderizarLibreDeuda();
     const m=$("excelLibreDeudaMeta");if(m)m.textContent=`Última carga: ${formatFecha(meta.fecha)} · Archivo: ${file.name} · Por: ${nombreActual}`;
-    if(status)status.textContent=`✅ Actualización completa: ${meta.registros.toLocaleString("es-AR")} registros; ${conPdf} con enlace al documento; ${sinDni} filas sin DNI válido omitidas${duplicados?`; ${duplicados} DNI repetidos (se conservó el último registro)`:""}. ${conPdf===0?"El archivo no trae enlaces a certificados; todavía no se pueden enviar automáticamente.":""}`;
+    if(status)status.textContent=`✅ Actualización completa: ${meta.registros.toLocaleString("es-AR")} registros en ${bloquesSubidos} bloques; ${conPdf} con enlace al documento; ${sinDni} filas sin DNI válido omitidas${duplicados?`; ${duplicados} DNI repetidos (se conservó el último registro)`:""}. ${conPdf===0?"El archivo no trae enlaces a certificados; todavía no se pueden enviar automáticamente.":""}`;
     input.value="";
   }catch(e){
     console.error("Error al importar Libre de Deuda:",e);
     if(status)status.textContent="❌ No se pudo actualizar: "+(e?.message||"revisá que el Excel tenga una columna DNI o Nro_doc válida.")+" La base anterior se conserva si no se encontraron DNI válidos.";
-    alert("No se pudo importar el Excel de Libre de Deuda. La base anterior se conserva si el archivo no tiene DNI válidos.");
+    alert("No se pudo importar el Excel de Libre de Deuda. Detalle: "+(e?.message||"error desconocido")+". La base anterior sigue activa si la carga no llegó a completarse.");
   }finally{excelLibreDeudaImportando=false;if(btn)btn.disabled=false;}
 }
 function renderizarLibreDeuda(){
