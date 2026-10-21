@@ -564,7 +564,7 @@ body.dashboard-mode .chat-panel,body.dashboard-mode .client-panel{display:none!i
       <button class="btn" onclick="mostrarVista('principal')">← Volver</button>
     </div>
     <div style="margin-top:16px;padding:14px;border:1px solid #f0d9a8;border-radius:12px;background:#fffaf0;color:#704b00;font-size:13px;line-height:1.5">
-      <b>Importante:</b> se reconoce el DNI tanto en una columna llamada DNI como en <b>Nro_doc</b> (formato del archivo “Consulta Cancela Deuda”). La carga actualiza únicamente la base independiente de Libre de Deuda. Este reporte no contiene un enlace al PDF del certificado, por lo que permite importar y buscar registros, pero no enviar automáticamente un certificado hasta incorporar el documento correspondiente y definir el criterio de aprobación.
+      <b>Formato compatible:</b> este importador reconoce el Excel “Consulta Cancela Deuda”, incluida la columna <code>Nro_doc</code> como DNI, y toma <code>Apellido</code>, <code>Nombre</code> y <code>Telefono_1</code>. El archivo recibido contiene datos de clientes, pero no trae el PDF ni un enlace al certificado. Por seguridad, el chat solo enviará un documento cuando exista un enlace válido; si falta, derivará la solicitud a un asesor. La carga no modifica conversaciones ni otras bases.
     </div>
     <div style="margin-top:14px;padding:16px;border:1px solid #dce3e8;border-radius:12px;background:#f8fafb">
       <div style="font-weight:800;margin-bottom:8px">1. Actualizar Excel del día</div>
@@ -1546,33 +1546,27 @@ function renderizarBaseClientes(){
 ========================= */
 async function cargarBaseLibreDeuda(){
   try{
-    const metaSnap=await get(ref(db,"libresDeudaImportacionActual"));
-    const meta=metaSnap.exists()?metaSnap.val():null;
-    // Las importaciones nuevas se guardan por bloques en una ruta versionada.
-    // Se conserva compatibilidad con la base anterior /libresDeudaBase.
-    const rutaBase=meta?.basePath || "libresDeudaBase";
-    const snap=await get(ref(db,rutaBase));
+    const snap=await get(ref(db,"libresDeudaBase"));
     baseLibresDeuda=snap.exists()?(snap.val()||{}):{};
     renderizarLibreDeuda();
+    const metaSnap=await get(ref(db,"libresDeudaImportacionActual"));
+    const meta=metaSnap.exists()?metaSnap.val():null;
     const el=$("excelLibreDeudaMeta");
     if(el) el.textContent=meta?`Última carga: ${formatFecha(meta.fecha)} · Archivo: ${meta.archivo||"—"} · Por: ${meta.usuario||"—"}`:"Todavía no se cargó un Excel de Libre de Deuda.";
   }catch(e){console.error("No se pudo cargar la base de Libre de Deuda:",e);}
 }
-function normalizarEncabezadoLibreDeuda(valor){
-  return String(valor??"").normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]/g,"");
-}
-function encontrarColumnaLibreDeuda(row,patrones){
-  const claves=Object.keys(row||{});
-  const buscadas=patrones.map(normalizarEncabezadoLibreDeuda);
-  return claves.find(k=>buscadas.includes(normalizarEncabezadoLibreDeuda(k))) ||
-    claves.find(k=>buscadas.some(p=>p && normalizarEncabezadoLibreDeuda(k).includes(p))) || "";
+function claveColumnaLibreDeuda(valor){
+  return String(valor??"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]/g,"");
 }
 function valorTextoColumna(row,patrones){
-  const col=encontrarColumnaLibreDeuda(row,patrones);
+  const claves=Object.keys(row||{});
+  const normalizados=patrones.map(claveColumnaLibreDeuda);
+  let col=claves.find(k=>normalizados.includes(claveColumnaLibreDeuda(k)));
+  if(!col) col=claves.find(k=>normalizados.some(p=>p && claveColumnaLibreDeuda(k).includes(p)));
   return col?String(row[col]??"").trim():"";
 }
 function urlDocumentoLibreDeuda(row){
-  const v=valorTextoColumna(row,["pdf_url","pdf url","url pdf","url","enlace","link","documento pdf","archivo pdf","libre de deuda pdf","libre_de_deuda_url","url certificado","link certificado"]);
+  const v=valorTextoColumna(row,["PDF_URL","PDF URL","URL PDF","URL","Enlace","Link","Documento PDF","Archivo PDF","Libre de deuda PDF","libre_de_deuda_url"]);
   return /^https?:\/\//i.test(v)?v:"";
 }
 async function importarExcelLibreDeuda(){
@@ -1581,76 +1575,61 @@ async function importarExcelLibreDeuda(){
   if(!file){alert("Seleccioná el Excel actualizado.");return;}
   if(typeof XLSX==="undefined"){alert("No se pudo cargar el lector de Excel. Actualizá la página e intentá nuevamente.");return;}
   if(excelLibreDeudaImportando)return;
-  if(!confirm("Se actualizará la base independiente de Libre de Deuda con los registros del Excel seleccionado. La base anterior será reemplazada solo si se detectan DNI válidos. ¿Continuar?"))return;
+  if(!confirm("Se actualizará la base de Libre de Deuda con los registros del Excel seleccionado. La base anterior será reemplazada solo después de validar que el archivo tenga DNI. ¿Continuar?"))return;
   excelLibreDeudaImportando=true;
   const btn=$("btnImportarLibreDeuda"),status=$("excelLibreDeudaStatus");
   if(btn)btn.disabled=true;
-  if(status)status.textContent="Leyendo y validando el Excel...";
+  if(status)status.textContent="Leyendo el Excel y buscando la columna Nro_doc...";
   try{
     const buffer=await file.arrayBuffer();
     const workbook=XLSX.read(buffer,{type:"array",cellDates:true});
-    const nuevos={};let filasTotales=0,sinDni=0,duplicados=0,conPdf=0;
+    const nuevos={};let filasTotales=0,sinDni=0,duplicados=0,conPdf=0,hojaDni="";
     for(const sheetName of workbook.SheetNames){
-      const rows=XLSX.utils.sheet_to_json(workbook.Sheets[sheetName],{defval:"",raw:false});
+      const sheet=workbook.Sheets[sheetName];
+      if(!sheet)continue;
+      const rows=XLSX.utils.sheet_to_json(sheet,{defval:"",raw:false});
       for(const row of rows){
         filasTotales++;
-        // Acepta el formato del reporte del estudio (Nro_doc) y otros encabezados comunes.
-        // tipo_doc es el tipo (DNI), no el número: nunca debe usarse como documento.
-        const dniReal=normalizarDniBase(valorTextoColumna(row,[
-          "dni","nro_doc","nro doc","nro documento","numero documento","numero de documento",
-          "documento","documento de identidad","nro dni","numero dni"
-        ]));
-        if(!dniReal || dniReal.length<6 || dniReal.length>12){sinDni++;continue;}
-        const nombreDirecto=valorTextoColumna(row,["nombre y apellido","apellido y nombre","nombre completo","titular","cliente"]);
-        const apellido=valorTextoColumna(row,["apellido"]);
-        const nombrePila=valorTextoColumna(row,["nombre"]);
-        const nombre=nombreDirecto || [apellido,nombrePila].filter(Boolean).join(", ");
-        const telefono=valorTextoColumna(row,["telefono","telefono 1","teléfono","celular","movil","telefono buscado"]);
-        const situacion=valorTextoColumna(row,["estado del documento","estado","situacion","situación","habilitado","aprobado"]);
-        const cancelaDeuda=valorTextoColumna(row,["cancela deuda","cancela_deuda"]);
-        const planPago=valorTextoColumna(row,["plan de pago","plan_pago"]);
-        const deuda=valorTextoColumna(row,["deuda"]);
-        const ultimoPago=valorTextoColumna(row,["ultimo pago","ultimo pago texto","fecha ult pago"]);
-        const fechaVencimiento=valorTextoColumna(row,["fecha vto cuota","fecha_vto_cuota"]);
-        const montoCuota=valorTextoColumna(row,["monto cuota","monto_cuota"]);
+        // En el Excel original el DNI se llama Nro_doc, no DNI.
+        const dni=normalizarDniBase(valorTextoColumna(row,["Nro_doc","Nro doc","DNI","Documento","Documento de identidad","Nro DNI","Numero DNI","Número de documento"]));
+        if(!dni){sinDni++;continue;}
+        hojaDni=sheetName;
+        const apellido=valorTextoColumna(row,["Apellido","Apellidos"]);
+        const nombrePila=valorTextoColumna(row,["Nombre","Nombres"]);
+        const nombre=valorTextoColumna(row,["Nombre y apellido","Apellido y nombre","Titular","Cliente"]) || [apellido,nombrePila].filter(Boolean).join(", ");
+        const telefono=valorTextoColumna(row,["Telefono_1","Telefono 1","Teléfono 1","Telefono_2","Telefono","Teléfono","Celular","Movil"]);
+        const estado=valorTextoColumna(row,["Estado del documento","Estado","Situacion","Situación","Habilitado","Aprobado"]);
         const pdfUrl=urlDocumentoLibreDeuda(row);
-        if(nuevos[dniReal])duplicados++;
-        nuevos[dniReal]={
-          dni:dniReal,nombre,apellido,nombrePila,telefono,estado:situacion,
-          cancelaDeuda,planPago,deuda,ultimoPago,fechaVencimiento,montoCuota,
-          pdfUrl,documentoDisponible:!!pdfUrl,hoja:sheetName,archivo:file.name,fechaImportacion:Date.now()
-        };
+        if(nuevos[dni])duplicados++;
+        nuevos[dni]={dni,nombre,apellido,nombrePila,telefono,estado,pdfUrl,documentoDisponible:!!pdfUrl,hoja:sheetName,archivo:file.name,fechaImportacion:Date.now()};
         if(pdfUrl)conPdf++;
       }
     }
-    if(!Object.keys(nuevos).length)throw new Error("No se encontraron filas con una columna DNI/Nro_doc válida. No se modificó la base anterior.");
+    const dnis=Object.keys(nuevos);
+    if(!dnis.length)throw new Error("No se encontró la columna Nro_doc/DNI ni filas con DNI válidos. La base anterior no se modificó.");
     const importId=`${Date.now()}_${normalizarTexto(file.name).replace(/[^a-z0-9]+/g,"_").slice(0,40)}`;
-    const basePath=`libresDeudaImportaciones/${importId}/registros`;
-    const claves=Object.keys(nuevos);
-    // No enviar la base completa en una sola operación: el Excel genera más de 16 MB.
-    // Se carga en bloques a una ruta nueva y recién después se cambia la ruta activa.
-    const TAMANO_BLOQUE=300;
-    let bloquesSubidos=0;
-    for(let i=0;i<claves.length;i+=TAMANO_BLOQUE){
+    const meta={archivo:file.name,fecha:Date.now(),usuario:nombreActual,email:usuarioActual?.email||"",filasTotales,registros:dnis.length,sinDni,duplicados,conPdf,hoja:hojaDni,importId};
+    if(status)status.textContent=`Validado: ${dnis.length.toLocaleString("es-AR")} DNI. Guardando en bloques para evitar errores por tamaño...`;
+    // Ya validamos DNI. Se reemplaza solo el nodo dedicado y se escriben bloques pequeños.
+    await set(ref(db,"libresDeudaBase"),{});
+    const tamBloque=800;
+    for(let i=0;i<dnis.length;i+=tamBloque){
       const bloque={};
-      for(const dni of claves.slice(i,i+TAMANO_BLOQUE)) bloque[dni]=nuevos[dni];
-      await update(ref(db,basePath),bloque);
-      bloquesSubidos++;
-      if(status)status.textContent=`Subiendo registros a Firebase: ${Math.min(i+TAMANO_BLOQUE,claves.length).toLocaleString("es-AR")} de ${claves.length.toLocaleString("es-AR")}...`;
+      for(const dni of dnis.slice(i,i+tamBloque))bloque[dni]=nuevos[dni];
+      await update(ref(db,"libresDeudaBase"),bloque);
+      if(status)status.textContent=`Guardando registros: ${Math.min(i+tamBloque,dnis.length).toLocaleString("es-AR")} de ${dnis.length.toLocaleString("es-AR")}...`;
     }
-    const meta={archivo:file.name,fecha:Date.now(),usuario:nombreActual,email:usuarioActual?.email||"",filasTotales,registros:claves.length,sinDni,duplicados,conPdf,importId,basePath,bloquesSubidos};
-    // Activar la nueva base solo después de que todos los bloques se guardaron.
-    await set(ref(db,`historialImportacionesLibreDeuda/${importId}`),meta);
     await set(ref(db,"libresDeudaImportacionActual"),meta);
+    await set(ref(db,`historialImportacionesLibreDeuda/${importId}`),meta);
     baseLibresDeuda=nuevos;
     renderizarLibreDeuda();
     const m=$("excelLibreDeudaMeta");if(m)m.textContent=`Última carga: ${formatFecha(meta.fecha)} · Archivo: ${file.name} · Por: ${nombreActual}`;
-    if(status)status.textContent=`✅ Actualización completa: ${meta.registros.toLocaleString("es-AR")} registros en ${bloquesSubidos} bloques; ${conPdf} con enlace al documento; ${sinDni} filas sin DNI válido omitidas${duplicados?`; ${duplicados} DNI repetidos (se conservó el último registro)`:""}. ${conPdf===0?"El archivo no trae enlaces a certificados; todavía no se pueden enviar automáticamente.":""}`;
+    if(status)status.textContent=`✅ Excel importado: ${meta.registros.toLocaleString("es-AR")} clientes por DNI (${hojaDni}); ${conPdf} con enlace a documento; ${sinDni} filas sin DNI omitidas${duplicados?`; ${duplicados} DNI repetidos (se conservó la última fila)`:""}.`+(conPdf===0?" El Excel no contiene enlaces a certificados: las solicitudes se derivarán a un asesor hasta cargar los documentos o sus enlaces.":"");
     input.value="";
   }catch(e){
     console.error("Error al importar Libre de Deuda:",e);
-    if(status)status.textContent="❌ No se pudo actualizar: "+(e?.message||"revisá que el Excel tenga una columna DNI o Nro_doc válida.")+" La base anterior se conserva si no se encontraron DNI válidos.";
-    alert("No se pudo importar el Excel de Libre de Deuda. Detalle: "+(e?.message||"error desconocido")+". La base anterior sigue activa si la carga no llegó a completarse.");
+    if(status)status.textContent=`❌ No se pudo actualizar: ${e?.message||e}. Si el error ocurrió al guardar, revisá la conexión y la consola; la lectura del DNI reconoce Nro_doc.`;
+    alert(`No se pudo importar el Excel de Libre de Deuda. Detalle: ${e?.message||"error desconocido"}`);
   }finally{excelLibreDeudaImportando=false;if(btn)btn.disabled=false;}
 }
 function renderizarLibreDeuda(){
@@ -1658,9 +1637,9 @@ function renderizarLibreDeuda(){
   const registros=Object.values(baseLibresDeuda||{});
   if(count)count.textContent=`${registros.length} registros`;
   const q=normalizarTexto($("libreDeudaSearch")?.value||"");
-  const filtrados=q?registros.filter(r=>normalizarTexto(`${r.dni||""} ${r.nombre||""} ${r.apellido||""} ${r.nombrePila||""} ${r.telefono||""}`).includes(q)):registros;
+  const filtrados=q?registros.filter(r=>normalizarTexto(`${r.dni||""} ${r.nombre||""} ${r.telefono||""}`).includes(q)):registros;
   if(!filtrados.length){table.innerHTML='<div class="empty">No hay registros para mostrar. Cargá el Excel actualizado o cambiá la búsqueda.</div>';return;}
-  table.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:12px;min-width:720px"><thead><tr><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">DNI</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">Nombre</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">Teléfono</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">Estado</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">Documento</th></tr></thead><tbody>${filtrados.slice(0,300).map(r=>`<tr><td style="padding:7px;border-bottom:1px solid #eef1f4">${escapeHtml(r.dni||"")}</td><td style="padding:7px;border-bottom:1px solid #eef1f4">${escapeHtml(r.nombre||"")}</td><td style="padding:7px;border-bottom:1px solid #eef1f4">${escapeHtml(r.telefono||"")}</td><td style="padding:7px;border-bottom:1px solid #eef1f4">${escapeHtml([r.estado||"",r.cancelaDeuda?`Cancela deuda: ${r.cancelaDeuda}`:"",r.planPago?`Plan de pago: ${r.planPago}`:"",r.deuda?`Deuda: ${r.deuda}`:"",r.ultimoPago?`Último pago: ${r.ultimoPago}`:""].filter(Boolean).join(" · ")||"Sin estado")}</td><td style="padding:7px;border-bottom:1px solid #eef1f4">${r.pdfUrl?`<a href="${escapeHtml(r.pdfUrl)}" target="_blank" rel="noopener noreferrer">Abrir documento</a>`:'<span style="color:#a15c00">Falta enlace</span>'}</td></tr>`).join("")}</tbody></table>${filtrados.length>300?`<div class="small" style="margin-top:8px">Se muestran 300 de ${filtrados.length}. Usá el buscador para encontrar un DNI.</div>`:""}`;
+  table.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:12px;min-width:720px"><thead><tr><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">DNI</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">Nombre</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">Teléfono</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">Estado</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">Documento</th></tr></thead><tbody>${filtrados.slice(0,300).map(r=>`<tr><td style="padding:7px;border-bottom:1px solid #eef1f4">${escapeHtml(r.dni||"")}</td><td style="padding:7px;border-bottom:1px solid #eef1f4">${escapeHtml(r.nombre||"")}</td><td style="padding:7px;border-bottom:1px solid #eef1f4">${escapeHtml(r.telefono||"")}</td><td style="padding:7px;border-bottom:1px solid #eef1f4">${escapeHtml(r.estado||"Sin estado")}</td><td style="padding:7px;border-bottom:1px solid #eef1f4">${r.pdfUrl?`<a href="${escapeHtml(r.pdfUrl)}" target="_blank" rel="noopener noreferrer">Abrir documento</a>`:'<span style="color:#a15c00">Falta enlace</span>'}</td></tr>`).join("")}</tbody></table>${filtrados.length>300?`<div class="small" style="margin-top:8px">Se muestran 300 de ${filtrados.length}. Usá el buscador para encontrar un DNI.</div>`:""}`;
 }
 
 function mostrarVista(vista){
