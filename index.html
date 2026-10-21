@@ -994,9 +994,9 @@
         } else {
           const estado=normalizarTexto(registro.estado||"");
           const estadoNoDisponible=estado==="no" || ["pendiente","rechazado","no emitido","no habilitado","no disponible","sin aprobar","inactivo","baja","no corresponde"].some(x=>estado.includes(x));
-          const url=String(registro.pdfUrl||registro.pdf_url||registro.url||registro.enlace||"").trim();
+          const url=String(registro.pdfUrl||registro.pdf_url||registro.pdfURL||registro.url||registro.URL||registro.enlace||registro.link||registro.documentoUrl||"").trim();
           if(estadoNoDisponible || !/^https?:\/\//i.test(url)){
-            await derivar(estadoNoDisponible?`Libre de Deuda: el estado del registro requiere revisión (${registro.estado}).`:"Libre de Deuda: el registro no tiene un enlace válido al documento.","Encontramos tu registro, pero el documento necesita revisión o todavía no tiene un enlace disponible. Voy a derivar tu solicitud a un asesor.");
+            await derivar(estadoNoDisponible?`Libre de Deuda: el estado del registro requiere revisión (${registro.estado}).`:"Libre de Deuda: el registro no tiene un enlace válido al documento.","Encontramos tu registro en el Excel, pero ese archivo no contiene el certificado ni un enlace para descargarlo. Voy a derivar tu solicitud a un asesor para que gestione el documento.");
           } else {
             const claim=await runTransaction(enviadosRef,actual=>{
               if(actual && (actual.estado==="enviado" || actual.estado==="procesando")) return;
