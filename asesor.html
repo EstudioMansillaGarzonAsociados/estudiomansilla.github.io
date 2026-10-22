@@ -1600,8 +1600,11 @@ async function importarExcelLibreDeuda(){
         const telefono=valorTextoColumna(row,["Telefono_1","Telefono 1","Teléfono 1","Telefono_2","Telefono","Teléfono","Celular","Movil"]);
         const estado=valorTextoColumna(row,["Estado del documento","Estado","Situacion","Situación","Habilitado","Aprobado"]);
         const pdfUrl=urlDocumentoLibreDeuda(row);
+        const cancelaDeuda=valorTextoColumna(row,["Cancela deuda","Cancela_deuda","Cancela deuda"]);
+        const fechaUltimoPago=valorTextoColumna(row,["Ultimo pago","Último pago","Ultimo pago Texto","Último pago Texto"]);
+        const fechaActualizacionPP=valorTextoColumna(row,["Fecha_de_actualizacion_PP","Fecha de actualizacion PP"]);
         if(nuevos[dni])duplicados++;
-        nuevos[dni]={dni,nombre,apellido,nombrePila,telefono,estado,pdfUrl,documentoDisponible:!!pdfUrl,hoja:sheetName,archivo:file.name,fechaImportacion:Date.now()};
+        nuevos[dni]={dni,nombre,apellido,nombrePila,telefono,estado,pdfUrl,cancelaDeuda,fechaUltimoPago,fechaActualizacionPP,documentoDisponible:!!pdfUrl,hoja:sheetName,archivo:file.name,fechaImportacion:Date.now()};
         if(pdfUrl)conPdf++;
       }
     }
