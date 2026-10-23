@@ -306,6 +306,43 @@ body.chat-wide .client-panel{width:300px;flex:0 0 300px}
 .preference-card input[type=file]{width:100%;font-size:12px}
 .preference-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px;flex-wrap:wrap}
 @media(max-width:560px){.preferences-grid{grid-template-columns:1fr}}
+
+/* AJUSTE DE ANCHO: ocupar todo el espacio disponible de la pestaña */
+html, body { width:100%; min-width:0; }
+#app { width:100%; min-width:0; }
+#app > .main { flex:1 1 auto; width:calc(100% - 250px); max-width:none; min-width:0; }
+body.dashboard-mode #app > .main {
+  display:block !important;
+  width:calc(100% - 250px) !important;
+  max-width:none !important;
+  min-width:0 !important;
+  flex:1 1 auto !important;
+  overflow:auto;
+}
+body.dashboard-mode #app > .main > .list-panel {
+  display:flex !important;
+  width:100% !important;
+  max-width:none !important;
+  min-width:0 !important;
+  flex:1 1 auto !important;
+  height:100%;
+}
+body.dashboard-mode #app > .main > .list-panel > .list-header,
+body.dashboard-mode #app > .main > .list-panel > .items {
+  width:100% !important;
+  max-width:none !important;
+  min-width:0 !important;
+}
+body.dashboard-mode .supervision-wrap { width:100% !important; max-width:none !important; margin:0 !important; }
+body.dashboard-mode .groups-admin-grid { grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr)); }
+body.dashboard-mode .sup-grid { grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr)); }
+body.dashboard-mode .sup-panels { grid-template-columns:repeat(auto-fit,minmax(min(360px,100%),1fr)); }
+@media(max-width:650px) {
+  #app { height:auto; min-height:100vh; }
+  #app > .main, body.dashboard-mode #app > .main { width:100% !important; }
+  body.dashboard-mode .groups-admin-grid { grid-template-columns:1fr; }
+}
+
 </style>
 </head>
 
