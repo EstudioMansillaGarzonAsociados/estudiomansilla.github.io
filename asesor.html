@@ -265,6 +265,41 @@ body.dashboard-mode .chat-panel,body.dashboard-mode .client-panel{display:none!i
 @media(max-width:1000px){.sup-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.sup-panels{grid-template-columns:1fr}}
 @media(max-width:560px){.sup-grid{grid-template-columns:1fr 1fr}.sup-kpi{padding:11px}.sup-kpi-value{font-size:22px}.sup-filters label,.sup-filters select{width:100%}}
 
+
+.nav-section-label{padding:14px 13px 4px;color:#8a95a3;font-size:10px;font-weight:800;letter-spacing:.09em}
+.internal-chat-shell{display:flex;flex-direction:column;min-height:65vh;background:#fff;border:1px solid #e1e6eb;border-radius:14px;overflow:hidden}
+.internal-chat-heading{padding:14px 16px;border-bottom:1px solid #e8edf1;font-weight:800;display:flex;justify-content:space-between;gap:12px;align-items:center}
+.internal-chat-messages{padding:16px;display:flex;flex-direction:column;gap:10px;overflow:auto;max-height:58vh}
+.internal-message{max-width:82%;align-self:flex-start;background:#f0f4f7;border-radius:12px;padding:10px 12px;overflow-wrap:anywhere}
+.internal-message.mine{align-self:flex-end;background:#dff5e8}
+.internal-message-meta{font-size:10px;color:#667085;margin-bottom:4px;font-weight:700}
+.internal-chat-compose{display:flex;gap:8px;padding:12px;border-top:1px solid #e8edf1}
+.internal-chat-compose input{flex:1;min-width:0;border:1px solid #d5dbe1;border-radius:9px;padding:11px}
+.groups-admin-grid{display:grid;grid-template-columns:repeat(3,minmax(220px,1fr));gap:12px}
+.group-admin-card{background:#fff;border:1px solid #e1e6eb;border-radius:13px;padding:13px;min-width:0}
+.group-admin-card h3{margin:0 0 10px;font-size:15px}
+.group-person-row{display:flex;align-items:center;justify-content:space-between;gap:7px;padding:8px 0;border-top:1px solid #eef1f4;font-size:12px}
+.group-person-row select{min-width:95px;max-width:125px;border:1px solid #d5dbe1;border-radius:7px;padding:6px;background:white}
+.group-admin-note{font-size:12px;color:#667085;margin:0 0 12px}
+@media(max-width:900px){.groups-admin-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.groups-admin-grid{grid-template-columns:1fr}.internal-chat-compose{flex-direction:column}.internal-chat-compose button{width:100%}}
+
+/* Preferencias individuales por usuario */
+.user-identity{display:flex;align-items:center;gap:9px;margin-bottom:8px}
+.user-avatar{width:38px;height:38px;border-radius:50%;background:var(--verde);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0;overflow:hidden}
+.user-avatar img{width:100%;height:100%;object-fit:cover}
+.user-identity-text{min-width:0}
+.user-identity-text .user-name{overflow-wrap:anywhere}
+body.chat-wide .list-panel{width:320px}
+body.chat-wide .client-panel{width:300px;flex:0 0 300px}
+.preferences-modal{width:min(650px,100%)}
+.preferences-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.preference-card{border:1px solid var(--gris2);border-radius:12px;padding:13px;background:#fff}
+.preference-card label{display:block;font-weight:700;font-size:13px;margin-bottom:7px}
+.preference-card input[type=color]{width:100%;height:42px;border:1px solid #d7dde3;border-radius:8px;padding:3px;background:#fff}
+.preference-card input[type=file]{width:100%;font-size:12px}
+.preference-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px;flex-wrap:wrap}
+@media(max-width:560px){.preferences-grid{grid-template-columns:1fr}}
 </style>
 </head>
 
@@ -299,8 +334,7 @@ body.dashboard-mode .chat-panel,body.dashboard-mode .client-panel{display:none!i
     </div>
 
     <div class="user-box">
-      <div id="currentUserName" class="user-name">—</div>
-      <div id="currentUserRole" class="user-role">—</div>
+      <div class="user-identity"><div id="currentUserAvatar" class="user-avatar">EM</div><div class="user-identity-text"><div id="currentUserName" class="user-name">—</div><div id="currentUserRole" class="user-role">—</div></div></div>
       <div class="presence">
         <span id="presenceDot" class="presence-dot"></span>
         <span id="presenceText">Sin jornada</span>
@@ -333,11 +367,19 @@ body.dashboard-mode .chat-panel,body.dashboard-mode .client-panel{display:none!i
       <button id="navSOS" class="sos-nav hidden" onclick="mostrarVista('sos')">
         <span>🚨 SOS URGENTES</span><span id="badgeSOS" class="badge">0</span>
       </button>
+      <div class="nav-section-label">CALENDARIOS</div>
       <button id="navAgenda" onclick="mostrarVista('agenda')">
-        <span>📅 Agenda gestores</span>
+        <span>🕐 Jornada del equipo</span>
       </button>
       <button id="navVencimientos" onclick="mostrarVista('vencimientos')">
-        <span>📆 Vencimientos</span>
+        <span>📆 Calendario de clientes</span>
+      </button>
+      <div class="nav-section-label">EQUIPO</div>
+      <button id="navChatInterno" class="hidden" onclick="mostrarVista('chatInterno')">
+        <span>💬 Chat interno</span><span id="badgeChatInterno" class="badge">0</span>
+      </button>
+      <button id="navGrupos" class="hidden" onclick="mostrarVista('grupos')">
+        <span>👥 Grupos y equipos</span><span class="badge">Admin</span>
       </button>
       <button id="navBaseClientes" class="hidden" onclick="mostrarVista('baseClientes')">
         <span>📊 Base de clientes</span>
@@ -345,6 +387,8 @@ body.dashboard-mode .chat-panel,body.dashboard-mode .client-panel{display:none!i
       <button id="navLibreDeuda" class="hidden" onclick="mostrarVista('libreDeuda')">
         <span>📄 Libre de deuda</span><span class="badge">Excel</span>
       </button>
+      <div class="nav-section-label">PERSONAL</div>
+      <button id="navPreferencias" onclick="abrirPreferencias()"><span>🎨 Mi página</span><span class="badge">Perfil</span></button>
     </nav>
 
     <div id="sosPanel" class="sos-panel hidden">
@@ -626,7 +670,7 @@ const auth = getAuth(app);
 const db = getDatabase(app);
 const storage = getStorage(app);
 
-const equipos = {
+let equipos = {
   "Verde": {
     seniors: ["Daniela","Rocio"],
     gestores: ["Maria Paz","Agustina","Pablo","Florencia"]
@@ -646,8 +690,15 @@ const equipos = {
   "Cuoteros": {
     seniors: ["Rocio","Daniela","Antonela","Pilar","Moriana"],
     gestores: ["Alejo Cuotero","Gregorio"]
-  }
+  },
+  "N2": { seniors: [], gestores: [] },
+  "N3": { seniors: [], gestores: [] }
 };
+const equiposPorDefecto = JSON.parse(JSON.stringify(equipos));
+let equiposConfiguracionCargada = false;
+let chatInternoMensajes = {};
+let chatInternoUltimaLectura = 0;
+let chatInternoLeidosCache = {};
 
 const perfiles = {
   "Milagros":"supervisor",
@@ -720,6 +771,8 @@ const emailsPorNombre = {
 };
 
 let usuarioActual = null;
+let preferenciasActuales = { colorPrincipal:"#176b4d", colorSuave:"#e9f6ef", layoutChats:"wide", pantallaInicial:"principal", fotoUrl:"" };
+let archivoFotoPendiente = null;
 let nombreActual = "";
 let baseClientes = {};
 let baseLibresDeuda = {};
@@ -1601,10 +1654,10 @@ async function importarExcelLibreDeuda(){
         const estado=valorTextoColumna(row,["Estado del documento","Estado","Situacion","Situación","Habilitado","Aprobado"]);
         const pdfUrl=urlDocumentoLibreDeuda(row);
         const cancelaDeuda=valorTextoColumna(row,["Cancela deuda","Cancela_deuda","Cancela deuda"]);
-        const fechaUltimoPago=valorTextoColumna(row,["Ultimo pago","Último pago","Ultimo pago Texto","Último pago Texto"]);
+        const fechaUltimoPago=valorTextoColumna(row,["Ultimo pago Texto","Último pago Texto","Ultimo pago","Último pago"]);
         const fechaActualizacionPP=valorTextoColumna(row,["Fecha_de_actualizacion_PP","Fecha de actualizacion PP"]);
         if(nuevos[dni])duplicados++;
-        nuevos[dni]={dni,nombre,apellido,nombrePila,telefono,estado,pdfUrl,cancelaDeuda,fechaUltimoPago,fechaActualizacionPP,documentoDisponible:!!pdfUrl,hoja:sheetName,archivo:file.name,fechaImportacion:Date.now()};
+        nuevos[dni]={dni,nombre,apellido,nombrePila,telefono,estado,pdfUrl,cancelaDeuda,fechaUltimoPago,ultimoPagoTexto:valorTextoColumna(row,["Ultimo pago Texto","Último pago Texto"]),fechaActualizacionPP,documentoDisponible:!!pdfUrl,hoja:sheetName,archivo:file.name,fechaImportacion:Date.now()};
         if(pdfUrl)conPdf++;
       }
     }
@@ -1661,18 +1714,22 @@ function mostrarVista(vista){
     vistaActual="principal";
     return mostrarVista("principal");
   }
+  if(vista==="chatInterno" && !puedeVerChatInterno()) return mostrarVista("principal");
+  if(vista==="grupos" && !esSupervisor()) return mostrarVista("principal");
 
   document.getElementById("baseClientesView")?.classList.add("hidden");
   document.getElementById("libreDeudaView")?.classList.add("hidden");
   vistaActual=vista;
   gestorSeleccionado=null;
   document.querySelectorAll(".nav button").forEach(b=>b.classList.remove("active"));
-  const mapa={supervision:"navSupervision",principal:"navPrincipal",agentes:"navAgentes",sos:"navSOS",sinAsignar:"navSinAsignar",historial:"navHistorial",agenda:"navAgenda",vencimientos:"navVencimientos",baseClientes:"navBaseClientes",libreDeuda:"navLibreDeuda"};
+  const mapa={supervision:"navSupervision",principal:"navPrincipal",agentes:"navAgentes",sos:"navSOS",sinAsignar:"navSinAsignar",historial:"navHistorial",agenda:"navAgenda",vencimientos:"navVencimientos",chatInterno:"navChatInterno",grupos:"navGrupos",baseClientes:"navBaseClientes",libreDeuda:"navLibreDeuda"};
   $(mapa[vista])?.classList.add("active");
 
   $("listSearch").value="";
   $("items").innerHTML="";
-  document.body.classList.toggle("dashboard-mode",vista==="supervision");
+  document.body.classList.toggle("dashboard-mode",["supervision","chatInterno","grupos"].includes(vista));
+  if(vista==="chatInterno") { renderizarChatInterno(); return; }
+  if(vista==="grupos") { renderizarAdministracionGrupos(); return; }
   if(vista==="supervision"){
     if(!esSupervisor()) return mostrarVista("principal");
     renderizarSupervision();
@@ -1714,6 +1771,8 @@ function refrescarVistaActual(){
   else if(vistaActual==="historial") renderizarHistorial();
   else if(vistaActual==="agenda") renderizarAgenda();
   else if(vistaActual==="vencimientos") renderizarVencimientos();
+  else if(vistaActual==="chatInterno") renderizarChatInterno();
+  else if(vistaActual==="grupos") renderizarAdministracionGrupos();
 }
 
 function limpiarBusqueda(){
@@ -2910,6 +2969,97 @@ function escucharAgenda(){
   });
 }
 
+/* ---------- CHAT INTERNO PRIVADO DE SENIORS Y SUPERVISORES ---------- */
+function puedeVerChatInterno(){ return esSenior() || esSupervisor(); }
+function actualizarBadgeChatInterno(){
+  const badge=$("badgeChatInterno"); if(!badge) return;
+  const leidos=Number(chatInternoLeidosCache?.[usuarioActual?.uid]||0);
+  const nuevos=Object.values(chatInternoMensajes||{}).filter(m=>(m?.fecha||0)>leidos && normalizarTexto(m?.autorEmail)!==normalizarTexto(usuarioActual?.email)).length;
+  badge.textContent=nuevos>99?"99+":String(nuevos);
+  badge.classList.toggle("hidden",nuevos===0);
+}
+function renderizarChatInterno(){
+  if(!puedeVerChatInterno()) return;
+  $("sectionTitle").textContent="Chat interno privado";
+  $("listSearch").style.display="none";
+  const msgs=Object.entries(chatInternoMensajes||{}).map(([id,m])=>({...m,_id:id})).sort((a,b)=>(a.fecha||0)-(b.fecha||0));
+  $("items").innerHTML=`<div class="internal-chat-shell">
+    <div class="internal-chat-heading"><span>🔒 Chat interno — Seniors y Supervisores</span><span class="small">Historial permanente</span></div>
+    <div id="internalChatMessages" class="internal-chat-messages">${msgs.length?msgs.map(m=>`<div class="internal-message ${normalizarTexto(m.autorEmail)===normalizarTexto(usuarioActual?.email)?"mine":""}"><div class="internal-message-meta">${escapeHtml(m.autor||"Equipo directivo")} · ${m.fecha?new Date(m.fecha).toLocaleString("es-AR"):""}</div><div>${escapeHtml(m.texto||"").replace(/\n/g,"<br>")}</div></div>`).join(""):`<div class="empty">Todavía no hay mensajes. El chat queda disponible para el equipo directivo y conserva el historial.</div>`}</div>
+    <form class="internal-chat-compose" onsubmit="event.preventDefault();enviarMensajeChatDirectivo()"><input id="internalChatInput" maxlength="3000" placeholder="Escribí un mensaje para seniors y supervisores…" autocomplete="off"><button class="primary" type="submit">Enviar</button></form>
+  </div>`;
+  const box=$("internalChatMessages"); if(box) box.scrollTop=box.scrollHeight;
+  chatInternoUltimaLectura=Date.now();
+  if(usuarioActual?.uid) set(ref(db,`chatInternoLeidos/${usuarioActual.uid}`),chatInternoUltimaLectura).catch(()=>{});
+  chatInternoLeidosCache[usuarioActual?.uid]=chatInternoUltimaLectura;
+  actualizarBadgeChatInterno();
+}
+async function enviarMensajeChatDirectivo(){
+  if(!puedeVerChatInterno()) return;
+  const input=$("internalChatInput"); const texto=String(input?.value||"").trim();
+  if(!texto) return;
+  input.disabled=true;
+  try{
+    await set(push(ref(db,"chatInternoMensajes")),{texto,autor:nombreActual,autorEmail:usuarioActual?.email||"",autorUid:usuarioActual?.uid||"",rol:esSupervisor()?"supervisor":"senior",fecha:Date.now()});
+    input.value="";
+  }catch(e){alert("No se pudo enviar el mensaje. Revisá los permisos de Firebase.");console.error(e)}
+  finally{if(input)input.disabled=false;input?.focus()}
+}
+function escucharChatInterno(){
+  if(!puedeVerChatInterno()) return;
+  onValue(ref(db,"chatInternoMensajes"),snap=>{chatInternoMensajes=snap.val()||{};actualizarBadgeChatInterno();if(vistaActual==="chatInterno")renderizarChatInterno();},()=>{});
+  onValue(ref(db,"chatInternoLeidos"),snap=>{chatInternoLeidosCache=snap.val()||{};actualizarBadgeChatInterno();},()=>{});
+}
+
+/* ---------- ADMINISTRACIÓN DE GRUPOS (SOLO SUPERVISORES) ---------- */
+function renderizarAdministracionGrupos(){
+  if(!esSupervisor()) return;
+  $("sectionTitle").textContent="Administración de grupos";
+  $("listSearch").style.display="none";
+  const todos=obtenerTodosLosGestores();
+  const tarjetas=Object.keys(equipos).map(equipo=>{
+    const gestores=equipos[equipo]?.gestores||[];
+    return `<section class="group-admin-card"><h3>${escapeHtml(equipo)} <span class="small">(${gestores.length})</span></h3>${gestores.length?gestores.map(g=>`<div class="group-person-row"><b>${escapeHtml(g)}</b><span>Gestor/a</span></div>`).join(""):`<div class="small">Sin gestores asignados</div>`}</section>`;
+  }).join("");
+  const filas=todos.map(g=>{
+    const actual=obtenerEquipoDeGestor(g)[0]||"";
+    return `<div class="group-person-row"><b>${escapeHtml(g)}</b><select id="moveTeam_${slugId(g)}">${Object.keys(equipos).map(e=>`<option value="${escapeHtml(e)}" ${e===actual?"selected":""}>${escapeHtml(e)}</option>`).join("")}</select><button class="btn blue" onclick="guardarMovimientoGestor('${escapeHtml(g)}')">Mover</button></div>`;
+  }).join("");
+  $("items").innerHTML=`<div style="padding:16px;overflow:visible"><h2 style="margin:0 0 6px">👥 Grupos</h2><p class="group-admin-note">Solo supervisores pueden modificar equipos. Al mover un gestor, el cambio se guarda en Firebase y actualiza la asignación de equipos de la aplicación. Los seniors se conservan en sus equipos.</p><div class="groups-admin-grid">${tarjetas}</div><section class="group-admin-card" style="margin-top:16px"><h3>Mover gestores</h3>${filas||'<div class="small">No hay gestores para mostrar.</div>'}</section><div class="small" style="margin-top:10px">Equipos disponibles: Azul · Verde · Rojo · 1142 · Cuoteros · N2 · N3</div></div>`;
+}
+function slugId(v){return String(v||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-zA-Z0-9_-]/g,"_")}
+async function guardarMovimientoGestor(nombre){
+  if(!esSupervisor()) return;
+  const select=$("moveTeam_"+slugId(nombre)); const destino=select?.value;
+  if(!destino||!equipos[destino]) return;
+  const actual=obtenerEquipoDeGestor(nombre)[0]||"Sin equipo";
+  if(normalizarTexto(actual)===normalizarTexto(destino)){alert(`${nombre} ya pertenece a ${destino}.`);return;}
+  if(!confirm(`¿Mover a ${nombre} de ${actual} a ${destino}?`)) return;
+  const nuevo=JSON.parse(JSON.stringify(equipos));
+  Object.keys(nuevo).forEach(e=>{nuevo[e].gestores=(nuevo[e].gestores||[]).filter(g=>!personasCoinciden(g,nombre));});
+  nuevo[destino].gestores=nuevo[destino].gestores||[];
+  if(!nuevo[destino].gestores.some(g=>personasCoinciden(g,nombre))) nuevo[destino].gestores.push(nombre);
+  try{
+    await set(ref(db,"configuracion/equipos"),nuevo);
+    equipos=nuevo;
+    renderizarAdministracionGrupos();
+    alert(`${nombre} ahora pertenece a ${destino}.`);
+  }catch(e){console.error(e);alert("No se pudo guardar el cambio en Firebase. Revisá las reglas de acceso de la base de datos.");}
+}
+function escucharConfiguracionEquipos(){
+  onValue(ref(db,"configuracion/equipos"),snap=>{
+    const guardados=snap.val();
+    equipos=JSON.parse(JSON.stringify(equiposPorDefecto));
+    if(guardados && typeof guardados==="object"){
+      Object.keys(guardados).forEach(e=>{if(guardados[e]&&typeof guardados[e]==="object") equipos[e]={seniors:Array.isArray(guardados[e].seniors)?guardados[e].seniors:[],gestores:Array.isArray(guardados[e].gestores)?guardados[e].gestores:[]};});
+    }
+    equiposConfiguracionCargada=true;
+    if(vistaActual==="grupos") renderizarAdministracionGrupos();
+    if(vistaActual==="vencimientos") renderizarVencimientos();
+    if(vistaActual==="agenda") renderizarAgenda();
+  },err=>console.warn("No se pudo leer la configuración de equipos",err));
+}
+
 /* ---------- VENCIMIENTOS CLIENTES ---------- */
 
 let vencMes=new Date().getMonth();
@@ -2988,9 +3138,10 @@ function dibujarCalendarioVencimientos(){
     const iso=date.toISOString().slice(0,10);
 
     const eventos=Object.values(vencimientos).filter(e=>{
-      return e?.fecha===iso &&
-        normalizarTexto(e?.equipo)===normalizarTexto(equipo) &&
-        equiposCalendarioVencimientos().some(x=>normalizarTexto(x)===normalizarTexto(e?.equipo));
+      const equipoValido=equiposCalendarioVencimientos().some(x=>normalizarTexto(x)===normalizarTexto(e?.equipo));
+      const asignadoAlGestor=!esAsesor() || personasCoinciden(e?.gestor||"",nombreActual);
+      return e?.fecha===iso && equipoValido &&
+        normalizarTexto(e?.equipo)===normalizarTexto(equipo) && asignadoAlGestor;
     });
 
     h+=`<div class="day ${other?"other":""}">
@@ -3138,6 +3289,49 @@ $("loginBtn").addEventListener("click",async()=>{
 $("loginPassword").addEventListener("keydown",e=>{
   if(e.key==="Enter") $("loginBtn").click();
 });
+document.addEventListener("keydown",e=>{if(e.key==="Enter" && e.target?.id==="internalChatInput"){e.preventDefault();enviarMensajeChatDirectivo();}});
+
+function aplicarPreferenciasUsuario(pref={}){
+  preferenciasActuales={...preferenciasActuales,...(pref||{})};
+  const root=document.documentElement;
+  const principal=/^#[0-9a-f]{6}$/i.test(preferenciasActuales.colorPrincipal||"")?preferenciasActuales.colorPrincipal:"#176b4d";
+  const suave=/^#[0-9a-f]{6}$/i.test(preferenciasActuales.colorSuave||"")?preferenciasActuales.colorSuave:"#e9f6ef";
+  root.style.setProperty("--verde",principal);root.style.setProperty("--verde2",suave);
+  document.body.classList.toggle("chat-wide",preferenciasActuales.layoutChats!=="compact");
+  const avatar=$("currentUserAvatar");
+  if(avatar){if(preferenciasActuales.fotoUrl){avatar.innerHTML=`<img src="${escapeHtml(preferenciasActuales.fotoUrl)}" alt="Foto de perfil">`;}else{avatar.textContent=(nombreActual||"EM").split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]).join("").toUpperCase();}}
+}
+async function cargarPreferenciasUsuario(){
+  if(!usuarioActual?.uid)return;
+  try{const snap=await get(ref(db,`preferenciasUsuarios/${usuarioActual.uid}`));aplicarPreferenciasUsuario(snap.exists()?snap.val():{});}
+  catch(e){console.warn("No se pudieron leer las preferencias personales",e);aplicarPreferenciasUsuario({});}
+}
+function abrirPreferencias(){
+  $("themePrimary").value=preferenciasActuales.colorPrincipal||"#176b4d";
+  $("themeSoft").value=preferenciasActuales.colorSuave||"#e9f6ef";
+  $("chatLayout").value=preferenciasActuales.layoutChats||"wide";
+  $("homeView").value="principal";
+  $("profilePhoto").value="";archivoFotoPendiente=null;
+  $("profilePhotoStatus").textContent=preferenciasActuales.fotoUrl?"Tenés una foto de perfil guardada. Podés reemplazarla o volver a las iniciales.":"Podés usar tus iniciales o subir una foto.";
+  $("preferencesStatus").textContent="";$("preferencesModal").classList.remove("hidden");
+}
+function cerrarPreferencias(){$("preferencesModal").classList.add("hidden");}
+function quitarFotoPerfil(){preferenciasActuales.fotoUrl="";archivoFotoPendiente=null;$("profilePhoto").value="";$("profilePhotoStatus").textContent="Se usarán tus iniciales al guardar.";aplicarPreferenciasUsuario(preferenciasActuales);}
+$("profilePhoto")?.addEventListener("change",e=>{archivoFotoPendiente=e.target.files?.[0]||null;if(archivoFotoPendiente){if(!archivoFotoPendiente.type.startsWith("image/")){archivoFotoPendiente=null;e.target.value="";$("profilePhotoStatus").textContent="Elegí un archivo de imagen.";return;}if(archivoFotoPendiente.size>5*1024*1024){archivoFotoPendiente=null;e.target.value="";$("profilePhotoStatus").textContent="La imagen debe pesar menos de 5 MB.";return;}$("profilePhotoStatus").textContent=`Foto seleccionada: ${archivoFotoPendiente.name}`;}});
+async function guardarPreferencias(){
+  if(!usuarioActual?.uid){$("preferencesStatus").textContent="Iniciá sesión para guardar tus preferencias.";return;}
+  const btn=document.querySelector("#preferencesModal .save");if(btn)btn.disabled=true;
+  $("preferencesStatus").textContent="Guardando tus preferencias…";
+  try{
+    const nuevo={...preferenciasActuales,colorPrincipal:$("themePrimary").value,colorSuave:$("themeSoft").value,layoutChats:$("chatLayout").value,pantallaInicial:"principal",actualizadoEn:Date.now(),nombre:nombreActual,email:usuarioActual.email||""};
+    if(archivoFotoPendiente){const destino=storageRef(storage,`preferenciasUsuarios/${usuarioActual.uid}/perfil-${Date.now()}`);await uploadBytes(destino,archivoFotoPendiente);nuevo.fotoUrl=await getDownloadURL(destino);}
+    await set(ref(db,`preferenciasUsuarios/${usuarioActual.uid}`),nuevo);
+    preferenciasActuales=nuevo;aplicarPreferenciasUsuario(nuevo);$("preferencesStatus").textContent="✅ Preferencias guardadas para tu usuario.";
+    setTimeout(()=>cerrarPreferencias(),650);
+  }catch(e){console.error("Error guardando preferencias",e);$("preferencesStatus").textContent="No se pudieron guardar. Revisá las reglas de Firebase Database y Storage para permitir que cada usuario escriba únicamente en su propia ruta.";}
+  finally{if(btn)btn.disabled=false;}
+}
+window.abrirPreferencias=abrirPreferencias;window.cerrarPreferencias=cerrarPreferencias;window.guardarPreferencias=guardarPreferencias;window.quitarFotoPerfil=quitarFotoPerfil;
 
 onAuthStateChanged(auth,async user=>{
   if(!user){
@@ -3176,11 +3370,14 @@ onAuthStateChanged(auth,async user=>{
     perfilActual==="supervisor"?"Supervisor":
     perfilActual==="senior"?"Senior":perfilActual==="asesor"?"Gestor":"Supervisor";
 
+  await cargarPreferenciasUsuario();
   greeting();
   // Ocultamiento físico de funciones según rol. Agenda y Sin asignar quedan para seniors/supervisores.
   const esGestionSuperior=esSenior()||esSupervisor();
   $("navAgenda").classList.toggle("hidden",!esGestionSuperior);
   $("navSinAsignar").classList.toggle("hidden",!esGestionSuperior);
+  $("navChatInterno").classList.toggle("hidden",!esGestionSuperior);
+  $("navGrupos").classList.toggle("hidden",!esSupervisor());
   // SOS: solamente el senior correspondiente al equipo puede verlo.
   $("navSOS").classList.toggle("hidden",!esSenior());
   $("navBaseClientes").classList.toggle("hidden",!esSupervisor());
@@ -3204,9 +3401,11 @@ onAuthStateChanged(auth,async user=>{
     });
   }catch(e){}
 
+  escucharConfiguracionEquipos();
   escucharConversaciones();
   escucharPresencias();
   escucharAgenda();
+  escucharChatInterno();
   escucharVencimientos();
   escucharUrgencias();
 
@@ -3314,6 +3513,7 @@ async function iaNota(){
 }
 
 window.enviarMensajeInterno=enviarMensajeInterno;
+window.enviarMensajeChatDirectivo=enviarMensajeChatDirectivo;
 window.enviarMensaje=enviarMensaje;
 window.finalizarConversacion=finalizarConversacion;
 window.abrirModalAsignacion=abrirModalAsignacion;
@@ -3344,6 +3544,45 @@ window.iaAnalizar=iaAnalizar;
 window.iaNota=iaNota;
 
 </script>
+
+<div id="preferencesModal" class="modal-bg hidden">
+  <div class="modal preferences-modal">
+    <h2>🎨 Mi página</h2>
+    <p class="small">Tus preferencias se guardan en tu usuario de Firebase y no modifican las de tus compañeros.</p>
+    <div class="preferences-grid">
+      <div class="preference-card">
+        <label for="profilePhoto">Foto de perfil</label>
+        <input id="profilePhoto" type="file" accept="image/*">
+        <div id="profilePhotoStatus" class="small" style="margin-top:7px">Podés usar tus iniciales o subir una foto.</div>
+        <button type="button" class="btn" style="margin-top:8px" onclick="quitarFotoPerfil()">Usar iniciales</button>
+      </div>
+      <div class="preference-card">
+        <label for="themePrimary">Color principal</label>
+        <input id="themePrimary" type="color" value="#176b4d">
+        <label for="themeSoft" style="margin-top:10px">Color suave</label>
+        <input id="themeSoft" type="color" value="#e9f6ef">
+      </div>
+      <div class="preference-card">
+        <label for="chatLayout">Vista de conversaciones</label>
+        <select id="chatLayout" style="width:100%;padding:10px;border:1px solid #d7dde3;border-radius:8px">
+          <option value="wide">Amplia</option><option value="compact">Compacta</option>
+        </select>
+      </div>
+      <div class="preference-card">
+        <label for="homeView">Pantalla al ingresar</label>
+        <select id="homeView" style="width:100%;padding:10px;border:1px solid #d7dde3;border-radius:8px">
+          <option value="principal">Chats activos</option>
+        </select>
+        <div class="small" style="margin-top:7px">Se mantienen los permisos de tu rol.</div>
+      </div>
+    </div>
+    <div id="preferencesStatus" class="small" style="margin-top:12px"></div>
+    <div class="preference-actions">
+      <button class="cancel" onclick="cerrarPreferencias()">Cancelar</button>
+      <button class="save" onclick="guardarPreferencias()">Guardar mi página</button>
+    </div>
+  </div>
+</div>
 
 <div id="aiModal" class="modal-bg hidden">
   <div class="modal">
