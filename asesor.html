@@ -241,11 +241,17 @@ button{cursor:pointer}
 .plan-yes{color:#15803d;font-weight:800}.plan-no{color:#b42318;font-weight:800}.plan-pending{color:#b45309;font-weight:800}
 
 /* PANEL DE SUPERVISION */
-body.dashboard-mode .main{display:block;overflow:auto;background:#f4f6f8}
-body.dashboard-mode .list-panel{width:100%;height:100%;border-right:0;background:#f4f6f8}
-body.dashboard-mode .list-header{background:#fff;position:sticky;top:0;z-index:3}
+body.dashboard-mode .main{display:block;overflow:auto;background:#f4f6f8;width:100%;max-width:100%;min-width:0;flex:1 1 0}
+body.dashboard-mode .list-panel{display:flex;width:100%;max-width:none;min-width:0;height:100%;border-right:0;background:#f4f6f8;flex:1 1 100%}
+body.dashboard-mode .list-header{background:#fff;position:sticky;top:0;z-index:3;width:100%;max-width:none}
 body.dashboard-mode .list-header .search,body.dashboard-mode .list-header .list-tools{display:none}
-body.dashboard-mode .items{padding:18px;overflow:visible}
+body.dashboard-mode .items{display:block;width:100%;max-width:none;min-width:0;padding:18px;overflow:visible;flex:1 1 auto}
+body.dashboard-mode .supervision-wrap{width:100%;max-width:none;margin:0 auto}
+body.dashboard-mode .groups-admin-grid{width:100%;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));align-items:stretch}
+body.dashboard-mode .group-admin-card{width:100%}
+.group-person-row select{flex:0 1 180px;min-width:120px;max-width:220px}
+.group-person-row .btn{flex-shrink:0}
+@media(max-width:700px){body.dashboard-mode .items{padding:10px}.group-person-row{flex-wrap:wrap}.group-person-row select{flex:1;max-width:none}}
 body.dashboard-mode .chat-panel,body.dashboard-mode .client-panel{display:none!important}
 .supervision-wrap{max-width:1500px;margin:0 auto;color:#1f2933}
 .sup-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:16px}
@@ -279,7 +285,7 @@ body.dashboard-mode .chat-panel,body.dashboard-mode .client-panel{display:none!i
 .group-admin-card{background:#fff;border:1px solid #e1e6eb;border-radius:13px;padding:13px;min-width:0}
 .group-admin-card h3{margin:0 0 10px;font-size:15px}
 .group-person-row{display:flex;align-items:center;justify-content:space-between;gap:7px;padding:8px 0;border-top:1px solid #eef1f4;font-size:12px}
-.group-person-row select{min-width:95px;max-width:125px;border:1px solid #d5dbe1;border-radius:7px;padding:6px;background:white}
+.group-person-row select{flex:0 1 180px;min-width:120px;max-width:220px;border:1px solid #d5dbe1;border-radius:7px;padding:8px;background:white}
 .group-admin-note{font-size:12px;color:#667085;margin:0 0 12px}
 @media(max-width:900px){.groups-admin-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:560px){.groups-admin-grid{grid-template-columns:1fr}.internal-chat-compose{flex-direction:column}.internal-chat-compose button{width:100%}}
@@ -3029,22 +3035,36 @@ function renderizarAdministracionGrupos(){
 }
 function slugId(v){return String(v||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-zA-Z0-9_-]/g,"_")}
 async function guardarMovimientoGestor(nombre){
-  if(!esSupervisor()) return;
-  const select=$("moveTeam_"+slugId(nombre)); const destino=select?.value;
-  if(!destino||!equipos[destino]) return;
+  if(!esSupervisor()){alert("Solo un supervisor puede mover gestores.");return;}
+  const select=$("moveTeam_"+slugId(nombre));
+  const destino=String(select?.value||"").trim();
+  if(!destino||!equipos[destino]){alert("No se reconoce el equipo de destino. Actualizá la página y volvé a intentarlo.");return;}
   const actual=obtenerEquipoDeGestor(nombre)[0]||"Sin equipo";
   if(normalizarTexto(actual)===normalizarTexto(destino)){alert(`${nombre} ya pertenece a ${destino}.`);return;}
   if(!confirm(`¿Mover a ${nombre} de ${actual} a ${destino}?`)) return;
-  const nuevo=JSON.parse(JSON.stringify(equipos));
-  Object.keys(nuevo).forEach(e=>{nuevo[e].gestores=(nuevo[e].gestores||[]).filter(g=>!personasCoinciden(g,nombre));});
-  nuevo[destino].gestores=nuevo[destino].gestores||[];
-  if(!nuevo[destino].gestores.some(g=>personasCoinciden(g,nombre))) nuevo[destino].gestores.push(nombre);
+  const boton=select?.parentElement?.querySelector("button");
+  if(boton){boton.disabled=true;boton.textContent="Guardando…";}
   try{
+    // Copia completa para no borrar los demás equipos ni sus seniors.
+    const nuevo=JSON.parse(JSON.stringify(equipos||{}));
+    if(!nuevo[destino]) nuevo[destino]={seniors:[],gestores:[]};
+    Object.keys(nuevo).forEach(e=>{
+      nuevo[e].seniors=Array.isArray(nuevo[e].seniors)?nuevo[e].seniors:[];
+      nuevo[e].gestores=(Array.isArray(nuevo[e].gestores)?nuevo[e].gestores:[]).filter(g=>!personasCoinciden(g,nombre));
+    });
+    nuevo[destino].gestores=nuevo[destino].gestores||[];
+    if(!nuevo[destino].gestores.some(g=>personasCoinciden(g,nombre))) nuevo[destino].gestores.push(nombre);
     await set(ref(db,"configuracion/equipos"),nuevo);
     equipos=nuevo;
     renderizarAdministracionGrupos();
-    alert(`${nombre} ahora pertenece a ${destino}.`);
-  }catch(e){console.error(e);alert("No se pudo guardar el cambio en Firebase. Revisá las reglas de acceso de la base de datos.");}
+    alert(`Cambio guardado: ${nombre} ahora pertenece a ${destino}.`);
+  }catch(e){
+    console.error("Error al mover gestor:",e);
+    const detalle=e?.code||e?.message||"Error desconocido";
+    alert(`No se pudo mover a ${nombre}. Firebase rechazó o no completó el guardado (${detalle}). No se confirmó ningún cambio. Revisá las reglas de escritura de configuracion/equipos.`);
+  }finally{
+    if(boton){boton.disabled=false;boton.textContent="Mover";}
+  }
 }
 function escucharConfiguracionEquipos(){
   onValue(ref(db,"configuracion/equipos"),snap=>{
@@ -3433,6 +3453,9 @@ async function cerrarSesion(){
 }
 
 window.mostrarVista=mostrarVista;
+// La administración de equipos usa onclick inline; al estar dentro de type="module",
+// la función debe exponerse en window para que el botón Mover pueda invocarla.
+window.guardarMovimientoGestor=guardarMovimientoGestor;
 window.importarExcelClientes=importarExcelClientes;
 window.importarExcelLibreDeuda=importarExcelLibreDeuda;
 window.renderizarLibreDeuda=renderizarLibreDeuda;
@@ -3542,6 +3565,8 @@ window.iaSugerirRespuesta=iaSugerirRespuesta;
 window.iaResumir=iaResumir;
 window.iaAnalizar=iaAnalizar;
 window.iaNota=iaNota;
+// Los onclick del HTML no pueden acceder directamente a funciones dentro de type="module".
+window.guardarMovimientoGestor=guardarMovimientoGestor;
 
 </script>
 
