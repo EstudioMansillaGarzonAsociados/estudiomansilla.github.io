@@ -971,7 +971,9 @@
       if(!window.jspdf?.jsPDF) throw new Error("No se pudo cargar el generador de PDF. Actualizá la página e intentá nuevamente.");
       if(!window.__libreDeudaStorage) throw new Error("No está disponible Firebase Storage para publicar el certificado.");
       const cancela=String(registro.cancelaDeuda??"").trim().toLowerCase();
-      const fechaPago=fechaLibreDeudaLegible(registro.fechaUltimoPago);
+      // Algunas versiones del Excel traen Ultimo pago vacío y la fecha en Ultimo pago Texto.
+      // El importador conserva ambos campos; usar el primero que tenga un valor real.
+      const fechaPago=fechaLibreDeudaLegible(registro.fechaUltimoPago || registro.ultimoPagoTexto || registro.fechaUltimoPagoTexto || registro.ultimo_pago_texto || "");
       // Emitir solo si el Excel marca la cancelación y registra una fecha de último pago.
       if(!(cancela==="1" || cancela==="si" || cancela==="sí" || cancela==="true") || !fechaPago){
         throw new Error("El Excel no confirma una cancelación con fecha de pago para este DNI. La solicitud debe revisarla un asesor.");
