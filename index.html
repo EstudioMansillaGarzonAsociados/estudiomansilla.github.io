@@ -966,24 +966,47 @@
 
     function fechaLibreDeudaLegible(valor){
       if(valor===null || valor===undefined || valor==="") return "";
+      // Devuelve dd/mm/aaaa o "" si no puede interpretar la fecha con certeza.
+      // Preferimos "" (deriva a un asesor) antes que emitir una fecha equivocada.
+      const armar=(d,m,a)=>{
+        d=Number(d); m=Number(m); a=Number(a);
+        if(a<100) a+=2000;
+        const f=new Date(Date.UTC(a,m-1,d));
+        if(f.getUTCFullYear()!==a || f.getUTCMonth()!==m-1 || f.getUTCDate()!==d) return "";
+        return `${String(d).padStart(2,"0")}/${String(m).padStart(2,"0")}/${a}`;
+      };
       // Excel puede entregar la fecha como Date, número serial o texto.
-      if(valor instanceof Date && !Number.isNaN(valor.getTime())){
-        return valor.toLocaleDateString("es-AR",{timeZone:"UTC"});
+      if(valor instanceof Date){
+        if(Number.isNaN(valor.getTime())) return "";
+        return armar(valor.getUTCDate(),valor.getUTCMonth()+1,valor.getUTCFullYear());
       }
       if(typeof valor==="number" || (typeof valor==="string" && /^\d{4,6}(?:\.0+)?$/.test(valor.trim()))){
         const serial=Number(valor);
         if(Number.isFinite(serial) && serial>=1 && serial<=100000){
-          const fecha=new Date(Date.UTC(1899,11,30)+Math.round(serial)*86400000);
-          return fecha.toLocaleDateString("es-AR",{timeZone:"UTC"});
+          const f=new Date(Date.UTC(1899,11,30)+Math.round(serial)*86400000);
+          return armar(f.getUTCDate(),f.getUTCMonth()+1,f.getUTCFullYear());
         }
       }
       const s=String(valor).trim(); if(!s) return "";
-      let m=s.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/);
-      if(m){const d=Number(m[1]),mes=Number(m[2]),anio=Number(m[3]);const fecha=new Date(Date.UTC(anio,mes-1,d));if(fecha.getUTCFullYear()===anio && fecha.getUTCMonth()===mes-1 && fecha.getUTCDate()===d)return `${String(d).padStart(2,"0")}/${String(mes).padStart(2,"0")}/${anio}`;return "";}
-      m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);
-      if(m)return `${m[3]}/${m[2]}/${m[1]}`;
-      const fecha=new Date(s);
-      if(!Number.isNaN(fecha.getTime())) return fecha.toLocaleDateString("es-AR",{timeZone:"UTC"});
+      // ISO: 2026-10-27 (con o sin hora)
+      let m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:\D.*)?$/);
+      if(m) return armar(m[3],m[2],m[1]);
+      // Numérica con separadores / - . : año de 4 dígitos => formato argentino dd/mm/aaaa
+      m=s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})(?:\D.*)?$/);
+      if(m) return armar(m[1],m[2],m[3]);
+      // Año de 2 dígitos: solo si no hay ambigüedad entre dd/mm y mm/dd.
+      m=s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2})(?:\D.*)?$/);
+      if(m){
+        const a=Number(m[1]), b=Number(m[2]);
+        if(a>12 && b<=12) return armar(a,b,m[3]);   // dd/mm/aa
+        if(b>12 && a<=12) return armar(b,a,m[3]);   // mm/dd/aa
+        return "";
+      }
+      // Texto en español: "27 de octubre de 2026", "27-oct-2026", "27 oct 26"
+      const meses={enero:1,ene:1,febrero:2,feb:2,marzo:3,mar:3,abril:4,abr:4,mayo:5,may:5,junio:6,jun:6,julio:7,jul:7,agosto:8,ago:8,septiembre:9,setiembre:9,sep:9,set:9,octubre:10,oct:10,noviembre:11,nov:11,diciembre:12,dic:12};
+      const limpio=s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+      m=limpio.match(/^(\d{1,2})[\s\-\/.]*(?:de\s+)?([a-z]+)\.?[\s\-\/.,]*(?:de\s+)?(\d{2}|\d{4})$/);
+      if(m && meses[m[2]]) return armar(m[1],meses[m[2]],m[3]);
       return "";
     }
     async function generarYSubirLibreDeuda(registro,dni){
@@ -1000,10 +1023,17 @@
         }
         return "";
       };
-      const cancela=String(campo("cancelaDeuda","cancela deuda","cancelacion","cancelado","deuda cancelada","libre de deuda")??"").trim().toLowerCase();
-      const fechaPago=fechaLibreDeudaLegible(campo("fechaUltimoPago","ultimoPagoTexto","fechaUltimoPagoTexto","ultimo_pago_texto","ultimo pago","fecha ultimo pago","Fecha_ult_pago","fecha_ult_pago","fecha ult pago","fecha de pago","fecha cancelacion"));
-      if(!(["1","1.0","1,0","si","sí","true","cancelado","cancelada","libre"].includes(cancela)) || !fechaPago){
-        throw new Error("El Excel no confirma una cancelación con fecha de pago para este DNI. La solicitud debe revisarla un asesor.");
+      const cancelaRaw=campo("cancelaDeuda","cancela deuda","cancelacion","cancelado","deuda cancelada","libre de deuda");
+      const cancela=String(cancelaRaw??"").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+      const fechaRaw=campo("fechaUltimoPago","ultimoPagoTexto","fechaUltimoPagoTexto","ultimo_pago_texto","ultimo pago","fecha ultimo pago","Fecha_ult_pago","fecha_ult_pago","fecha ult pago","fecha de pago","fecha cancelacion");
+      const fechaPago=fechaLibreDeudaLegible(fechaRaw);
+      const cancelaOk=["1","1.0","1,0","si","true","verdadero","cancelado","cancelada","cancela","libre"].includes(cancela);
+      if(!cancelaOk || !fechaPago){
+        const motivos=[];
+        if(!cancelaOk) motivos.push(`columna "Cancela deuda" = "${String(cancelaRaw)}"`);
+        if(!fechaPago) motivos.push(`fecha de pago no reconocida = "${String(fechaRaw)}"`);
+        console.warn("Libre de Deuda: validación fallida ->",motivos.join(" | "));
+        throw new Error(`El Excel no confirma una cancelación con fecha de pago para este DNI (${motivos.join("; ")}). La solicitud debe revisarla un asesor.`);
       }
       const nombreCompleto=String(campo("nombre","nombre completo","titular","apellido y nombre")||[campo("apellido"),campo("nombrePila","nombre pila")].filter(Boolean).join(" ")).replace(/\s+/g," ").trim();
       if(!nombreCompleto) throw new Error("No hay nombre de titular en el Excel para generar el certificado.");
