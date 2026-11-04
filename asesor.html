@@ -1729,7 +1729,7 @@ async function importarExcelLibreDeuda(){
         const planDePago=valorTextoColumna(row,["Plan de pago","Plan_de_pago"]);
         const cancelada=["1","1.0","si","sí","true","cancelado","cancelada"].includes(String(cancelaDeuda).trim().toLowerCase());
         const puedeEmitir=cancelada && !!fechaUltimoPago;
-        if(nuevos[dni])duplicados++;
+        if(nuevos[dni]){duplicados++; if(nuevos[dni].puedeEmitir && !puedeEmitir){continue;}}
         nuevos[dni]={dni,nombre,apellido,nombrePila,telefono,estado,pdfUrl,cancelaDeuda,planDePago,fechaUltimoPago,ultimoPagoTexto,ultimoPago,fechaUltPago,fechaActualizacionPP,puedeEmitir,documentoDisponible:!!pdfUrl,hoja:sheetName,archivo:file.name,fechaImportacion:Date.now()};
         if(pdfUrl)conPdf++;
         if(puedeEmitir)listosParaEmitir++;
