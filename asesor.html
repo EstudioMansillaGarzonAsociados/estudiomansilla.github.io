@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Centro de Atención — Estudio Mansilla Garzon y Asociados — v2026.10.05-SOS-IA</title>
+<title>Centro de Atención — Estudio Jurídico Mansilla y Asociados — v2026.10.05-SOS-IA</title>
 
 <style>
 :root{
@@ -343,6 +343,24 @@ body.dashboard-mode .sup-panels { grid-template-columns:repeat(auto-fit,minmax(m
   body.dashboard-mode .groups-admin-grid { grid-template-columns:1fr; }
 }
 
+
+/* CALENDARIO A PANTALLA COMPLETA: mantiene la barra lateral y aprovecha todo el espacio de trabajo. */
+body.calendar-mode #app{width:100%;height:100vh;height:100dvh;overflow:hidden}
+body.calendar-mode .main{display:block;flex:1 1 auto;width:calc(100% - 250px);max-width:none;min-width:0;height:100%;overflow:auto;background:#f4f6f8}
+body.calendar-mode .list-panel{display:flex;width:100%;max-width:none;min-width:0;height:100%;flex:1 1 100%;border-right:0;background:#f4f6f8}
+body.calendar-mode .chat-panel,body.calendar-mode .client-panel{display:none!important}
+body.calendar-mode .list-header{width:100%;max-width:none;flex:0 0 auto;padding:12px 20px}
+body.calendar-mode .list-header .greeting,body.calendar-mode .list-header .motivational{display:none}
+body.calendar-mode .list-header .search,body.calendar-mode .list-header .list-tools{display:none!important}
+body.calendar-mode .items{display:block;flex:1 1 auto;width:100%;max-width:none;min-width:0;overflow:auto;padding:0}
+body.calendar-mode .calendar-wrap{width:100%;max-width:none;min-height:100%;padding:clamp(12px,2vw,28px)!important;overflow:auto;box-sizing:border-box}
+body.calendar-mode .calendar-toolbar{width:100%;margin-bottom:16px}
+body.calendar-mode .calendar-grid{width:100%;max-width:none;min-width:0;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
+body.calendar-mode .calendar-grid .day{min-width:0;min-height:clamp(90px,13vh,150px);padding:7px;box-sizing:border-box;overflow-wrap:anywhere}
+body.calendar-mode .calendar-grid .day-name{min-width:0;box-sizing:border-box}
+@media(max-width:850px){body.calendar-mode .main{width:calc(100% - 190px)}}
+@media(max-width:650px){body.calendar-mode #app{height:auto;min-height:100vh;display:block;overflow:visible}body.calendar-mode .sidebar{width:100%;height:auto}body.calendar-mode .main{width:100%;height:auto}body.calendar-mode .list-panel{height:auto;min-height:70vh}body.calendar-mode .calendar-wrap{overflow-x:auto}body.calendar-mode .calendar-grid{min-width:700px;grid-template-columns:repeat(7,minmax(90px,1fr))}}
+
 </style>
 </head>
 
@@ -350,7 +368,7 @@ body.dashboard-mode .sup-panels { grid-template-columns:repeat(auto-fit,minmax(m
 
 <div id="loginScreen">
   <div class="login-card">
-    <div class="logo">Estudio Mansilla Garzon y Asociados</div>
+    <div class="logo">Estudio Jurídico Mansilla y Asociados</div>
     <div class="subtitle">Centro de Atención</div>
 
     <div class="field">
@@ -372,7 +390,7 @@ body.dashboard-mode .sup-panels { grid-template-columns:repeat(auto-fit,minmax(m
 
   <aside class="sidebar">
     <div class="brand">
-      <div class="brand-title">Estudio Mansilla Garzon y Asociados</div>
+      <div class="brand-title">Estudio Jurídico Mansilla y Asociados</div>
       <div class="brand-sub">Centro de Atención</div>
     </div>
 
@@ -651,7 +669,7 @@ body.dashboard-mode .sup-panels { grid-template-columns:repeat(auto-fit,minmax(m
       <button class="btn" onclick="mostrarVista('principal')">← Volver</button>
     </div>
     <div style="margin-top:16px;padding:14px;border:1px solid #f0d9a8;border-radius:12px;background:#fffaf0;color:#704b00;font-size:13px;line-height:1.5">
-      <b>Formato compatible:</b> este importador reconoce el Excel “Consulta Cancela Deuda”, incluida la columna <code>Nro_doc</code> como DNI, y toma <code>Apellido</code>, <code>Nombre</code> y <code>Telefono_1</code>. El archivo recibido contiene datos de clientes, pero no trae el PDF ni un enlace al certificado. Por seguridad, el chat solo enviará un documento cuando exista un enlace válido; si falta, derivará la solicitud a un asesor. La carga no modifica conversaciones ni otras bases.
+      <b>Formato compatible:</b> lee el Excel “Consulta Cancela Deuda” del estudio y sus columnas reales: <code>Nro_doc</code>, <code>Apellido</code>, <code>Nombre</code>, <code>Telefono_1</code>, <code>Cancela deuda</code>, <code>Ultimo pago</code> y <code>Ultimo pago Texto</code>. El archivo no incluye un PDF ni un enlace: cuando el registro confirma <code>Cancela deuda = 1</code> y tiene fecha de último pago, el portal genera el certificado PDF individual en Firebase Storage al momento de la solicitud. Los registros que no cumplan esas condiciones se derivan a un asesor. La carga modifica únicamente la base <code>libresDeudaBase</code> y su historial de importación.
     </div>
     <div style="margin-top:14px;padding:16px;border:1px solid #dce3e8;border-radius:12px;background:#f8fafb">
       <div style="font-weight:800;margin-bottom:8px">1. Actualizar Excel del día</div>
@@ -1183,7 +1201,10 @@ function puedeVerPorEquipo(c){
   if(!equipo){
     const gestor=obtenerGestorDeConversacion(c);
     if(gestor){
-      const e=obtenerEquipoDeGestor(gestor);
+      // Los chats pueden estar asignados a un senior (por ejemplo, Rocio),
+      // que no aparece en la lista de gestores del equipo. Buscar también
+      // entre los seniors para determinar correctamente el equipo del chat.
+      const e=obtenerEquipoDePersona(gestor);
       if(e.length) equipo=e[0];
     }
   }
@@ -1679,7 +1700,7 @@ async function importarExcelLibreDeuda(){
   try{
     const buffer=await file.arrayBuffer();
     const workbook=XLSX.read(buffer,{type:"array",cellDates:true});
-    const nuevos={};let filasTotales=0,sinDni=0,duplicados=0,conPdf=0,hojaDni="";
+    const nuevos={};let filasTotales=0,sinDni=0,duplicados=0,conPdf=0,listosParaEmitir=0,hojaDni="";
     for(const sheetName of workbook.SheetNames){
       const sheet=workbook.Sheets[sheetName];
       if(!sheet)continue;
@@ -1694,20 +1715,30 @@ async function importarExcelLibreDeuda(){
         const nombrePila=valorTextoColumna(row,["Nombre","Nombres"]);
         const nombre=valorTextoColumna(row,["Nombre y apellido","Apellido y nombre","Titular","Cliente"]) || [apellido,nombrePila].filter(Boolean).join(", ");
         const telefono=valorTextoColumna(row,["Telefono_1","Telefono 1","Teléfono 1","Telefono_2","Telefono","Teléfono","Celular","Movil"]);
-        const estado=valorTextoColumna(row,["Estado del documento","Estado","Situacion","Situación","Habilitado","Aprobado"]);
+        // Columnas reales del archivo "Consulta Cancela Deuda".
+        // No trae un PDF ni una URL: el portal del cliente genera el certificado
+        // individual al solicitarlo, usando la marca de cancelación y la fecha.
+        const estado=valorTextoColumna(row,["Situación","Situacion","Estado del documento","Estado","Habilitado","Aprobado"]);
         const pdfUrl=urlDocumentoLibreDeuda(row);
-        const cancelaDeuda=valorTextoColumna(row,["Cancela deuda","Cancela_deuda","Cancela deuda"]);
-        const fechaUltimoPago=valorTextoColumna(row,["Ultimo pago Texto","Último pago Texto","Ultimo pago","Último pago"]);
+        const cancelaDeuda=valorTextoColumna(row,["Cancela deuda","Cancela_deuda"]);
+        const ultimoPagoTexto=valorTextoColumna(row,["Ultimo pago Texto","Último pago Texto"]);
+        const ultimoPago=valorTextoColumna(row,["Ultimo pago","Último pago"]);
+        const fechaUltPago=valorTextoColumna(row,["Fecha_ult_pago","Fecha ult pago","Fecha último pago","Fecha ultimo pago"]);
+        const fechaUltimoPago=ultimoPagoTexto || ultimoPago || fechaUltPago;
         const fechaActualizacionPP=valorTextoColumna(row,["Fecha_de_actualizacion_PP","Fecha de actualizacion PP"]);
+        const planDePago=valorTextoColumna(row,["Plan de pago","Plan_de_pago"]);
+        const cancelada=["1","1.0","si","sí","true","cancelado","cancelada"].includes(String(cancelaDeuda).trim().toLowerCase());
+        const puedeEmitir=cancelada && !!fechaUltimoPago;
         if(nuevos[dni])duplicados++;
-        nuevos[dni]={dni,nombre,apellido,nombrePila,telefono,estado,pdfUrl,cancelaDeuda,fechaUltimoPago,ultimoPagoTexto:valorTextoColumna(row,["Ultimo pago Texto","Último pago Texto"]),fechaActualizacionPP,documentoDisponible:!!pdfUrl,hoja:sheetName,archivo:file.name,fechaImportacion:Date.now()};
+        nuevos[dni]={dni,nombre,apellido,nombrePila,telefono,estado,pdfUrl,cancelaDeuda,planDePago,fechaUltimoPago,ultimoPagoTexto,ultimoPago,fechaUltPago,fechaActualizacionPP,puedeEmitir,documentoDisponible:!!pdfUrl,hoja:sheetName,archivo:file.name,fechaImportacion:Date.now()};
         if(pdfUrl)conPdf++;
+        if(puedeEmitir)listosParaEmitir++;
       }
     }
     const dnis=Object.keys(nuevos);
     if(!dnis.length)throw new Error("No se encontró la columna Nro_doc/DNI ni filas con DNI válidos. La base anterior no se modificó.");
     const importId=`${Date.now()}_${normalizarTexto(file.name).replace(/[^a-z0-9]+/g,"_").slice(0,40)}`;
-    const meta={archivo:file.name,fecha:Date.now(),usuario:nombreActual,email:usuarioActual?.email||"",filasTotales,registros:dnis.length,sinDni,duplicados,conPdf,hoja:hojaDni,importId};
+    const meta={archivo:file.name,fecha:Date.now(),usuario:nombreActual,email:usuarioActual?.email||"",filasTotales,registros:dnis.length,sinDni,duplicados,conPdf,listosParaEmitir,hoja:hojaDni,importId};
     if(status)status.textContent=`Validado: ${dnis.length.toLocaleString("es-AR")} DNI. Guardando en bloques para evitar errores por tamaño...`;
     // Ya validamos DNI. Se reemplaza solo el nodo dedicado y se escriben bloques pequeños.
     await set(ref(db,"libresDeudaBase"),{});
@@ -1723,7 +1754,7 @@ async function importarExcelLibreDeuda(){
     baseLibresDeuda=nuevos;
     renderizarLibreDeuda();
     const m=$("excelLibreDeudaMeta");if(m)m.textContent=`Última carga: ${formatFecha(meta.fecha)} · Archivo: ${file.name} · Por: ${nombreActual}`;
-    if(status)status.textContent=`✅ Excel importado: ${meta.registros.toLocaleString("es-AR")} clientes por DNI (${hojaDni}); ${conPdf} con enlace a documento; ${sinDni} filas sin DNI omitidas${duplicados?`; ${duplicados} DNI repetidos (se conservó la última fila)`:""}.`+(conPdf===0?" El Excel no contiene enlaces a certificados: las solicitudes se derivarán a un asesor hasta cargar los documentos o sus enlaces.":"");
+    if(status)status.textContent=`✅ Excel importado: ${meta.registros.toLocaleString("es-AR")} clientes por DNI (${hojaDni}); ${listosParaEmitir.toLocaleString("es-AR")} registros con cancelación y fecha de último pago listos para generar el PDF al solicitarlo; ${conPdf} con enlace externo; ${sinDni} filas sin DNI omitidas${duplicados?`; ${duplicados} DNI repetidos (se conservó la última fila)`:""}.`;
     input.value="";
   }catch(e){
     console.error("Error al importar Libre de Deuda:",e);
@@ -1738,7 +1769,7 @@ function renderizarLibreDeuda(){
   const q=normalizarTexto($("libreDeudaSearch")?.value||"");
   const filtrados=q?registros.filter(r=>normalizarTexto(`${r.dni||""} ${r.nombre||""} ${r.telefono||""}`).includes(q)):registros;
   if(!filtrados.length){table.innerHTML='<div class="empty">No hay registros para mostrar. Cargá el Excel actualizado o cambiá la búsqueda.</div>';return;}
-  table.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:12px;min-width:720px"><thead><tr><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">DNI</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">Nombre</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">Teléfono</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">Estado</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">Documento</th></tr></thead><tbody>${filtrados.slice(0,300).map(r=>`<tr><td style="padding:7px;border-bottom:1px solid #eef1f4">${escapeHtml(r.dni||"")}</td><td style="padding:7px;border-bottom:1px solid #eef1f4">${escapeHtml(r.nombre||"")}</td><td style="padding:7px;border-bottom:1px solid #eef1f4">${escapeHtml(r.telefono||"")}</td><td style="padding:7px;border-bottom:1px solid #eef1f4">${escapeHtml(r.estado||"Sin estado")}</td><td style="padding:7px;border-bottom:1px solid #eef1f4">${r.pdfUrl?`<a href="${escapeHtml(r.pdfUrl)}" target="_blank" rel="noopener noreferrer">Abrir documento</a>`:'<span style="color:#a15c00">Falta enlace</span>'}</td></tr>`).join("")}</tbody></table>${filtrados.length>300?`<div class="small" style="margin-top:8px">Se muestran 300 de ${filtrados.length}. Usá el buscador para encontrar un DNI.</div>`:""}`;
+  table.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:12px;min-width:720px"><thead><tr><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">DNI</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">Nombre</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">Teléfono</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">Estado</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e1e6eb">Documento</th></tr></thead><tbody>${filtrados.slice(0,300).map(r=>`<tr><td style="padding:7px;border-bottom:1px solid #eef1f4">${escapeHtml(r.dni||"")}</td><td style="padding:7px;border-bottom:1px solid #eef1f4">${escapeHtml(r.nombre||"")}</td><td style="padding:7px;border-bottom:1px solid #eef1f4">${escapeHtml(r.telefono||"")}</td><td style="padding:7px;border-bottom:1px solid #eef1f4">${escapeHtml(r.estado||"Sin estado")}</td><td style="padding:7px;border-bottom:1px solid #eef1f4">${r.pdfUrl?`<a href="${escapeHtml(r.pdfUrl)}" target="_blank" rel="noopener noreferrer">Abrir documento</a>`:(r.puedeEmitir?'<span style="color:#16803c;font-weight:700">PDF automático al solicitar</span>':'<span style="color:#a15c00">Revisión de datos</span>')}</td></tr>`).join("")}</tbody></table>${filtrados.length>300?`<div class="small" style="margin-top:8px">Se muestran 300 de ${filtrados.length}. Usá el buscador para encontrar un DNI.</div>`:""}`;
 }
 
 function mostrarVista(vista){
@@ -1771,6 +1802,7 @@ function mostrarVista(vista){
   $("listSearch").value="";
   $("items").innerHTML="";
   document.body.classList.toggle("dashboard-mode",["supervision","chatInterno","grupos"].includes(vista));
+  document.body.classList.toggle("calendar-mode",vista==="agenda" || vista==="vencimientos");
   if(vista==="chatInterno") { renderizarChatInterno(); return; }
   if(vista==="grupos") { renderizarAdministracionGrupos(); return; }
   if(vista==="supervision"){
