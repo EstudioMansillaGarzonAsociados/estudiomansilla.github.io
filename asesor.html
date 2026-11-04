@@ -387,6 +387,40 @@ body.dashboard-mode .internal-chat-compose button{padding:0 26px;font-size:15px}
 .login-card .logo,.login-card .subtitle{text-align:center}
 .login-card .logo{font-size:23px;line-height:1.25}
 .brand-logo{display:block;width:64px;height:auto;margin:0 0 9px}
+
+/* TAREAS PENDIENTES */
+.badge.alerta{background:#b42318;color:#fff;font-weight:800}
+.tareas-wrap{max-width:980px;margin:0 auto;width:100%}
+.tareas-card{background:#fff;border:1px solid #e1e6eb;border-radius:14px;padding:16px 18px;margin-bottom:16px}
+.tareas-card h3{margin:0 0 12px;font-size:17px;display:flex;align-items:center;gap:9px}
+.tareas-contador{background:#eef5f0;color:var(--verde);border-radius:20px;padding:2px 10px;font-size:13px;font-weight:800}
+.tarea{display:flex;gap:14px;justify-content:space-between;align-items:flex-start;border:1px solid #e6eaee;border-left:5px solid var(--verde);border-radius:11px;padding:12px 14px;margin-bottom:10px;background:#fcfdfd}
+.tarea.vencida{border-left-color:#b42318;background:#fff8f7}
+.tarea.hecha{border-left-color:#9aa5b1;background:#f6f7f9;opacity:.82}
+.tarea.hecha .tarea-titulo{text-decoration:line-through}
+.tarea-main{min-width:0;flex:1}
+.tarea-titulo{font-weight:800;font-size:15px;overflow-wrap:anywhere}
+.tarea-detalle{margin-top:5px;font-size:14px;color:#3b4652;line-height:1.45;overflow-wrap:anywhere}
+.tarea-meta{margin-top:7px;font-size:12px;color:#667085}
+.tarea-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.tarea-tag{border-radius:20px;padding:3px 9px;font-size:11px;font-weight:800;background:#eef1f4;color:#475467}
+.tarea-tag.alta{background:#fff0e0;color:#b45309}
+.tarea-tag.vencida{background:#fde8e6;color:#b42318}
+.tarea-tag.hoy{background:#fff7d6;color:#8a6100}
+.tarea-acciones{display:flex;gap:6px;flex-shrink:0}
+.tareas-hechas summary{cursor:pointer;font-weight:800;font-size:14px;padding:4px 0;margin-bottom:8px}
+.tareas-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;align-items:end}
+.tareas-form-wide{grid-column:1/-1}
+.tareas-check{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;padding-bottom:8px}
+.tareas-guardar{width:auto!important;padding:12px 24px!important;justify-self:end}
+.tareas-ingreso-lista{max-height:52vh;overflow:auto;margin-top:12px}
+.toast-tarea{position:fixed;right:18px;bottom:18px;max-width:340px;background:#176b4d;color:#fff;padding:13px 16px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.25);z-index:80;cursor:pointer;font-size:13px;line-height:1.4}
+@media(max-width:650px){
+  .tareas-form-grid{grid-template-columns:1fr}
+  .tarea{flex-direction:column}
+  .tarea-acciones{width:100%}
+  .tareas-guardar{width:100%!important}
+}
 </style>
 </head>
 
@@ -456,6 +490,9 @@ body.dashboard-mode .internal-chat-compose button{padding:0 26px;font-size:15px}
       </button>
       <button id="navSOS" class="sos-nav hidden" onclick="mostrarVista('sos')">
         <span>🚨 SOS URGENTES</span><span id="badgeSOS" class="badge">0</span>
+      </button>
+      <button id="navTareas" onclick="mostrarVista('tareas')">
+        <span>📝 Mis tareas</span><span id="badgeTareas" class="badge">0</span>
       </button>
       <div class="nav-section-label">CALENDARIOS</div>
       <button id="navAgenda" onclick="mostrarVista('agenda')">
@@ -547,6 +584,18 @@ body.dashboard-mode .internal-chat-compose button{padding:0 26px;font-size:15px}
 </div>
 
 <!-- MODAL EXPEDIENTE -->
+<div id="tareasIngresoModal" class="modal-bg hidden">
+  <div class="modal">
+    <h2>📝 <span id="tareasIngresoTitulo">Tareas pendientes</span></h2>
+    <div class="small">Estas son las tareas que te dejaron para hoy.</div>
+    <div id="tareasIngresoLista" class="tareas-ingreso-lista"></div>
+    <div class="modal-actions">
+      <button class="cancel" onclick="cerrarTareasIngreso()">Cerrar</button>
+      <button class="save" onclick="abrirTareasDesdeIngreso()">Ver mis tareas</button>
+    </div>
+  </div>
+</div>
+
 <div id="expedienteModal" class="modal-bg hidden">
   <div class="modal expediente-modal">
     <div id="expedienteContent"></div>
@@ -1825,14 +1874,16 @@ function mostrarVista(vista){
   vistaActual=vista;
   gestorSeleccionado=null;
   document.querySelectorAll(".nav button").forEach(b=>b.classList.remove("active"));
-  const mapa={supervision:"navSupervision",principal:"navPrincipal",agentes:"navAgentes",sos:"navSOS",sinAsignar:"navSinAsignar",historial:"navHistorial",agenda:"navAgenda",vencimientos:"navVencimientos",chatInterno:"navChatInterno",grupos:"navGrupos",baseClientes:"navBaseClientes",libreDeuda:"navLibreDeuda"};
+  const mapa={supervision:"navSupervision",principal:"navPrincipal",agentes:"navAgentes",sos:"navSOS",sinAsignar:"navSinAsignar",historial:"navHistorial",agenda:"navAgenda",vencimientos:"navVencimientos",chatInterno:"navChatInterno",tareas:"navTareas",grupos:"navGrupos",baseClientes:"navBaseClientes",libreDeuda:"navLibreDeuda"};
   $(mapa[vista])?.classList.add("active");
 
   $("listSearch").value="";
+  $("listSearch").style.display="";
   $("items").innerHTML="";
-  document.body.classList.toggle("dashboard-mode",["supervision","chatInterno","grupos"].includes(vista));
+  document.body.classList.toggle("dashboard-mode",["supervision","chatInterno","grupos","tareas"].includes(vista));
   document.body.classList.toggle("calendar-mode",vista==="agenda" || vista==="vencimientos");
   if(vista==="chatInterno") { renderizarChatInterno(); return; }
+  if(vista==="tareas") { renderizarTareas(); return; }
   if(vista==="grupos") { renderizarAdministracionGrupos(); return; }
   if(vista==="supervision"){
     if(!esSupervisor()) return mostrarVista("principal");
@@ -1876,6 +1927,7 @@ function refrescarVistaActual(){
   else if(vistaActual==="agenda") renderizarAgenda();
   else if(vistaActual==="vencimientos") renderizarVencimientos();
   else if(vistaActual==="chatInterno") renderizarChatInterno();
+  else if(vistaActual==="tareas") renderizarTareas();
   else if(vistaActual==="grupos") renderizarAdministracionGrupos();
 }
 
@@ -3349,6 +3401,246 @@ function escucharVencimientos(){
   });
 }
 
+/* ---------- TAREAS PENDIENTES (las dejan la supervisora y las seniors) ---------- */
+let tareas={};
+let desuscribirTareas=null;
+let tareasPrimeraCarga=true;
+let tareasIngresoMostrado=false;
+let tareasIdsConocidos=new Set();
+let toastTareaTimer=null;
+
+function hoyTareasISO(){
+  const d=new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+}
+function fechaISOaAR(iso){
+  const m=String(iso||"").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return m?`${m[3]}/${m[2]}/${m[1]}`:"";
+}
+function puedeDejarTareas(){ return esSupervisor()||esSenior(); }
+function esMiTarea(t){ return personasCoinciden(t?.asignadoA,nombreActual); }
+function esTareaCreadaPorMi(t){ return !!usuarioActual?.email && normalizarTexto(t?.creadoPorEmail)===normalizarTexto(usuarioActual.email); }
+function puedeCerrarTarea(t){ return esMiTarea(t)||esTareaCreadaPorMi(t)||esSupervisor(); }
+function puedeEliminarTarea(t){ return esTareaCreadaPorMi(t)||esSupervisor(); }
+function textoRolTarea(r){ return r==="supervisor"?"Supervisión":r==="senior"?"Senior":""; }
+
+function ordenarTareas(a,b){
+  const hoy=hoyTareasISO();
+  const va=(a.fechaLimite&&a.fechaLimite<hoy)?0:1, vb=(b.fechaLimite&&b.fechaLimite<hoy)?0:1;
+  if(va!==vb) return va-vb;
+  const fa=a.fechaLimite||"9999-99-99", fb=b.fechaLimite||"9999-99-99";
+  if(fa!==fb) return fa<fb?-1:1;
+  const pa=a.prioridad==="alta"?0:1, pb=b.prioridad==="alta"?0:1;
+  if(pa!==pb) return pa-pb;
+  return (a.fechaCreacion||0)-(b.fechaCreacion||0);
+}
+function tareasPendientesMias(){
+  return Object.values(tareas).filter(t=>t.estado!=="hecha"&&esMiTarea(t)).sort(ordenarTareas);
+}
+function personasAsignablesTareas(){
+  const lista=[];
+  const agregar=n=>{ if(n && !lista.some(x=>personasCoinciden(x,n))) lista.push(n); };
+  if(esSupervisor()){
+    Object.values(equipos).forEach(e=>{ (e.seniors||[]).forEach(agregar); (e.gestores||[]).forEach(agregar); });
+  }else if(esSenior()){
+    obtenerEquipoDePersona(nombreActual).forEach(eq=>(equipos[eq]?.gestores||[]).forEach(agregar));
+  }
+  return lista.sort((a,b)=>a.localeCompare(b,"es"));
+}
+
+function htmlTarea(t,opts={}){
+  const hoy=hoyTareasISO();
+  const hecha=t.estado==="hecha";
+  const vencida=!hecha&&t.fechaLimite&&t.fechaLimite<hoy;
+  const venceHoy=!hecha&&t.fechaLimite===hoy;
+  const rol=textoRolTarea(t.creadoPorRol);
+  const creada=t.fechaCreacion?new Date(t.fechaCreacion).toLocaleDateString("es-AR"):"";
+  const etiquetas=[];
+  if(t.prioridad==="alta"&&!hecha) etiquetas.push('<span class="tarea-tag alta">🔥 Prioridad alta</span>');
+  if(vencida) etiquetas.push('<span class="tarea-tag vencida">⏰ Vencida</span>');
+  else if(venceHoy) etiquetas.push('<span class="tarea-tag hoy">📌 Vence hoy</span>');
+  if(t.fechaLimite) etiquetas.push(`<span class="tarea-tag fecha">📅 ${escapeHtml(fechaISOaAR(t.fechaLimite))}</span>`);
+  const id=escapeHtml(t._id||"");
+  const botones=[];
+  if(puedeCerrarTarea(t)){
+    botones.push(hecha
+      ? `<button class="btn" onclick="reabrirTarea('${id}')">↩ Reabrir</button>`
+      : `<button class="btn green" onclick="marcarTareaHecha('${id}')">✔ Hecha</button>`);
+  }
+  if(puedeEliminarTarea(t)) botones.push(`<button class="btn" title="Eliminar" onclick="eliminarTarea('${id}')">🗑</button>`);
+  return `<div class="tarea ${hecha?"hecha":""} ${vencida?"vencida":""}">
+    <div class="tarea-main">
+      <div class="tarea-titulo">${escapeHtml(t.titulo||"(sin título)")}</div>
+      ${t.detalle?`<div class="tarea-detalle">${escapeHtml(t.detalle).replace(/\n/g,"<br>")}</div>`:""}
+      <div class="tarea-meta">${opts.verAsignado?`Para: <b>${escapeHtml(t.asignadoA||"—")}</b> · `:""}Dejada por <b>${escapeHtml(t.creadoPor||"—")}</b>${rol?` (${rol})`:""}${creada?` · ${creada}`:""}${hecha&&t.fechaHecha?` · Hecha el ${new Date(t.fechaHecha).toLocaleDateString("es-AR")}${t.hechaPor?` por ${escapeHtml(t.hechaPor)}`:""}`:""}</div>
+      ${etiquetas.length?`<div class="tarea-tags">${etiquetas.join("")}</div>`:""}
+    </div>
+    <div class="tarea-acciones">${botones.join("")}</div>
+  </div>`;
+}
+
+function actualizarBadgeTareas(){
+  const badge=$("badgeTareas"); if(!badge) return;
+  const n=tareasPendientesMias().length;
+  badge.textContent=n>99?"99+":String(n);
+  badge.classList.toggle("alerta",n>0);
+}
+
+function actualizarListasTareas(){
+  const cont=$("tareasListas"); if(!cont) return;
+  const todas=Object.values(tareas);
+  const mias=todas.filter(esMiTarea);
+  const pend=mias.filter(t=>t.estado!=="hecha").sort(ordenarTareas);
+  const hechas=mias.filter(t=>t.estado==="hecha").sort((a,b)=>(b.fechaHecha||0)-(a.fechaHecha||0)).slice(0,15);
+  let html=`<div class="tareas-card"><h3>📝 Mis pendientes <span class="tareas-contador">${pend.length}</span></h3>${
+    pend.length?pend.map(t=>htmlTarea(t)).join(""):'<div class="empty">🎉 No tenés tareas pendientes.</div>'
+  }</div>`;
+  if(puedeDejarTareas()){
+    const dejadas=todas.filter(t=>!esMiTarea(t)&&(esSupervisor()||esTareaCreadaPorMi(t)));
+    const dPend=dejadas.filter(t=>t.estado!=="hecha").sort(ordenarTareas);
+    const dHechas=dejadas.filter(t=>t.estado==="hecha").sort((a,b)=>(b.fechaHecha||0)-(a.fechaHecha||0)).slice(0,20);
+    html+=`<div class="tareas-card"><h3>${esSupervisor()?"👥 Tareas del equipo":"📤 Tareas que dejé"} <span class="tareas-contador">${dPend.length}</span></h3>${
+      dPend.length?dPend.map(t=>htmlTarea(t,{verAsignado:true})).join(""):'<div class="empty">No hay tareas pendientes para controlar.</div>'
+    }${dHechas.length?`<details class="tareas-hechas"><summary>✅ Cumplidas recientemente (${dHechas.length})</summary>${dHechas.map(t=>htmlTarea(t,{verAsignado:true})).join("")}</details>`:""}</div>`;
+  }
+  if(hechas.length){
+    html+=`<details class="tareas-card tareas-hechas"><summary>✅ Mis tareas hechas (${hechas.length})</summary>${hechas.map(t=>htmlTarea(t)).join("")}</details>`;
+  }
+  cont.innerHTML=html;
+}
+
+function renderizarTareas(){
+  $("sectionTitle").textContent="Mis tareas";
+  $("listSearch").style.display="none";
+  let form="";
+  if(puedeDejarTareas()){
+    const personas=personasAsignablesTareas();
+    form=`<div class="tareas-card tareas-form">
+      <h3>➕ Dejar una tarea</h3>
+      <div class="tareas-form-grid">
+        <div class="field"><label>Para</label>
+          <select id="tareaPara"><option value="">Elegí una persona…</option>${personas.map(p=>`<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`).join("")}</select></div>
+        <div class="field"><label>Fecha límite (opcional)</label><input id="tareaFecha" type="date" min="${hoyTareasISO()}"></div>
+        <div class="field tareas-form-wide"><label>Qué tiene que hacer</label><input id="tareaTitulo" maxlength="140" placeholder="Ej.: Llamar a los clientes con acuerdo vencido" autocomplete="off"></div>
+        <div class="field tareas-form-wide"><label>Detalle (opcional)</label><textarea id="tareaDetalle" rows="2" maxlength="1500" placeholder="Instrucciones, DNI, observaciones…"></textarea></div>
+        <label class="tareas-check"><input id="tareaAlta" type="checkbox"> 🔥 Prioridad alta</label>
+        <button class="primary tareas-guardar" id="tareaGuardarBtn" onclick="guardarTarea()">Dejar tarea</button>
+      </div>
+      ${personas.length?"":'<div class="small">No hay personas asignables en tus equipos todavía.</div>'}
+    </div>`;
+  }
+  $("items").innerHTML=`<div class="tareas-wrap">${form}<div id="tareasListas"></div></div>`;
+  actualizarListasTareas();
+}
+
+async function guardarTarea(){
+  if(!puedeDejarTareas()) return;
+  const para=($("tareaPara")?.value||"").trim();
+  const titulo=($("tareaTitulo")?.value||"").trim();
+  if(!para){ alert("Elegí a quién le dejás la tarea."); return; }
+  if(!titulo){ alert("Escribí qué tiene que hacer."); return; }
+  if(!esSupervisor() && !personasAsignablesTareas().some(p=>personasCoinciden(p,para))){ alert("Solo podés dejar tareas a gestores de tus equipos."); return; }
+  const btn=$("tareaGuardarBtn"); if(btn) btn.disabled=true;
+  try{
+    await set(push(ref(db,"tareas")),{
+      titulo,
+      detalle:($("tareaDetalle")?.value||"").trim(),
+      asignadoA:para,
+      creadoPor:nombreActual,
+      creadoPorEmail:usuarioActual?.email||"",
+      creadoPorUid:usuarioActual?.uid||"",
+      creadoPorRol:esSupervisor()?"supervisor":"senior",
+      fechaLimite:$("tareaFecha")?.value||"",
+      prioridad:$("tareaAlta")?.checked?"alta":"normal",
+      estado:"pendiente",
+      fechaCreacion:Date.now()
+    });
+    ["tareaTitulo","tareaDetalle","tareaFecha"].forEach(i=>{ if($(i)) $(i).value=""; });
+    if($("tareaAlta")) $("tareaAlta").checked=false;
+    $("tareaTitulo")?.focus();
+  }catch(e){
+    console.error("No se pudo guardar la tarea:",e);
+    alert("No se pudo guardar la tarea. Revisá los permisos de Firebase para el nodo /tareas.");
+  }finally{ if(btn) btn.disabled=false; }
+}
+async function marcarTareaHecha(id){
+  const t=tareas[id]; if(!t||!puedeCerrarTarea(t)) return;
+  try{ await update(ref(db,`tareas/${id}`),{estado:"hecha",fechaHecha:Date.now(),hechaPor:nombreActual}); }
+  catch(e){ console.error(e); alert("No se pudo marcar la tarea como hecha."); }
+}
+async function reabrirTarea(id){
+  const t=tareas[id]; if(!t||!puedeCerrarTarea(t)) return;
+  try{ await update(ref(db,`tareas/${id}`),{estado:"pendiente",fechaHecha:null,hechaPor:null}); }
+  catch(e){ console.error(e); alert("No se pudo reabrir la tarea."); }
+}
+async function eliminarTarea(id){
+  const t=tareas[id]; if(!t||!puedeEliminarTarea(t)) return;
+  if(!confirm(`¿Eliminar la tarea "${t.titulo||""}"?`)) return;
+  try{ await set(ref(db,`tareas/${id}`),null); }
+  catch(e){ console.error(e); alert("No se pudo eliminar la tarea."); }
+}
+
+function cerrarTareasIngreso(){ $("tareasIngresoModal")?.classList.add("hidden"); }
+function abrirTareasDesdeIngreso(){ cerrarTareasIngreso(); mostrarVista("tareas"); }
+function mostrarTareasAlIngresar(){
+  const pend=tareasPendientesMias();
+  if(!pend.length) return;
+  $("tareasIngresoTitulo").textContent=`${pend.length===1?"Tenés 1 tarea pendiente":`Tenés ${pend.length} tareas pendientes`}`;
+  $("tareasIngresoLista").innerHTML=pend.slice(0,6).map(t=>htmlTarea(t)).join("")+(pend.length>6?`<div class="small" style="text-align:center;margin-top:8px">… y ${pend.length-6} más</div>`:"");
+  $("tareasIngresoModal").classList.remove("hidden");
+}
+function refrescarTareasIngreso(){
+  const modal=$("tareasIngresoModal");
+  if(!modal || modal.classList.contains("hidden")) return;
+  const pend=tareasPendientesMias();
+  if(!pend.length){ cerrarTareasIngreso(); return; }
+  $("tareasIngresoTitulo").textContent=pend.length===1?"Tenés 1 tarea pendiente":`Tenés ${pend.length} tareas pendientes`;
+  $("tareasIngresoLista").innerHTML=pend.slice(0,6).map(t=>htmlTarea(t)).join("")+(pend.length>6?`<div class="small" style="text-align:center;margin-top:8px">… y ${pend.length-6} más</div>`:"");
+}
+function avisarTareaNueva(t){
+  let toast=$("toastTarea");
+  if(!toast){
+    toast=document.createElement("div"); toast.id="toastTarea"; toast.className="toast-tarea";
+    toast.onclick=()=>{ toast.classList.add("hidden"); mostrarVista("tareas"); };
+    document.body.appendChild(toast);
+  }
+  toast.innerHTML=`📝 <b>Nueva tarea de ${escapeHtml(t.creadoPor||"tu equipo")}</b><br>${escapeHtml(t.titulo||"")}`;
+  toast.classList.remove("hidden");
+  clearTimeout(toastTareaTimer);
+  toastTareaTimer=setTimeout(()=>toast.classList.add("hidden"),9000);
+}
+
+function escucharTareas(){
+  if(desuscribirTareas){ try{desuscribirTareas();}catch(e){} desuscribirTareas=null; }
+  tareasPrimeraCarga=true;
+  desuscribirTareas=onValue(ref(db,"tareas"),snap=>{
+    const data=snap.val()||{};
+    tareas={};
+    Object.entries(data).forEach(([id,t])=>{ if(t&&typeof t==="object") tareas[id]={...t,_id:id}; });
+    actualizarBadgeTareas();
+    refrescarTareasIngreso();
+    if(vistaActual==="tareas"){ if($("tareasListas")) actualizarListasTareas(); else renderizarTareas(); }
+    if(tareasPrimeraCarga){
+      tareasPrimeraCarga=false;
+      Object.keys(tareas).forEach(id=>tareasIdsConocidos.add(id));
+      if(!tareasIngresoMostrado){ tareasIngresoMostrado=true; mostrarTareasAlIngresar(); }
+    }else{
+      Object.values(tareas).forEach(t=>{
+        if(!tareasIdsConocidos.has(t._id)){
+          tareasIdsConocidos.add(t._id);
+          if(t.estado!=="hecha"&&esMiTarea(t)&&!esTareaCreadaPorMi(t)&&vistaActual!=="tareas") avisarTareaNueva(t);
+        }
+      });
+    }
+  },err=>console.warn("No se pudieron leer las tareas (revisá las reglas de /tareas):",err));
+}
+window.guardarTarea=guardarTarea;
+window.marcarTareaHecha=marcarTareaHecha;
+window.reabrirTarea=reabrirTarea;
+window.eliminarTarea=eliminarTarea;
+window.cerrarTareasIngreso=cerrarTareasIngreso;
+window.abrirTareasDesdeIngreso=abrirTareasDesdeIngreso;
+
 /* ---------- LOGIN / USUARIO ---------- */
 
 async function resolverUsuarioPorEmail(user){
@@ -3531,6 +3823,7 @@ onAuthStateChanged(auth,async user=>{
   escucharChatInterno();
   escucharVencimientos();
   escucharUrgencias();
+  escucharTareas();
 
   mostrarVista("principal");
 });
@@ -3552,6 +3845,9 @@ async function cerrarSesion(){
       });
     }catch(e){}
   }
+  if(desuscribirTareas){ try{desuscribirTareas();}catch(e){} desuscribirTareas=null; }
+  tareas={}; tareasIdsConocidos=new Set(); tareasIngresoMostrado=false; tareasPrimeraCarga=true;
+  cerrarTareasIngreso();
   await signOut(auth);
 }
 
