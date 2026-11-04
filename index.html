@@ -1074,7 +1074,7 @@
         const envioSnap=await get(enviadosRef);
         if(envioSnap.exists() && envioSnap.val()?.estado==="enviado"){
           await responder("Según nuestros registros, el enlace del Libre de Deuda ya fue enviado en esta conversación. Si no podés abrirlo, te derivamos con un asesor para que te ayude.","libre_deuda_duplicado");
-          await update(ref(db,`conversaciones/${conversacionId}/mensajes/${messageKey}`),{iaProcesado:true,iaProcesando:false});
+          await update(ref(db,`conversaciones/${conversacionId}/mensajes/${messageKey}`),{iaProcesado:true,iaProcesando:false,iaProcesandoDesde:null});
           return;
         }
         const baseSnap=await get(ref(db,"libresDeudaBase"));
@@ -1106,7 +1106,7 @@
                 console.error("Error al emitir/subir el Libre de Deuda:",errorGeneracion);
                 await update(enviadosRef,{estado:"requiere_revision",dni:dniRegistrado,nombre:valorLibreDeuda(registro,"nombre","nombre completo","titular")||"",motivo:String(errorGeneracion?.message||errorGeneracion),fechaIntento:Date.now()});
                 await derivar(`Libre de Deuda: no se pudo emitir automáticamente (${String(errorGeneracion?.message||errorGeneracion)}).`,"No pudimos emitir automáticamente el certificado con los datos disponibles. Derivamos tu solicitud a un asesor para que revise el caso.");
-                await update(ref(db,`conversaciones/${conversacionId}/mensajes/${messageKey}`),{iaProcesado:true,iaProcesando:false});
+                await update(ref(db,`conversaciones/${conversacionId}/mensajes/${messageKey}`),{iaProcesado:true,iaProcesando:false,iaProcesandoDesde:null});
                 return;
               }
               const textoRespuesta=`Encontramos tu registro${(valorLibreDeuda(registro,"nombre","nombre completo","titular")?` a nombre de ${valorLibreDeuda(registro,"nombre","nombre completo","titular")}`:"")}. Podés abrir o descargar tu Libre de Deuda desde este enlace:
@@ -1118,7 +1118,7 @@ ${url}`;
           }
         }
       }
-      await update(ref(db,`conversaciones/${conversacionId}/mensajes/${messageKey}`),{iaProcesado:true,iaProcesando:false});
+      await update(ref(db,`conversaciones/${conversacionId}/mensajes/${messageKey}`),{iaProcesado:true,iaProcesando:false,iaProcesandoDesde:null});
     }
 
     async function buscarClienteEnBasePorDni(dni){
@@ -1217,10 +1217,14 @@ ${url}`;
     }
 
     async function procesarRespuestaIA(messageKey, mensaje) {
-      if (!IA_HABILITADA || iaDerivada || iaProcesando || !db) return;
+      if (!IA_HABILITADA || !db) return;
 
       const texto = String(mensaje?.texto || "").trim();
       if (!texto) return;
+      // Una solicitud explícita de Libre de Deuda debe poder reintentarse
+      // aunque la conversación haya quedado derivada por un intento anterior.
+      const esSolicitudLibreDeuda = detectarIntencionIA(texto) === "libre_deuda";
+      if ((iaDerivada || iaProcesando) && !esSolicitudLibreDeuda) return;
 
       const identificador = `${messageKey}:${texto}`;
       if (identificador === iaUltimoMensajeProcesado) return;
@@ -1232,8 +1236,12 @@ ${url}`;
         const mensajeRef = ref(db, `conversaciones/${conversacionId}/mensajes/${messageKey}`);
         const resultado = await runTransaction(mensajeRef, actual => {
           if (!actual || actual.remitente !== "cliente") return actual;
-          if (actual.iaProcesado === true || actual.iaProcesando === true) return;
-          return { ...actual, iaProcesando: true };
+          if (actual.iaProcesado === true) return;
+          // Recupera bloqueos abandonados (pestaña cerrada o error de red).
+          const bloqueoDesde = Number(actual.iaProcesandoDesde || 0);
+          const bloqueoVigente = actual.iaProcesando === true && bloqueoDesde > 0 && (Date.now() - bloqueoDesde) < 90000;
+          if (bloqueoVigente) return;
+          return { ...actual, iaProcesando: true, iaProcesandoDesde: Date.now() };
         });
         reclamo = resultado.committed === true;
       } catch (error) {
@@ -1272,7 +1280,7 @@ ${url}`;
           if (!esOpcion) {
             await update(
               ref(db, `conversaciones/${conversacionId}/mensajes/${messageKey}`),
-              { iaProcesado: true, iaProcesando: false }
+              { iaProcesado: true, iaProcesando: false, iaProcesandoDesde: null }
             );
             return;
           }
@@ -1302,7 +1310,7 @@ ${url}`;
                 respondeA: messageKey,
                 tipo: "solicitar_dni_plan_pago"
               });
-              await update(ref(db, `conversaciones/${conversacionId}/mensajes/${messageKey}`), { iaProcesado: true, iaProcesando: false });
+              await update(ref(db, `conversaciones/${conversacionId}/mensajes/${messageKey}`), { iaProcesado: true, iaProcesando: false, iaProcesandoDesde: null });
               await update(ref(db, `conversaciones/${conversacionId}`), { iaPaso: "plan_pago_opciones", ultimaActividad: Date.now() });
               return;
             }
@@ -1326,7 +1334,7 @@ ${url}`;
               datosPlan: { deuda, pq, tresCuotas: registro["3 cuotas"] || registro["3 CUOTAS"] || registro.tresCuotas || registro.tres_cuotas || "" }
             });
 
-            await update(ref(db, `conversaciones/${conversacionId}/mensajes/${messageKey}`), { iaProcesado: true, iaProcesando: false });
+            await update(ref(db, `conversaciones/${conversacionId}/mensajes/${messageKey}`), { iaProcesado: true, iaProcesando: false, iaProcesandoDesde: null });
             await update(ref(db, `conversaciones/${conversacionId}`), {
               iaPaso: "pq_confirmacion",
               planPagoSolicitado: true,
@@ -1353,7 +1361,7 @@ ${url}`;
                 tipo: "derivacion_plan_pago",
                 opcionPlan: "PQ — Pago cancelatorio"
               });
-              await update(ref(db, `conversaciones/${conversacionId}/mensajes/${messageKey}`), { iaProcesado: true, iaProcesando: false });
+              await update(ref(db, `conversaciones/${conversacionId}/mensajes/${messageKey}`), { iaProcesado: true, iaProcesando: false, iaProcesandoDesde: null });
               await derivarAAsesor({ opcion:"PQ — Pago cancelatorio", respuesta:"Sí", tipoDerivacion:"gestor", motivo:"Cliente acepta pago cancelatorio (PQ)" });
               await update(ref(db, `conversaciones/${conversacionId}`), { ultimoMensaje: respuestaSiPQ, ultimoRemitente:"ia" });
               return;
@@ -1373,7 +1381,7 @@ ${url}`;
                 tipo: "tres_cuotas_confirmacion",
                 opciones: ["Sí", "No"]
               });
-              await update(ref(db, `conversaciones/${conversacionId}/mensajes/${messageKey}`), { iaProcesado: true, iaProcesando: false });
+              await update(ref(db, `conversaciones/${conversacionId}/mensajes/${messageKey}`), { iaProcesado: true, iaProcesando: false, iaProcesandoDesde: null });
               await update(ref(db, `conversaciones/${conversacionId}`), {
                 iaPaso: "tres_cuotas_confirmacion",
                 planPagoOpcion: "3 cuotas",
@@ -1397,7 +1405,7 @@ ${url}`;
                 tipo: "derivacion_plan_pago",
                 opcionPlan: "3 cuotas"
               });
-              await update(ref(db, `conversaciones/${conversacionId}/mensajes/${messageKey}`), { iaProcesado: true, iaProcesando: false });
+              await update(ref(db, `conversaciones/${conversacionId}/mensajes/${messageKey}`), { iaProcesado: true, iaProcesando: false, iaProcesandoDesde: null });
               await derivarAAsesor({ opcion:"3 cuotas", respuesta:"Sí", tipoDerivacion:"asesor", motivo:"Cliente acepta opción de 3 cuotas" });
               await update(ref(db, `conversaciones/${conversacionId}`), { ultimoMensaje: respuestaSi3, ultimoRemitente:"ia" });
               return;
@@ -1413,7 +1421,7 @@ ${url}`;
                 respondeA: messageKey,
                 tipo: "solicitar_monto_fecha"
               });
-              await update(ref(db, `conversaciones/${conversacionId}/mensajes/${messageKey}`), { iaProcesado: true, iaProcesando: false });
+              await update(ref(db, `conversaciones/${conversacionId}/mensajes/${messageKey}`), { iaProcesado: true, iaProcesando: false, iaProcesandoDesde: null });
               await update(ref(db, `conversaciones/${conversacionId}`), {
                 iaPaso: "esperando_monto_fecha",
                 planPagoOpcion: "propuesta_cliente",
@@ -1436,7 +1444,7 @@ ${url}`;
               respondeA: messageKey,
               tipo: "derivacion_propuesta_cliente"
             });
-            await update(ref(db, `conversaciones/${conversacionId}/mensajes/${messageKey}`), { iaProcesado: true, iaProcesando: false });
+            await update(ref(db, `conversaciones/${conversacionId}/mensajes/${messageKey}`), { iaProcesado: true, iaProcesando: false, iaProcesandoDesde: null });
             await derivarAAsesor({
               opcion:"propuesta_cliente",
               respuesta:"No a 3 cuotas",
@@ -1468,7 +1476,7 @@ ${url}`;
                 tipo: "consulta_base_clientes",
                 dniConsultado: dniDetectado
               });
-              await update(ref(db, `conversaciones/${conversacionId}/mensajes/${messageKey}`), { iaProcesado: true, iaProcesando: false });
+              await update(ref(db, `conversaciones/${conversacionId}/mensajes/${messageKey}`), { iaProcesado: true, iaProcesando: false, iaProcesandoDesde: null });
               await update(ref(db, `conversaciones/${conversacionId}`), {
                 ultimaActividad: Date.now(),
                 ultimoMensaje: respuestaCliente,
@@ -1495,7 +1503,7 @@ ${url}`;
               respondeA: messageKey,
               tipo: "opciones_plan_pago"
             });
-            await update(ref(db, `conversaciones/${conversacionId}/mensajes/${messageKey}`), { iaProcesado: true, iaProcesando: false });
+            await update(ref(db, `conversaciones/${conversacionId}/mensajes/${messageKey}`), { iaProcesado: true, iaProcesando: false, iaProcesandoDesde: null });
             await update(ref(db, `conversaciones/${conversacionId}`), {
               iaActiva: true,
               iaEstado: "activa",
@@ -1539,7 +1547,7 @@ ${url}`;
 
           await update(
             ref(db, `conversaciones/${conversacionId}/mensajes/${messageKey}`),
-            { iaProcesado: true, iaProcesando: false }
+            { iaProcesado: true, iaProcesando: false, iaProcesandoDesde: null }
           );
 
           // No responde automáticamente en este caso.
@@ -1586,7 +1594,7 @@ ${url}`;
 
         await update(
           ref(db, `conversaciones/${conversacionId}/mensajes/${messageKey}`),
-          { iaProcesado: true, iaProcesando: false }
+          { iaProcesado: true, iaProcesando: false, iaProcesandoDesde: null }
         );
 
         await update(ref(db, `conversaciones/${conversacionId}`), {
@@ -1609,7 +1617,7 @@ ${url}`;
         try {
           await update(
             ref(db, `conversaciones/${conversacionId}/mensajes/${messageKey}`),
-            { iaProcesando: false }
+            { iaProcesando: false, iaProcesandoDesde: null }
           );
         } catch (_) {}
       }
