@@ -965,18 +965,33 @@
 
 
     function fechaLibreDeudaLegible(valor){
-      const s=String(valor??"").trim(); if(!s) return "";
-      if(/^\d{4}-\d{2}-\d{2}/.test(s)){const [y,m,d]=s.slice(0,10).split("-");return `${d}/${m}/${y}`;}
-      if(/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(s)) return s;
-      const d=new Date(s); if(!Number.isNaN(d.getTime())) return d.toLocaleDateString("es-AR");
-      return s;
+      if(valor===null || valor===undefined || valor==="") return "";
+      // Excel puede entregar la fecha como Date, número serial o texto.
+      if(valor instanceof Date && !Number.isNaN(valor.getTime())){
+        return valor.toLocaleDateString("es-AR",{timeZone:"UTC"});
+      }
+      if(typeof valor==="number" || (typeof valor==="string" && /^\d{4,6}(?:\.0+)?$/.test(valor.trim()))){
+        const serial=Number(valor);
+        if(Number.isFinite(serial) && serial>=1 && serial<=100000){
+          const fecha=new Date(Date.UTC(1899,11,30)+Math.round(serial)*86400000);
+          return fecha.toLocaleDateString("es-AR",{timeZone:"UTC"});
+        }
+      }
+      const s=String(valor).trim(); if(!s) return "";
+      let m=s.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/);
+      if(m){const d=Number(m[1]),mes=Number(m[2]),anio=Number(m[3]);const fecha=new Date(Date.UTC(anio,mes-1,d));if(fecha.getUTCFullYear()===anio && fecha.getUTCMonth()===mes-1 && fecha.getUTCDate()===d)return `${String(d).padStart(2,"0")}/${String(mes).padStart(2,"0")}/${anio}`;return "";}
+      m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if(m)return `${m[3]}/${m[2]}/${m[1]}`;
+      const fecha=new Date(s);
+      if(!Number.isNaN(fecha.getTime())) return fecha.toLocaleDateString("es-AR",{timeZone:"UTC"});
+      return "";
     }
     async function generarYSubirLibreDeuda(registro,dni){
       if(!window.jspdf?.jsPDF) throw new Error("No se pudo cargar el generador de PDF. Actualizá la página e intentá nuevamente.");
       if(!window.__libreDeudaStorage) throw new Error("No está disponible Firebase Storage para publicar el certificado.");
       const campo = (...nombres) => {
         const normalizarClave = valor => String(valor || "").toLowerCase()
-          .normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").replace(/[^a-z0-9]/g, "");
+          .normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
         const claves = Object.keys(registro || {});
         for (const nombre of nombres) {
           const buscada = normalizarClave(nombre);
@@ -986,11 +1001,11 @@
         return "";
       };
       const cancela=String(campo("cancelaDeuda","cancela deuda","cancelacion","cancelado","deuda cancelada","libre de deuda")??"").trim().toLowerCase();
-      const fechaPago=fechaLibreDeudaLegible(campo("fechaUltimoPago","ultimoPagoTexto","fechaUltimoPagoTexto","ultimo_pago_texto","ultimo pago","fecha ultimo pago","fecha de pago","fecha cancelacion"));
-      if(!(["1","si","sí","true","cancelado","cancelada","libre"].includes(cancela)) || !fechaPago){
+      const fechaPago=fechaLibreDeudaLegible(campo("fechaUltimoPago","ultimoPagoTexto","fechaUltimoPagoTexto","ultimo_pago_texto","ultimo pago","fecha ultimo pago","Fecha_ult_pago","fecha_ult_pago","fecha ult pago","fecha de pago","fecha cancelacion"));
+      if(!(["1","1.0","1,0","si","sí","true","cancelado","cancelada","libre"].includes(cancela)) || !fechaPago){
         throw new Error("El Excel no confirma una cancelación con fecha de pago para este DNI. La solicitud debe revisarla un asesor.");
       }
-      const nombreCompleto=String(campo("nombre","nombre completo","titular","apellido y nombre")||[campo("apellido"),campo("nombrePila","nombre pila")].filter(Boolean).join(" ")).replace(/\\s+/g," ").trim();
+      const nombreCompleto=String(campo("nombre","nombre completo","titular","apellido y nombre")||[campo("apellido"),campo("nombrePila","nombre pila")].filter(Boolean).join(" ")).replace(/\s+/g," ").trim();
       if(!nombreCompleto) throw new Error("No hay nombre de titular en el Excel para generar el certificado.");
       const {jsPDF}=window.jspdf; const doc=new jsPDF({unit:"mm",format:"a4"});
       const hoy=new Date().toLocaleDateString("es-AR",{day:"2-digit",month:"long",year:"numeric"});
@@ -1010,7 +1025,7 @@
 
     function claveLibreDeuda(valor){
       return String(valor ?? "").toLowerCase().normalize("NFD")
-        .replace(/[\\u0300-\\u036f]/g,"").replace(/[^a-z0-9]/g,"");
+        .replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]/g,"");
     }
     function valorLibreDeuda(registro, ...nombres){
       const claves=Object.keys(registro || {});
@@ -1023,11 +1038,11 @@
     }
     function buscarRegistroLibreDeuda(base,dni){
       if(!base || typeof base!=="object") return null;
-      const limpio=String(dni||"").replace(/\\D/g,"");
+      const limpio=String(dni||"").replace(/\D/g,"");
       if(base[limpio] && typeof base[limpio]==="object") return base[limpio];
       for(const [clave,valor] of Object.entries(base)){
         if(!valor || typeof valor!=="object") continue;
-        const dniFila=String(valorLibreDeuda(valor,"dni","documento","nro documento","numero documento","cuil dni") || clave).replace(/\\D/g,"");
+        const dniFila=String(valorLibreDeuda(valor,"dni","documento","nro documento","numero documento","cuil dni") || clave).replace(/\D/g,"");
         if(dniFila===limpio) return valor;
       }
       return null;
@@ -1088,6 +1103,7 @@
               try {
                 if(!/^https?:\/\//i.test(url)) url=await generarYSubirLibreDeuda(registro,dniRegistrado);
               } catch(errorGeneracion) {
+                console.error("Error al emitir/subir el Libre de Deuda:",errorGeneracion);
                 await update(enviadosRef,{estado:"requiere_revision",dni:dniRegistrado,nombre:valorLibreDeuda(registro,"nombre","nombre completo","titular")||"",motivo:String(errorGeneracion?.message||errorGeneracion),fechaIntento:Date.now()});
                 await derivar(`Libre de Deuda: no se pudo emitir automáticamente (${String(errorGeneracion?.message||errorGeneracion)}).`,"No pudimos emitir automáticamente el certificado con los datos disponibles. Derivamos tu solicitud a un asesor para que revise el caso.");
                 await update(ref(db,`conversaciones/${conversacionId}/mensajes/${messageKey}`),{iaProcesado:true,iaProcesando:false});
