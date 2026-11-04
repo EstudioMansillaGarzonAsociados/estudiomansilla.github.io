@@ -1032,7 +1032,7 @@
         const motivos=[];
         if(!cancelaOk) motivos.push(`columna "Cancela deuda" = "${String(cancelaRaw)}"`);
         if(!fechaPago) motivos.push(`fecha de pago no reconocida = "${String(fechaRaw)}"`);
-        console.warn("Libre de Deuda: validación fallida ->",motivos.join(" | "));
+        console.warn("Libre de Deuda: validación fallida ->",motivos.join(" | "),"| campos del registro:",Object.keys(registro||{}).join(", "));
         throw new Error(`El Excel no confirma una cancelación con fecha de pago para este DNI (${motivos.join("; ")}). La solicitud debe revisarla un asesor.`);
       }
       const nombreCompleto=String(campo("nombre","nombre completo","titular","apellido y nombre")||[campo("apellido"),campo("nombrePila","nombre pila")].filter(Boolean).join(" ")).replace(/\s+/g," ").trim();
