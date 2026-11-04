@@ -1704,7 +1704,7 @@ async function importarExcelLibreDeuda(){
     for(const sheetName of workbook.SheetNames){
       const sheet=workbook.Sheets[sheetName];
       if(!sheet)continue;
-      const rows=XLSX.utils.sheet_to_json(sheet,{defval:"",raw:false});
+      const rows=XLSX.utils.sheet_to_json(sheet,{defval:"",raw:false,dateNF:"dd/mm/yyyy"});
       for(const row of rows){
         filasTotales++;
         // En el Excel original el DNI se llama Nro_doc, no DNI.
